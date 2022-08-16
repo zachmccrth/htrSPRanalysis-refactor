@@ -1,0 +1,484 @@
+process_sample_sheet <- function(sample_sheet){
+  # Process Sample Sheet
+
+  # Position/Channel/Sensor has multiple wells. Need to expand to one row per well.
+
+  test_names <- names(sample_sheet)
+
+  # Bloc/Chip/Tray is old format
+
+  if (!("Position/Channel/Sensor" %in% test_names)){
+    idx <- which(test_names == "Block/Chip/Tray")
+    test_names[idx] <- "Position/Channel/Sensor"
+    names(sample_sheet) <- test_names
+
+  }
+
+
+
+  sample_sheet %>% separate(`Position/Channel/Sensor`, into = c("BeginPosition", "EndPosition", sep = "-")) %>%
+    #  filter(!is.na(EndPosition)) %>%
+    separate(BeginPosition, into = c("Row", "Column"), sep = 1) %>%
+    separate(EndPosition, into = c("EndRow", "EndColumn"), sep = 1) %>%
+    mutate(Column = as.integer(Column)) %>%
+    mutate(EndColumn = as.integer(EndColumn)) -> RowExpansionTemplate
+
+  length_ss <- dim(RowExpansionTemplate)[1]
+  ss_exp <- NULL
+
+  for(i in 1:length_ss){
+
+    old_row <- RowExpansionTemplate[i,]
+    old_row$Row <- str_to_upper(old_row$Row)
+    old_row$EndRow <- str_to_upper(old_row$EndRow)
+
+    start_letter <- old_row$Row
+    end_letter   <- old_row$EndRow
+
+    if (is.na(end_letter))
+      end_letter <- start_letter
+
+    if(start_letter != end_letter) {
+      start_idx <- which(LETTERS == start_letter)
+      end_idx <- which(LETTERS == end_letter)
+      for (j in start_idx+1:(end_idx-1)){
+        new_row <- old_row
+        new_row$Row <- LETTERS[j]
+        if (j == start_idx+1)
+          ss_exp <- rbind(old_row, new_row)
+        else
+          ss_exp <- rbind(ss_exp, new_row)
+      }
+    } else
+      ss_exp <- rbind(ss_exp, old_row)
+  }
+
+  ### Now to expand columns if necessary
+  RowExpansionTemplate <- ss_exp
+
+  length_ss <- dim(RowExpansionTemplate)[1]
+  ss_exp <- NULL
+
+  for(i in 1:length_ss){
+    old_row <- RowExpansionTemplate[i,]
+
+    start_col <- old_row$Column
+    end_col   <- old_row$EndColumn
+
+    if (is.na(end_col))
+      end_col <- start_col
+
+    if (start_col != end_col){
+      for (j in (start_col+1):end_col){
+        new_row <- old_row
+        new_row$Column++
+          if (j == start_idx+1)
+            ss_exp <- rbind(old_row, new_row)
+        else
+          ss_exp <- rbind(ss_exp, new_row)
+      }
+    } else
+      ss_exp <- rbind(ss_exp, RowExpansionTemplate[i,])
+  }
+
+  ss_exp %>% select(-EndRow, -EndColumn, -"-") -> ss_exp
+
+  # Now expand blocks
+  current_idx <- 0
+  new_current_idx <- 0
+  nsamples <- dim(ss_exp)[1]
+  sample_info_expanded <- NULL
+
+  for(i in 1:nsamples){
+
+    num_blocks <- str_count(ss_exp[i,]$`Block/Chip/Tray`, ",") + 1
+
+    blocks <- as.numeric(flatten(str_split(ss_exp[i,]$`Block/Chip/Tray`, ",")))
+
+    # create an expanded sample sheet with one row for each block
+
+    tmp_sample_info_expanded <- purrr::map_dfr(seq_len(num_blocks), ~ss_exp[i,])
+    tmp_sample_info_expanded$Block <- blocks
+    #  tmp_sample_info_expanded <- data.frame(tmp_sample_info_expanded)
+    sample_info_expanded <- bind_rows(sample_info_expanded, tmp_sample_info_expanded)
+
+  }
+  # Rows are sorted A,E,B,F,C,G,D,H
+
+  sample_info_expanded %>% mutate(RowSort = translate_rows_for_sort(Row)) ->
+    sample_info_expanded
+
+  sample_info_expanded %>% arrange(RowSort, Column, Block) -> sample_info_expanded
+
+  sample_info_expanded
+}
+
+select_samples <- function(sample_info, titration_select_data){
+  remove_ligands <- which(sample_info$Incl. == "N")
+  keep_ligands <- which(sample_info$Incl. == "Y")
+
+  titration_data %>% select(everything(), -starts_with("Y")) -> x_vals
+  titration_data %>% select(everything(), -starts_with("X")) -> y_vals
+
+  n_time_points <- dim(x_vals)[1]
+  nsamples <- dim(sample_info)[1]
+
+  #loop over all samples to be included. Exclude concentrations not selected for analysis.
+
+  displacement_per_ligand <- 0
+  keep_concentrations_all <- NULL
+  all_concentrations_ligand <- NULL
+  all_concentrations_values <- NULL
+
+  for(i in 1:nsamples){
+
+    num_conc <- str_count(sample_info$`All Concentrations`[i], ",") + 1
+
+    if (sample_info$Incl.[i] == "N"){
+      displacement_per_ligand <- displacement_per_ligand + num_conc
+      next
+    }
+
+    concentrations <-
+      as.numeric(flatten(str_split(sample_info$`All Concentrations`[i], ",")))
+    all_concentrations_ligand <- c(all_concentrations_ligand, num_conc)
+    all_concentrations_values <- c(all_concentrations_values, concentrations)
+
+    #Use this to match to ligand_conc and to x_vals, y_vals
+    keep_conc_idx <- 1:num_conc + displacement_per_ligand
+
+    keep_concentrations_all <- c(keep_concentrations_all, keep_conc_idx)
+
+    displacement_per_ligand <- displacement_per_ligand + num_conc
+
+  }
+
+  # time and ru values for selected wells
+  x_vals_select <- x_vals[ , keep_concentrations_all]
+  y_vals_select <- y_vals[ , keep_concentrations_all]
+
+  sample_info <- sample_info[keep_ligands, ]
+  sample_info$NumConc <- all_concentrations_ligand
+
+  list(Time = x_vals_select, RU = y_vals_select,
+       sample_info = sample_info,
+       all_concentrations_values = all_concentrations_values,
+       n_time_points = n_time_points)
+}
+
+select_concentrations <- function(sample_info, x_vals, y_vals){
+  #after we select the wells, we select the concentrations out of the remaining time series
+
+  n_time_points <- dim(x_vals)[1]
+  nsamples <- dim(sample_info)[1]
+
+  #loop over all samples to be included. Exclude concentrations not selected for analysis.
+
+  displacement_per_ligand <- 0
+  keep_concentrations <- NULL
+  incl_concentrations_ligand <- NULL
+  incl_concentrations_values <- NULL
+  error_idx <- NULL
+
+  for(i in 1:nsamples){
+
+###    num_conc <- str_count(sample_info$`All Concentrations`[i], ",") + 1
+### The Tomaras lab has sometimes placed the wrong number of concentrations in this field. It causes havoc,
+### because the sample sheet and Carterra output are out of sync. Need to add code to check dimensions
+
+    num_conc <- str_count(sample_info$`All Concentrations`[i], ",") + 1
+
+    if (sample_info$Incl.[i] == "N"){
+      displacement_per_ligand <- num_conc + displacement_per_ligand
+      next
+    }
+
+    concentrations <-
+      as.numeric(flatten(str_split(sample_info$`All Concentrations`[i], ",")))
+
+    if (str_to_upper(sample_info$`Incl. Conc.`[i]) == "ALL"){
+      incl_concentrations <- concentrations
+    } else {
+      incl_concentrations <-
+        as.numeric(flatten(str_split(sample_info$`Incl. Conc.`[i], ",")))
+    }
+    num_incl <- length(incl_concentrations)
+
+    if (num_incl > 5){
+      incl_concentrations <-
+        get_best_window(i, sample_info, x_vals, y_vals,
+                        num_incl, incl_concentrations,
+                        displacement_per_ligand)
+      num_incl <- length(incl_concentrations)
+    }
+
+    incl_concentrations_ligand <- c(incl_concentrations_ligand, num_incl)
+    incl_concentrations_values <- c(incl_concentrations_values, incl_concentrations)
+
+    #Use this to match to ligand_conc and to x_vals, y_vals
+
+    if (num_incl > 3){
+      incl_idx <- which(concentrations %in% incl_concentrations) + displacement_per_ligand
+      keep_concentrations <- c(keep_concentrations, incl_idx)
+    }
+    else
+      error_idx <- c(error_idx, i)
+
+    # the following keeps all of the concentrations for each of the wells selected to include, but
+    # excludes the wells not selected
+
+    displacement_per_ligand <- num_conc + displacement_per_ligand
+
+  }
+
+  sample_info$NumInclConc <- incl_concentrations_ligand
+
+  list(keep_concentrations = keep_concentrations,
+       sample_info = sample_info, incl_concentrations_values = incl_concentrations_values,
+       error_idx = error_idx)
+
+}
+
+#check sample sheet
+check_sample_sheet <- function(sample_sheet) {
+
+    if (dim(sample_sheet)[1] == 0) {
+      check1 <- "empty data set :"
+      flagspresent <- TRUE
+      print(paste(check1, sample_sheet_path))
+      return(flagspresent)
+  }
+  columns <- names(sample_sheet)
+  defaultcolumnnames <-
+    c(
+      "Incl.",
+      "Block/Chip/Tray",
+      "Position/Channel/Sensor",
+      "Analyte",
+      "Ligand",
+      "Baseline",
+      "Association",
+      "Dissociation",
+      "Asso. Skip",
+      "Disso. Skip",
+      "All Concentrations",
+      "Incl. Conc.",
+      "Bulkshift",
+      "Regen.",
+      "Bsl Start",
+      "Base Corr",
+      "Global Rmax",
+      "Automate Dissoc. Window"
+    )
+
+  columnspresent <-
+    any(columns %in% defaultcolumnnames == FALSE) # if true, means that unidentified column is present
+  if (columnspresent == TRUE) {
+    columnspresent_note <-
+      paste(setdiff(columns, defaultcolumnnames),
+            setdiff(defaultcolumnnames, columns))
+  } else {
+    columnspresent_note <- ""
+  }
+  columnslength <-
+    (length(columns) == length(defaultcolumnnames)) # if false, some column is missing or extra is added
+  if (columnslength == FALSE) {
+    columnslength_note <-
+      paste("File columns",
+            length(columns),
+            ", expected",
+            length(defaultcolumnnames))
+  } else {
+    columnslength_note = ""
+  }
+  columns_note <-
+    unique(paste(columnspresent_note, columnslength_note, sep = ""))
+
+  #check for "Incl." column !is.na & %in% c("Y", "N")
+  incl_note <-
+    (ifelse(any(
+      !unique(sample_sheet$"Incl.") %in% c("Y", "N")
+    ),  "Only Y and N values allowed", ""))
+  #"Block/Chip/Tray" !is.na
+  block_note <-
+    ifelse(any(is.na(unique(
+      sample_sheet$"Block/Chip/Tray"
+    ))) == TRUE, "Empty rows", "")
+  #"Position/Channel/Sensor" !is.na & letter and number
+  position_note <-
+    ifelse(any(is.na(
+      unique(sample_sheet$"Position/Channel/Sensor")
+    )) == TRUE, "Empty rows", "")
+  position_note <-
+    unique(ifelse(
+      !grepl(
+        "([A-Z])([0-9])",
+        unique(sample_sheet$`Position/Channel/Sensor`)
+      ),
+      paste(position_note, "Incorrect format"),
+      position_note
+    ))
+  #"Analyte" !is.na &character
+  analyte_note <-
+    ifelse(any(is.na(unique(
+      sample_sheet$Analyte
+    ))) == TRUE, "Empty rows", "")
+  #"Ligand" !is.na &character
+  ligand_note <-
+    ifelse(any(is.na(unique(
+      sample_sheet$Ligand
+    ))) == TRUE, "Empty rows", "")
+  #"Baseline"    !is.na & numeric
+  baseline_note <-
+    ifelse(any(is.na(unique(
+      sample_sheet$Baseline
+    ))) == TRUE, "Empty rows", "")
+  baseline_note <-
+    ifelse(typeof(unique(sample_sheet$Baseline)) != "double",
+           "Incorrect data type",
+           baseline_note)
+  #"Association"  !is.na & numeric
+  association_note <-
+    ifelse(any(is.na(unique(
+      sample_sheet$Association
+    ))) == TRUE, "Empty rows", "")
+  association_note <-
+    ifelse(typeof(unique(sample_sheet$Association)) != "double",
+           "Incorrect data type",
+           association_note)
+  #"Dissociation" !is.na & numeric
+  dissociation_note <-
+    ifelse(any(is.na(unique(
+      sample_sheet$Dissociation
+    ))) == TRUE, "Empty rows", "")
+  dissociation_note <-
+    ifelse(typeof(unique(sample_sheet$Dissociation)) != "double",
+           "Incorrect data type",
+           association_note)
+  #"Asso. Skip" !is.na & numeric
+  assoskip_note <-
+    ifelse(any(is.na(unique(
+      sample_sheet$`Asso. Skip`
+    ))) == TRUE, "Empty rows", "")
+  assoskip_note <-
+    ifelse(typeof(unique(sample_sheet$`Asso. Skip`)) != "double",
+           "Incorrect data type",
+           assoskip_note)
+  #"Disso. Skip" !is.na & numeric
+  dissoskip_note <-
+    ifelse(any(is.na(unique(
+      sample_sheet$`Disso. Skip`
+    ))) == TRUE, "Empty rows", "")
+  dissoskip_note <-
+    ifelse(typeof(unique(sample_sheet$`Disso. Skip`)) != "double",
+           "Incorrect data type",
+           dissoskip_note)
+  #"All Concentrations" !is.na &character
+  conc_note <-
+    ifelse(any(is.na(
+      unique(sample_sheet$`All Concentrations`)
+    )) == TRUE, "Empty rows", "")
+  conc_note <-
+    ifelse(typeof(unique(sample_sheet$`All Concentrations`)) != "character", "Incorrect data type", conc_note)
+  #"Incl. Conc." !is.na &character
+  inclconc_note <-
+    ifelse(any(is.na(
+      unique(sample_sheet$`All Concentrations`)
+    )) == TRUE, "Empty rows", "")
+  inclconc_note <-
+    ifelse(typeof(unique(sample_sheet$`All Concentrations`)) != "character",
+           "Incorrect data type",
+           inclconc_note)
+  #"Bulkshift" !is.na & %in% c("Y", "N")
+  bulkshift_note <-
+    unique(ifelse((
+      !unique(sample_sheet$Bulkshift) %in% c("Y", "N")
+    ),  "Only Y and N values allowed",  ""))
+  #"Regen." !is.na & %in% c("Y", "N")
+  regen_note <-
+    unique(ifelse((
+      !unique(sample_sheet$Regen.) %in% c("Y", "N")
+    ),  "Only Y and N values allowed",  ""))
+  #"Bsl Start"  !is.na & numeric
+  bslstart_note <-
+    ifelse(any(is.na(unique(
+      sample_sheet$`Bsl Start`
+    ))) == TRUE, "Empty rows", "")
+  bslstart_note <-
+    ifelse(typeof(unique(sample_sheet$`Bsl Start`)) != "double",
+           "Incorrect data type",
+           bslstart_note)
+  #"Base Corr"  !is.na & %in% c("Y", "N")
+  basecorr_note <-
+    unique(ifelse((
+      !unique(sample_sheet$`Base Corr`) %in% c("Y", "N")
+    ),  "Only Y and N values allowed",  ""))
+
+  parameter <- c("Columns overview", defaultcolumnnames)
+  flag = c(
+    columns_note,
+    incl_note,
+    block_note,
+    position_note,
+    analyte_note,
+    ligand_note,
+    baseline_note,
+    association_note,
+    dissociation_note,
+    assoskip_note,
+    dissoskip_note,
+    conc_note,
+    inclconc_note,
+    bulkshift_note,
+    regen_note,
+    bslstart_note,
+    basecorr_note,
+    "",
+    ""
+  )
+  check1 <- data.frame(parameter, flag, sample_sheet_path)
+  #change to txt
+  if (any(check1$flag != "")) {
+    flagspresent <- TRUE
+    write_csv(check1,
+              paste(files_directory, "Error_note_sample_sheet.csv", sep = "/"))
+    print("Error in sample sheet file. See Error_note_sample_sheet.csv")
+  } else {
+
+    flagspresent <- FALSE
+  }
+  flagspresent
+}
+
+#check titration data
+check_titration_data <- function(titration_data) {
+  if (dim(titration_data)[1] == 0) {
+    check2 <- "empty data set :"
+    flagspresent <- TRUE
+    print(paste(check2, data_file_path))
+    return(flagspresent)
+  }
+  columns_title <- names(titration_data)
+  # this does not work for large number of columns (i.e. X1000 looks like an error)
+  #  columns_note <- unique(ifelse(any(!grepl("([X-Y])(...)([0-9])", columns_title)), "Incorrect naming of the columns.", ""))
+  columns_note <- ""
+
+    ifelse(
+      any(unique(sapply(
+        titration_data, typeof
+      )) != "double") == T,
+      paste(columns_note, "Incorrect data type for some columns"),
+      columns_note
+    )
+
+  if (columns_note != "") {
+    check2 <- data.frame(columns_note, data_file_path)
+    write_csv(check2,
+              paste(files_directory, "Error_note_titration_data.csv", sep = "/"))
+    print("Error in titration data file. See Error_note_titration_data.csv")
+    flagspresent <- TRUE
+  } else {
+    flagspresent <- FALSE
+  }
+  flagspresent
+}
