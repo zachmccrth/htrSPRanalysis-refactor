@@ -1,3 +1,16 @@
+#this is an internal function to help create mapping from LSA plate to ROI
+translate_rows_for_sort <- function(x){
+  ifelse (x == "A", 1,
+          ifelse(x == "E", 2,
+                 ifelse(x == "B", 3,
+                        ifelse(x == "F", 4,
+                               ifelse(x == "C", 5,
+                                      ifelse(x == "G", 6,
+                                             ifelse(x == "D", 7,
+                                                    ifelse(x == "H", 8, 0))))))))
+
+}
+
 process_sample_sheet <- function(sample_sheet){
   # Process Sample Sheet
 

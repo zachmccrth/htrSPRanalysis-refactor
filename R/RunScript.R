@@ -7,11 +7,14 @@ library(grid)
 library(kableExtra)
 library(parallel)
 library(svDialogs)
-
+# Need to detect OS or use OS independent functions
 #options("scipen"=2, "digits"=3)
-source("R/InputProcessingFunctions.R")
-source("R/RTFunctions.R")
+#source("R/InputProcessingFunctions.R")
+#source("R/RTFunctions.R")
 
+load_code()
+
+# Windows does not use fork. Figure out how to use multi-core on Windows
 num_cores <- detectCores()/2
 
 if (num_cores < 1)
@@ -284,13 +287,10 @@ sample_info_fits$DissocEnd <- rep(NA, n_fit_wells)
 
 #how to extract this?
 
-get_dissoc_times <- function(x){
+get_dissoc_times <-
 
-  ifelse(is.null(x$error) & !is.null(x$result), x$result, NA)
-
-}
-
-sample_info_fits$DissocEnd <- map_dbl(.x = end_dissoc_list, .f = get_dissoc_times)
+sample_info_fits$DissocEnd <- map_dbl(.x = end_dissoc_list,
+                    .f = function(x){ifelse(is.null(x$error) & !is.null(x$result), x$result, NA)})
 
 
 fits_list <- mclapply(X = 1:n_fit_wells, FUN = safely(fit_association_dissociation), mc.cores = num_cores, sample_info_fits,
@@ -306,6 +306,7 @@ rc_list <- mclapply(X = 1:n_fit_wells, FUN = get_response_curve, sample_info_fit
                Time, RU,
                all_concentrations_values,
                incl_concentrations_values, n_time_points, mc.cores = num_cores)
+
 
 plot_list_out <- mclapply(X = 1:n_fit_wells, FUN = plot_sensorgrams_with_fits,
                      sample_info_fits, fits_list,

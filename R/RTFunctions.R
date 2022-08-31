@@ -77,17 +77,14 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
   return(max(as.numeric(end_dissoc_list), na.rm = TRUE))
 }
 
-translate_rows_for_sort <- function(x){
-  ifelse (x == "A", 1,
-          ifelse(x == "E", 2,
-                 ifelse(x == "B", 3,
-                        ifelse(x == "F", 4,
-                               ifelse(x == "C", 5,
-                                      ifelse(x == "G", 6,
-                                             ifelse(x == "D", 7,
-                                                    ifelse(x == "H", 8, 0))))))))
+#' Determine the first concentration index in the Carterra output for a sample in the extended sample sheet
+#'
+#' @param well_idx The corresponding well in the extended sample sheet
+#' @param num_conc_ligand A vector. For each ligand (well), the total number of analyte concentrations observed.
+#' @return A number. The first index in the Carterra ouput that corresponds to this ligand (well)
+#' @examples
+#' first_conc_indices(well_idx, num_conc_ligand)
 
-}
 
 first_conc_indices <- function(well_idx, num_conc_ligand){
 
@@ -101,13 +98,16 @@ first_conc_indices <- function(well_idx, num_conc_ligand){
   first_conc_idx
 }
 
-#' @return A list containing:\tabular{ll}{
-#'    \code{pars} \tab A numeric vector of parameter estimates \cr
-#'    \tab \cr
-#'    \code{std.errs} \tab A numeric vector of standard errors on parameters \cr
-#'    \tab \cr
-#'    \code{cov.mat} \tab Parameter covariance matrix (excluding mean) \cr
-#' }
+#' Determine the index of the baseline concentration
+#'
+#' @param well_idx The corresponding well in the extended sample sheet
+#' @param sample_info A tibble. The expanded sample sheet
+#' @param x_vals A tibble. Time columns from the carterra output for concentrations chosen for fittting
+#' @param y_vals A tibble RU values from the carterra output for concentrations chosen for fittting
+#' @return A list.
+#' @examples
+#' get_baseline_indices(well_idx, sample_info, x_vals, y_vals)
+
 get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
   start_idx <- sample_info[well_idx,]$FirstConcIdx
   num_conc <- sample_info[well_idx,]$NumConc
@@ -436,9 +436,18 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 }
 
 summary_fit_with_constraints <- function(fit_object){
+
+  info <- fit_object$info
   hessian <- fit_object$hessian
   pars <- fit_object$par
-  info <- fit_object$info
+  n <- length(pars)
+  std_err_full <- rep(NA, n)
+
+  if (info == 0 | info == 5) {
+    df <- data.frame(Estimate = pars, "Std. Error" = std_err_full)
+    colnames(df) <- c("Estimate", "Std. Error")
+    return(df)
+  }
 
   n <- nrow(hessian)
   test_zeroes <- apply(hessian, 1 , function(x) sum(x==0))
@@ -459,6 +468,8 @@ summary_fit_with_constraints <- function(fit_object){
     resvar <- deviance(fit_object)/rdf
     se <- sqrt(diag(ih) * resvar)
   }
+  else
+    se <- rep(NA, length(nonsingular_rows))
 
   std_err_full[nonsingular_rows] <- se
 
@@ -934,12 +945,23 @@ get_csv <- function(well_idx, fits_list, sample_info){
   if (!global_rmax){
     Rmax <- rep(NA, 5)
     Rmax_se <- rep(NA,5)
+  } else {
+    Rmax <- NA
+    Rmax_se <- NA
   }
+
+
 
   Bulkshift <- rep(NA, 5)
   Bulkshift_se <- rep(NA,5)
   R0 <- rep(NA,5)
   R0_se <- rep(NA,5)
+
+  if (is.null(fits_list[well_idx]$R0)){
+    return(c(Rmax = Rmax, Rmax_se = Rmax_se, ka = NA, ka_se = NA, kd = NA,
+             kd_se = NA, Bulkshift = Bulkshift, Bulkshift_se = Bulkshift_se, R0 = R0, R0_se = R0_se))
+
+  }
 
   pars <- coefficients(fits_list[[well_idx]]$result$R0)
 
