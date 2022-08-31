@@ -12,7 +12,7 @@ library(svDialogs)
 #source("R/InputProcessingFunctions.R")
 #source("R/RTFunctions.R")
 
-load_code()
+#pkgload::load_code()
 
 # Windows does not use fork. Figure out how to use multi-core on Windows
 num_cores <- detectCores()/2
@@ -151,7 +151,6 @@ error_pdf <- paste0(output_file_path, date()," - error.pdf")
 
 
 ####### Process sample sheet #############################################
-
 # There are different numbers of concentrations exported for each well.
 # Here, we delete the observations from the time series and from the ligand_conc data frame
 # that are chosen by the user as not to be included.
@@ -189,9 +188,9 @@ baseline_info_list <- map_dfr(.x = 1:nwells, .f = get_baseline_indices,
                               sample_info,
                               Time, RU)
 
-sample_info$BaselineAverage <- baseline_info_list$MinBaseline
-sample_info$BaselineIdx <- baseline_info_list$BaselineIdx
-sample_info$BaselineNegative <- baseline_info_list$BaselineNegative
+sample_info$BaselineAverage <- baseline_info_list$min_baseline
+sample_info$BaselineIdx <- baseline_info_list$baseline_idx
+sample_info$BaselineNegative <- baseline_info_list$baseline_negative
 rm(baseline_info_list)
 
 sample_info$WellIdx <- 1:nwells
@@ -246,9 +245,7 @@ error_idx_concentrations <- selected_concentrations$error_idx
 #                 all_concentrations_values,
 #                 n_time_points, all_concentrations = FALSE, mc.cores = num_cores)
 
-
 # Haven't corrected for duplicated values in incl_conc (only the first to be used)
-
 
 ####### Fits #############################################
 
@@ -287,7 +284,6 @@ sample_info_fits$DissocEnd <- rep(NA, n_fit_wells)
 
 #how to extract this?
 
-get_dissoc_times <-
 
 sample_info_fits$DissocEnd <- map_dbl(.x = end_dissoc_list,
                     .f = function(x){ifelse(is.null(x$error) & !is.null(x$result), x$result, NA)})

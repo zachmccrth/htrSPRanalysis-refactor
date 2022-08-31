@@ -2,11 +2,11 @@
 #'
 #' @param well_idx The corresponding well in the extended sample sheet
 #' @param sample_info A tibble. The expanded sample sheet
-#' @param x_vals A tibble. Time columns from the carterra output for concentrations chosen for fittting
-#' @param y_vals A tibble RU values from the carterra output for concentrations chosen for fittting
+#' @param x_vals A tibble. Time columns from the carterra output for concentrations chosen for fitting
+#' @param y_vals A tibble RU values from the carterra output for concentrations chosen for fitting
 #' @param incl_concentrations_ligand A vector. The concentrations chosen for inclusion in fitting.
-#' @param max_RU_tol A number. The maximum RU value to be included for determining the dissocation window
-#' @param min_RU_tol A number. The minimum RU value to be included for determining the dissocation window
+#' @param max_RU_tol A number. The maximum RU value to be included for determining the dissociation window
+#' @param min_RU_tol A number. The minimum RU value to be included for determining the dissociation window
 #' @return A number. The end dissociation time required to capture the decay in all of the selected concentrations for the given well
 #' @examples
 #' find_dissociation_window(well_idx, sample_info, x_vals, y_vals, incl_concentrations_ligand, max_RU_tol, min_RU_tol)
@@ -102,9 +102,13 @@ first_conc_indices <- function(well_idx, num_conc_ligand){
 #'
 #' @param well_idx The corresponding well in the extended sample sheet
 #' @param sample_info A tibble. The expanded sample sheet
-#' @param x_vals A tibble. Time columns from the carterra output for concentrations chosen for fittting
-#' @param y_vals A tibble RU values from the carterra output for concentrations chosen for fittting
+#' @param x_vals A tibble. Time columns from the Carterra output for concentrations chosen for fitting
+#' @param y_vals A tibble RU values from the Carterra output for concentrations chosen for fitting
+#' @param sample_info A tibble. This is the sample sheet after it has been extended to include a row for each well
 #' @return A list.
+#' @param baseline_idx A number. The index of the minimum average baseline for this well.
+#' @param min_baseline A number. The average of the minimum baseline
+#' @param baseline_negative A logical. TRUE if the baseline for the highest concentrate has a negative average.
 #' @examples
 #' get_baseline_indices(well_idx, sample_info, x_vals, y_vals)
 
@@ -134,9 +138,10 @@ get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
     baseline_neg <- TRUE else
     baseline_neg <- FALSE
 
-  list(BaselineIdx = baseline_idx, MinBaseline = min_baseline, BaselineNegative = baseline_neg)
+  list(baseline_idx = baseline_idx, min_baseline = min_baseline, baseline_negativeative = baseline_neg)
 }
 
+# internal function. Not documented
 create_dataframe_with_conc <- function(begin_conc_idx, end_conc_idx, x_vals, y_vals,
                                  numerical_concentrations,
                                 n_time_points){
@@ -172,9 +177,19 @@ bulkshift_correction <- function(well_idx, x_vals, y_vals, sample_info,
 
 }
 
+#' Determine baseline correction
+#'
+#' @param well_idx The corresponding well in the extended sample sheet.
+#' @param x_vals A tibble. Time columns from the Carterra output for concentrations chosen for fitting.
+#' @param y_vals A tibble RU values from the Carterra output for concentrations chosen for fitting.
+#' @param sample_info A tibble. The expanded sample sheet.
+#' @return A tibble. The baseline-adjusted RU values.
+#' @examples
+#' baseline_correction <- function(well_idx, x_vals, y_vals, sample_info)
+
 baseline_correction <- function(well_idx, x_vals, y_vals, sample_info){
 
-  negative_baseline <- sample_info[well_idx, ]$BaselineNegative
+  negative_baseline <- sample_info[well_idx, ]$baseline_negativeative
   baseline_average <- sample_info[well_idx, ]$BaselineAverage
   baseline <- sample_info[well_idx,]$Baseline
   baseline_start <- sample_info[well_idx,]$`Bsl Start`
@@ -213,6 +228,20 @@ baseline_correction <- function(well_idx, x_vals, y_vals, sample_info){
   y_vals[, start_idx:end_idx]
 
 }
+
+#' Obtain the response curve of log concentrations vs. RU averaged over 5 time points at the end of the association phase.
+#'
+#' @param well_idx The corresponding well in the extended sample sheet.
+#' @param sample_info A tibble. The expanded sample sheet.
+#' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
+#' @param y_vals A tibble RU values from the Carterra output for all concentrations.
+#' @param all_concentrations_values A vector. All concentrations measured.
+#' @param incl_concentrations_values A vector. Concentrations to include in fitting.
+#' @param n_time_points A number. The maximum number of time points collected in this experiment. It is the number of rows in the Time and RU tibbles.
+#' @return A ggplot object. The plot of the response curve.
+#' @examples
+#' get_response_curve <- function(well_idx, sample_info, x_vals, y_vals, all_concentrations_values, incl_concentrations_values, n_time_points)
+
 get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
                                all_concentrations_values,
                                incl_concentrations_values, n_time_points){
