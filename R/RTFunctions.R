@@ -279,16 +279,31 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
     ggtitle(ligand_desc)
 }
 
-
+#' Determine the best range of concentrations for fitting. The algorithm will attempt to find 5 concentrations
+#' by computing a rolling slope of the response curve over
+#' 5 consecutive concentrations. The concentration that leads to the maximum cumulative sum of slopes is marked as
+#' the starting concentration. A concentration is removed from consideration if its slope (the window where it is the first concentration)
+#' is less than 20% of the average of all slopes. If none of the concentrations are removed, the algorithm returns
+#' the five concentrations. Otherwise, it removes the concentration with the smallest slope and returns 4 concentrations.
+#' @param well_idx The corresponding well in the extended sample sheet.
+#' @param sample_info A tibble. The expanded sample sheet.
+#' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
+#' @param y_vals A tibble RU values from the Carterra output for all concentrations.
+#' @param num_conc A number. The number of concentrations observed for this well.
+#' @param concentrations A vector. The concentrations observed for this well.
+#' @param start_idx A number. The start index for the columns in the titration data for the current well.
+#' @return A vector. The concentrations selected for fitting.
+#' @examples
+#' get_best_window <- function(well_idx, sample_info, x_vals, y_vals, num_conc, concentrations, start_idx)
 
 get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
-                            num_conc, concentrations, displacement_per_ligand){
+                            num_conc, concentrations, start_idx){
 
   association <- sample_info[well_idx,]$Association
   baseline <- sample_info[well_idx,]$Baseline
   baseline_start <- sample_info[well_idx,]$`Bsl Start`
   end_assoc_time <- association + baseline + baseline_start
-  start_idx <- displacement_per_ligand + 1
+
   end_idx <- start_idx + num_conc - 1
   end_assoc_resp <- NULL
 
@@ -298,7 +313,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
                                          concentrations,
                                          n_time_points)
 
-  #this fails for well 61 because there are no times that meet the criteria
+  #this has failed in some data sets where these observations are missing.
   df %>% filter((Time >= baseline + baseline_start + association - 10)
                 & (Time <= baseline + baseline_start + association - 5)) %>%
     group_by(Concentration) %>%
@@ -340,6 +355,24 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
       return(concentrations[(start_conc_idx):(start_conc_idx + 3)])
 
 }
+
+#' Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, use plot_sensorgrams_with_fits
+#' @param well_idx The corresponding well in the extended sample sheet.
+#' @param sample_info A tibble. The expanded sample sheet.
+#' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
+#' @param y_vals A tibble RU values from the Carterra output for all concentrations.
+#' @param incl_conc_values A vector. The number of concentrations to be included in this plot.
+#' @param all_concentrations_values A vector. The concentrations observed for this well.
+#' @param n_time_points A number. The maximum number of time points observed in this experiment. It is
+#' the number of rows in the titration data tibble.
+#' @param all_concentrations A logical. Whether or not to include all observed concentrations in the plot.
+#' The default is FALSE. This will plot only concentrations included in the fit.
+#' @return A ggplot object. The plotted sensorgram.
+#' @examples
+#' plot_sensorgrams <- function(well_idx, sample_info, x_vals, y_vals,
+#' incl_conc_values, all_concentrations_values, n_time_points,
+#' all_concentrations = FALSE)
+
 
 plot_sensorgrams <- function(well_idx,
                              sample_info,
@@ -396,6 +429,19 @@ plot_sensorgrams <- function(well_idx,
     ggtitle(ligand_desc, subtitle = sub_title)
 }
 
+#' Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, use plot_sensorgrams_with_fits
+#' @param well_idx The corresponding well in the extended sample sheet.
+#' @param sample_info A tibble. The expanded sample sheet.
+#' @param fits A kinetics fit object. This is returned from a 'safely' call to fit_association_dissociation.
+#' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
+#' @param y_vals A tibble RU values from the Carterra output for all concentrations.
+#' @param incl_conc_values A vector. The number of concentrations to be included in this plot.
+#' @param n_time_points A number. The maximum number of time points observed in this experiment. It is
+#' the number of rows in the titration data tibble.
+#' @return A ggplot object. The plotted sensorgram with fitted curves.
+#' @examples
+#' plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_vals,
+#' incl_conc_values, n_time_points)
 
 plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_vals,
                              incl_conc_values, n_time_points){
@@ -464,6 +510,9 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
     geom_line(aes(x = Time, y = FittedRU, group = Concentration), color = "black")
 }
 
+# This function is used internally. It is a replacement for summary.nlm that allows for a non-singular
+# Hessian due to the constrained fits.
+
 summary_fit_with_constraints <- function(fit_object){
 
   info <- fit_object$info
@@ -507,7 +556,7 @@ summary_fit_with_constraints <- function(fit_object){
   df
 }
 
-
+# Fit only kd. Not implemented
 fit_kd <- function(pars, df, incl_concentrations, num_conc, kd, t0 = t0){
   #pars ("Rmax" one for each concentration,"ka", "tstart" one for each concentration)
 
@@ -535,6 +584,7 @@ fit_kd <- function(pars, df, incl_concentrations, num_conc, kd, t0 = t0){
 
 }
 
+# Internal function that is passed to nlm. It computes the objective function for the fit.
 fit_as_system <- function(pars, df, incl_concentrations, num_conc, association, bulkshift, global_rmax){
 
   if(global_rmax){
@@ -607,6 +657,7 @@ fit_as_system <- function(pars, df, incl_concentrations, num_conc, association, 
   c(err_assoc, err_dissoc)
 }
 
+# Internal. Called by fit_association_dissociation
 
 get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
                              incl_concentrations, association, shift, global_rmax){
@@ -662,6 +713,22 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
   # return fitted values
   full_output_RU %>% select(Time, RU, Concentration)
 }
+
+#' Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, use plot_sensorgrams_with_fits
+#' @param well_idx The corresponding well in the extended sample sheet.
+#' @param sample_info A tibble. The expanded sample sheet.
+#' @param fits A kinetics fit object. This is returned from a 'safely' call to fit_association_dissociation.
+#' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
+#' @param y_vals A tibble RU values from the Carterra output for all concentrations.
+#' @param incl_conc_values A vector. The number of concentrations to be included in this plot.
+#' @param n_time_points A number. The maximum number of time points observed in this experiment. It is
+#' the number of rows in the titration data tibble.
+#' @return A ggplot object. The plotted sensorgram with fitted curves.
+#' @examples
+#' fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
+#' incl_concentrations_values, min_allowed_kd = 10^(-5),
+#' max_iterations = 500, ptol = 10^(-10), ftol = 10^(-10)){
+
 
 fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
                             incl_concentrations_values,

@@ -138,7 +138,7 @@ select_samples <- function(sample_info, titration_select_data){
 
   #loop over all samples to be included. Exclude concentrations not selected for analysis.
 
-  displacement_per_ligand <- 0
+  displacement_in_titration_data <- 0
   keep_concentrations_all <- NULL
   all_concentrations_ligand <- NULL
   all_concentrations_values <- NULL
@@ -148,7 +148,7 @@ select_samples <- function(sample_info, titration_select_data){
     num_conc <- str_count(sample_info$`All Concentrations`[i], ",") + 1
 
     if (sample_info$Incl.[i] == "N"){
-      displacement_per_ligand <- displacement_per_ligand + num_conc
+      displacement_in_titration_data <- displacement_in_titration_data + num_conc
       next
     }
 
@@ -158,11 +158,11 @@ select_samples <- function(sample_info, titration_select_data){
     all_concentrations_values <- c(all_concentrations_values, concentrations)
 
     #Use this to match to ligand_conc and to x_vals, y_vals
-    keep_conc_idx <- 1:num_conc + displacement_per_ligand
+    keep_conc_idx <- 1:num_conc + displacement_in_titration_data
 
     keep_concentrations_all <- c(keep_concentrations_all, keep_conc_idx)
 
-    displacement_per_ligand <- displacement_per_ligand + num_conc
+    displacement_in_titration_data <- displacement_in_titration_data + num_conc
 
   }
 
@@ -187,7 +187,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
 
   #loop over all samples to be included. Exclude concentrations not selected for analysis.
 
-  displacement_per_ligand <- 0
+  displacement_in_titration_data <- 0
   keep_concentrations <- NULL
   incl_concentrations_ligand <- NULL
   incl_concentrations_values <- NULL
@@ -202,7 +202,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
     num_conc <- str_count(sample_info$`All Concentrations`[i], ",") + 1
 
     if (sample_info$Incl.[i] == "N"){
-      displacement_per_ligand <- num_conc + displacement_per_ligand
+      displacement_in_titration_data <- num_conc + displacement_in_titration_data
       next
     }
 
@@ -221,7 +221,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
       incl_concentrations <-
         get_best_window(i, sample_info, x_vals, y_vals,
                         num_incl, incl_concentrations,
-                        displacement_per_ligand)
+                        displacement_in_titration_data + 1)
       num_incl <- length(incl_concentrations)
     }
 
@@ -231,7 +231,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
     #Use this to match to ligand_conc and to x_vals, y_vals
 
     if (num_incl > 3){
-      incl_idx <- which(concentrations %in% incl_concentrations) + displacement_per_ligand
+      incl_idx <- which(concentrations %in% incl_concentrations) + displacement_in_titration_data
       keep_concentrations <- c(keep_concentrations, incl_idx)
     }
     else
@@ -240,7 +240,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
     # the following keeps all of the concentrations for each of the wells selected to include, but
     # excludes the wells not selected
 
-    displacement_per_ligand <- num_conc + displacement_per_ligand
+    displacement_in_titration_data <- num_conc + displacement_in_titration_data
 
   }
 
