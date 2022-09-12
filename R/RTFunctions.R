@@ -138,7 +138,7 @@ get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
     baseline_neg <- TRUE else
     baseline_neg <- FALSE
 
-  list(baseline_idx = baseline_idx, min_baseline = min_baseline, baseline_negativeative = baseline_neg)
+  list(baseline_idx = baseline_idx, min_baseline = min_baseline, baseline_negative = baseline_neg)
 }
 
 # internal function. Not documented
@@ -189,7 +189,7 @@ bulkshift_correction <- function(well_idx, x_vals, y_vals, sample_info,
 
 baseline_correction <- function(well_idx, x_vals, y_vals, sample_info){
 
-  negative_baseline <- sample_info[well_idx, ]$baseline_negativeative
+  negative_baseline <- sample_info[well_idx, ]$BaselineNegative
   baseline_average <- sample_info[well_idx, ]$BaselineAverage
   baseline <- sample_info[well_idx,]$Baseline
   baseline_start <- sample_info[well_idx,]$`Bsl Start`
