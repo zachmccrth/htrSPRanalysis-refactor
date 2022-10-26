@@ -714,16 +714,19 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
   full_output_RU %>% select(Time, RU, Concentration)
 }
 
-#' Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, use plot_sensorgrams_with_fits
+#' Fit sensorgrams for a given well.
 #' @param well_idx The corresponding well in the extended sample sheet.
 #' @param sample_info A tibble. The expanded sample sheet.
-#' @param fits A kinetics fit object. This is returned from a 'safely' call to fit_association_dissociation.
 #' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
 #' @param y_vals A tibble RU values from the Carterra output for all concentrations.
 #' @param incl_conc_values A vector. The number of concentrations to be included in this plot.
-#' @param n_time_points A number. The maximum number of time points observed in this experiment. It is
-#' the number of rows in the titration data tibble.
-#' @return A ggplot object. The plotted sensorgram with fitted curves.
+#' @param min_allowed_kd A number. The lowest kd value that can be reliably fit.
+#' The default is $10^{-5}$
+#' @param max_iterations A number. The maximum number of iterations to perform if the
+#' fit does not converge.
+#' @param ptol A number. The tolerance level to determine convergence of parameters.
+#' @param ftol A number. The tolerance level to determine convergence of the error function.
+#' @return A list.
 #' @examples
 #' fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
 #' incl_concentrations_values, min_allowed_kd = 10^(-5),
@@ -870,7 +873,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   fit_outcomes <- get_fit_outcomes(Rmax, ka, t0, kd, df, num_conc,
                                    incl_concentrations, association = association, shift = shift, global_rmax = global_rmax)
 
-   list("R0" = fit_result, "FitOutcomes" = fit_outcomes)
+   list("FitResult" = fit_result, "FitOutcomes" = fit_outcomes)
 }
 
 
@@ -899,18 +902,18 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   bulkshift_label <- map_dfr(tibble(1:num_conc), function(x) paste("Bulkshift", x))
 
 
-  pars <- coefficients(fits_list[[well_idx]]$result$R0)
+  pars <- coefficients(fits_list[[well_idx]]$result$FitResult)
 
   if (bulkshift)
     par_names <- as_vector(flatten(c(Rmax_label, "ka", R0_label, "kd", bulkshift_label)))
   else
     par_names <- as_vector(flatten(c(Rmax_label, "ka", R0_label, "kd")))
 
-  # result_summary <- summary(fits_list[[well_idx]]$result$R0)
+  # result_summary <- summary(fits_list[[well_idx]]$result$FitResult)
   #R's built-in summary method doesn't play nicely when the some of the parameters hit their limiting values (the hessian is singular)
   # I've adapted the function to return NA's for std error when the limits are reached.
 
-  result_summary <- summary_fit_with_constraints(fits_list[[well_idx]]$result$R0)
+  result_summary <- summary_fit_with_constraints(fits_list[[well_idx]]$result$FitResult)
   #summary_fit_with_constraints returns the coefficients table from summary.nls.lm
 
   summary_names <- colnames(result_summary)
@@ -940,7 +943,7 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   bind_rows(rest_out, kakd_out) %>%
     tableGrob(rows = par_names, theme = ttheme_minimal()) -> tb1
 
-  residuals(fits_list[[well_idx]]$result$R0) -> RU_resid
+  residuals(fits_list[[well_idx]]$result$FitResult) -> RU_resid
   fits_list[[well_idx]]$result$FitOutcomes$Time -> Time_resid
   fits_list[[well_idx]]$result$FitOutcomes$Concentration -> Concentration_resid
 
@@ -1053,13 +1056,13 @@ get_csv <- function(well_idx, fits_list, sample_info){
   R0 <- rep(NA,5)
   R0_se <- rep(NA,5)
 
-  if (is.null(fits_list[well_idx]$R0)){
+  if (is.null(fits_list[well_idx]$FitResult)){
     return(c(Rmax = Rmax, Rmax_se = Rmax_se, ka = NA, ka_se = NA, kd = NA,
              kd_se = NA, Bulkshift = Bulkshift, Bulkshift_se = Bulkshift_se, R0 = R0, R0_se = R0_se))
 
   }
 
-  pars <- coefficients(fits_list[[well_idx]]$result$R0)
+  pars <- coefficients(fits_list[[well_idx]]$result$FitResult)
 
   if (sample_info[well_idx, ]$Bulkshift == "Y")
     bulkshift <- TRUE else
@@ -1067,7 +1070,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
 
 
 
-  result_summary <- summary_fit_with_constraints(fits_list[[well_idx]]$result$R0)
+  result_summary <- summary_fit_with_constraints(fits_list[[well_idx]]$result$FitResult)
 
   # first column of summary is the estimate. Second is standard error
 

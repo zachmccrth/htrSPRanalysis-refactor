@@ -12,6 +12,6 @@ Current features include:
 
 The motivations for developing this package are 
 
-- to provide an open-source tool for analyzing SPR kinetic data
-- to automate some of the steps in analysis, such as determining the length of dissociation window and concentration range to include in fits and whether or not to include bulkshift in fitting.
-- to provide a platform for further development of multi-valent binding kinetics models, such as bivalent analyte, parallel binding and more. These models are currently not an option in commercial software when using non-regenerative SPR data.
+- to provide an open-source tool for analyzing high-throughput SPR kinetic data
+- to automate some of the steps in analysis, such as determining the length of dissociation window and concentration range to include in fits and whether or not to include bulk-shift in fitting.
+- to provide a platform for further development of multivalent binding kinetics models, such as bivalent analyte, parallel binding and more. These models are currently not an option in commercial software when using non-regenerative SPR data.
