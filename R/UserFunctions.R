@@ -11,7 +11,7 @@ process_input <- function(){
   sample_sheet <- read_excel(sample_sheet_path)
 
   #identify if any flags present in the sample sheet
-  flagspresent <- check_sample_sheet(sample_sheet)
+  flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path)
 
   # requesting re-selection of the file is empty or in different format
 
@@ -23,7 +23,7 @@ process_input <- function(){
                                                 existing = TRUE,
                                                 path = files_directory)
     sample_sheet <- read_excel(sample_sheet_path)
-    flagspresent <- check_sample_sheet(sample_sheet)
+    flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path)
   }
 
   #formatting sample_sheet data
@@ -37,19 +37,21 @@ process_input <- function(){
 
 
   # check if this is new or old file format
-
+  print("here")
   titration_data <- read_excel(data_file_path, col_names = TRUE, skip = 0, n_max = 1000)
+  print("now here")
+
   if (titration_data[1,1] == "X")
     # file may be in new format. We should skip first line
     titration_data <- read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000)
 
-  #change to double - we shouldn't need to do this if file is read correctly
-  #titration_data  <- as.data.frame(lapply(titration_data,as.numeric))
+  print("checking data")
   #identify if any flags present in the sample sheet
   flagspresent <- check_titration_data(titration_data)
+  print(flagspresent)
 
 
-  # requesting re-selction of the file is empty or in different format
+  # requesting re-selection of the file is empty or in different format
 
   usr_msg <- "Error in titration data file. See Error_note_titration_data.csv for detailed description, then select corrected file"
   while (flagspresent) {

@@ -304,7 +304,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
 }
 
 #check sample sheet
-check_sample_sheet <- function(sample_sheet) {
+check_sample_sheet <- function(sample_sheet, sample_sheet_path) {
 
     if (dim(sample_sheet)[1] == 0) {
       check1 <- "empty data set :"
