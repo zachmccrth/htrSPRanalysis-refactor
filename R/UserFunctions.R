@@ -11,7 +11,7 @@ process_input <- function(){
   sample_sheet <- read_excel(sample_sheet_path)
 
   #identify if any flags present in the sample sheet
-  flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path)
+  flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path, files_directory)
 
   # requesting re-selection of the file is empty or in different format
 
@@ -23,7 +23,7 @@ process_input <- function(){
                                                 existing = TRUE,
                                                 path = files_directory)
     sample_sheet <- read_excel(sample_sheet_path)
-    flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path)
+    flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path, files_directory)
   }
 
   #formatting sample_sheet data
@@ -37,18 +37,14 @@ process_input <- function(){
 
 
   # check if this is new or old file format
-  print("here")
   titration_data <- read_excel(data_file_path, col_names = TRUE, skip = 0, n_max = 1000)
-  print("now here")
 
   if (titration_data[1,1] == "X")
     # file may be in new format. We should skip first line
     titration_data <- read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000)
 
-  print("checking data")
   #identify if any flags present in the sample sheet
-  flagspresent <- check_titration_data(titration_data)
-  print(flagspresent)
+  flagspresent <- check_titration_data(titration_data, files_directory)
 
 
   # requesting re-selection of the file is empty or in different format
@@ -60,7 +56,7 @@ process_input <- function(){
                                              existing = TRUE,
                                              path = files_directory)
     titration_data <- read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000)
-    flagspresent <- check_titration_data(titration_data)
+    flagspresent <- check_titration_data(titration_data, files_directory)
   }
 
   ################################ Set fitting options - not allowing user to change ptol or ftol at the moment ###############################

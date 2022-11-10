@@ -304,7 +304,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
 }
 
 #check sample sheet
-check_sample_sheet <- function(sample_sheet, sample_sheet_path) {
+check_sample_sheet <- function(sample_sheet, sample_sheet_path, files_directory) {
 
     if (dim(sample_sheet)[1] == 0) {
       check1 <- "empty data set :"
@@ -499,6 +499,7 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path) {
     bslstart_note,
     basecorr_note,
     "",
+    "",
     ""
   )
   check1 <- data.frame(parameter, flag, sample_sheet_path)
@@ -516,7 +517,7 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path) {
 }
 
 #check titration data
-check_titration_data <- function(titration_data) {
+check_titration_data <- function(titration_data, files_directory) {
   if (dim(titration_data)[1] == 0) {
     check2 <- "empty data set :"
     flagspresent <- TRUE
