@@ -11,7 +11,7 @@ process_input <- function(){
   sample_sheet <- read_excel(sample_sheet_path)
 
   #identify if any flags present in the sample sheet
-  flagspresent <- check_sample_sheet(sample_sheet)
+  flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path)
 
   # requesting re-selection of the file is empty or in different format
 
@@ -23,7 +23,7 @@ process_input <- function(){
                                                 existing = TRUE,
                                                 path = files_directory)
     sample_sheet <- read_excel(sample_sheet_path)
-    flagspresent <- check_sample_sheet(sample_sheet)
+    flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path)
   }
 
   #formatting sample_sheet data
@@ -37,19 +37,21 @@ process_input <- function(){
 
 
   # check if this is new or old file format
-
+  print("here")
   titration_data <- read_excel(data_file_path, col_names = TRUE, skip = 0, n_max = 1000)
+  print("now here")
+
   if (titration_data[1,1] == "X")
     # file may be in new format. We should skip first line
     titration_data <- read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000)
 
-  #change to double - we shouldn't need to do this if file is read correctly
-  #titration_data  <- as.data.frame(lapply(titration_data,as.numeric))
+  print("checking data")
   #identify if any flags present in the sample sheet
   flagspresent <- check_titration_data(titration_data)
+  print(flagspresent)
 
 
-  # requesting re-selction of the file is empty or in different format
+  # requesting re-selection of the file is empty or in different format
 
   usr_msg <- "Error in titration data file. See Error_note_titration_data.csv for detailed description, then select corrected file"
   while (flagspresent) {
@@ -278,11 +280,11 @@ process_input <- function(){
        n_time_points = n_time_points, max_RU_tol = max_RU_tol, min_RU_tol = min_RU_tol, nwells = nwells,
        n_fit_wells = n_fit_wells, num_cores = num_cores, min_allowed_kd = min_allowed_kd,
        max_iterations = max_iterations, ptol = ptol, ftol = ftol, output_pdf = output_pdf,
-       output_csv = output_csv, error_pdf = error_pdf)
+       output_csv = output_csv, error_pdf = error_pdf, error_idx_concentrations = error_idx_concentrations)
 }
 
 get_plots_before_baseline <- function(processed_input){
-  sample_info <- processed_fits$sample_info
+  sample_info <- processed_input$sample_info
   Time <- processed_input$Time
   RU <- processed_input$RU
   incl_concentrations_values <- processed_input$incl_concentrations_values
@@ -337,6 +339,7 @@ get_fitted_plots <- function(processed_input, fits_list){
 }
 
 get_rc_plots <- function(processed_input){
+
   n_fit_wells <- processed_input$n_fit_wells
   n_time_points <- processed_input$n_time_points
   num_cores <- processed_input$num_cores
@@ -355,15 +358,16 @@ get_rc_plots <- function(processed_input){
 }
 
 create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
-  n_fit_wells <- processed_input$n_fit_wells
-  sample_info_fits <- procesed$sample_info_fits
+  nwells <- processed_input$nwells
+  sample_info <- processed_input$sample_info
   output_pdf <- processed_input$output_pdf
   error_pdf <- processed_input$error_pdf
+  error_idx_concentrations <- processed_input$error_idx_concentrations
 
-  pages_list <-lapply(1:n_fit_wells, safely(combine_output),
-                      fits_list, plot_list_out, rc_list, sample_info_fits)
+  pages_list <-lapply(1:nwells, safely(combine_output),
+                      fits_list, plot_list_out, rc_list, sample_info)
   pdf(file = output_pdf)
-  for (well_idx in 1:n_fit_wells){
+  for (well_idx in 1:nwells){
     if (!is.null(pages_list[[well_idx]]$result)){
       grid.arrange(pages_list[[well_idx]]$result)
 
@@ -390,7 +394,9 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
 }
 
 create_csv <- function(processed_input, fits_list){
+
   sample_info_fits <- processed_input$sample_info_fits
+  n_fit_wells <- processed_input$n_fit_wells
   output_csv <- processed_input$output_csv
 
   csv_data <- map_dfr(.x = 1:n_fit_wells, .f = get_csv, fits_list, sample_info_fits)

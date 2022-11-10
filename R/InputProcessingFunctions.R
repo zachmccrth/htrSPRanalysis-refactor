@@ -272,7 +272,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
       incl_concentrations <-
         get_best_window(i, sample_info, x_vals, y_vals,
                         num_incl, incl_concentrations,
-                        displacement_in_titration_data + 1)
+                        displacement_in_titration_data + 1, n_time_points)
       num_incl <- length(incl_concentrations)
     }
 
@@ -304,7 +304,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
 }
 
 #check sample sheet
-check_sample_sheet <- function(sample_sheet) {
+check_sample_sheet <- function(sample_sheet, sample_sheet_path) {
 
     if (dim(sample_sheet)[1] == 0) {
       check1 <- "empty data set :"

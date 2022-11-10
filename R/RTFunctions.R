@@ -297,7 +297,7 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
 #' get_best_window <- function(well_idx, sample_info, x_vals, y_vals, num_conc, concentrations, start_idx)
 
 get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
-                            num_conc, concentrations, start_idx){
+                            num_conc, concentrations, start_idx, n_time_points){
 
   association <- sample_info[well_idx,]$Association
   baseline <- sample_info[well_idx,]$Baseline
