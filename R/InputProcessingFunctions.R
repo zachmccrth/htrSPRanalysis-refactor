@@ -332,7 +332,8 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path) {
       "Bsl Start",
       "Base Corr",
       "Global Rmax",
-      "Automate Dissoc. Window"
+      "Automate Dissoc. Window",
+      "Automate Bulkshift"
     )
 
   columnspresent <-
