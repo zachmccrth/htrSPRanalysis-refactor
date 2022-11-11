@@ -160,7 +160,7 @@ process_sample_sheet <- function(sample_sheet){
 #' select_samples <- function(sample_info, titration_select_data)
 
 
-select_samples <- function(sample_info, titration_select_data){
+select_samples <- function(sample_info, titration_data){
   remove_ligands <- which(sample_info$Incl. == "N")
   keep_ligands <- which(sample_info$Incl. == "Y")
 

@@ -1035,7 +1035,7 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
 
 get_csv <- function(well_idx, fits_list, sample_info){
 
-  num_conc <- sample_info_fits[well_idx,]$NumInclConc
+  num_conc <- sample_info[well_idx,]$NumInclConc
 
   if (sample_info[well_idx,]$`Global Rmax` == "Y")
     global_rmax <- TRUE else

@@ -297,6 +297,7 @@ get_plots_before_baseline <- function(processed_input){
 
 get_fits <- function(processed_input){
   n_fit_wells <- processed_input$n_fit_wells
+  sample_info_fits <- processed_input$sample_info_fits
   num_cores <- processed_input$num_cores
   Time <- processed_input$Time
   RU <- processed_input$corrected_RU
