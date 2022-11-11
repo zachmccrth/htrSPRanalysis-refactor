@@ -273,6 +273,7 @@ process_input <- function(){
 
   list(sample_info = sample_info, sample_info_fits = sample_info_fits, Time = Time, RU = RU, corrected_RU = corrected_RU,
        keep_concentrations = keep_concentrations, all_concentrations_values = all_concentrations_values,
+       incl_concentrations_values = incl_concentrations_values,
        n_time_points = n_time_points, max_RU_tol = max_RU_tol, min_RU_tol = min_RU_tol, nwells = nwells,
        n_fit_wells = n_fit_wells, num_cores = num_cores, min_allowed_kd = min_allowed_kd,
        max_iterations = max_iterations, ptol = ptol, ftol = ftol, output_pdf = output_pdf,
@@ -296,7 +297,9 @@ get_plots_before_baseline <- function(processed_input){
 }
 
 get_fits <- function(processed_input){
+
   n_fit_wells <- processed_input$n_fit_wells
+  n_time_points <- processed_input$n_time_points
   sample_info_fits <- processed_input$sample_info_fits
   num_cores <- processed_input$num_cores
   Time <- processed_input$Time
@@ -307,10 +310,12 @@ get_fits <- function(processed_input){
   max_iterations <- processed_input$max_iterations
   ptol <- processed_input$ptol
   ftol <- processed_input$ftol
+
   mclapply(X = 1:n_fit_wells, FUN = safely(fit_association_dissociation), mc.cores = num_cores, sample_info_fits,
            Time[, keep_concentrations],
            RU[, keep_concentrations],
            incl_concentrations_values,
+           n_time_points,
            min_allowed_kd,
            max_iterations,
            ptol,
@@ -356,22 +361,25 @@ get_rc_plots <- function(processed_input){
 
 create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
   nwells <- processed_input$nwells
+  n_fit_wells <- processed_input$n_fit_wells
   sample_info <- processed_input$sample_info
+  sample_info_fits <- processed_input$sample_info_fits
   output_pdf <- processed_input$output_pdf
   error_pdf <- processed_input$error_pdf
   error_idx_concentrations <- processed_input$error_idx_concentrations
 
-  pages_list <-lapply(1:nwells, safely(combine_output),
-                      fits_list, plot_list_out, rc_list, sample_info)
+  pages_list <-lapply(1:n_fit_wells, safely(combine_output),
+                      fits_list, plot_list, rc_list, sample_info_fits)
+
   pdf(file = output_pdf)
-  for (well_idx in 1:nwells){
+  for (well_idx in 1:n_fit_wells){
     if (!is.null(pages_list[[well_idx]]$result)){
       grid.arrange(pages_list[[well_idx]]$result)
 
     } else {
       error_msg <- paste("An error occurred when producing final output", well_idx,
                          "\n\n The sample info is: \n")
-      sample_info[well_idx,] %>% select(Block, Row, Column, Ligand, Analyte) -> sample_info_error
+      sample_info_fits[well_idx,] %>% select(Block, Row, Column, Ligand, Analyte) -> sample_info_error
       grid.arrange(textGrob(error_msg), tableGrob(sample_info_error))
     }
   }

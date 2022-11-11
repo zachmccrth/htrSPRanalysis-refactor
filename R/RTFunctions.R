@@ -734,7 +734,7 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
 
 
 fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
-                            incl_concentrations_values,
+                            incl_concentrations_values, n_time_points,
                             min_allowed_kd = 10^(-5),
                             max_iterations = 500,
                             ptol = 10^(-10),
@@ -893,8 +893,7 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   num_conc <- sample_info[well_idx,]$NumInclConc
 
   if (global_rmax)
-    Rmax_label <- "Rmax"
-    else
+    Rmax_label <- "Rmax" else
       Rmax_label <- map_dfr(tibble(1:num_conc), function(x) paste("Rmax", x))
 
 
@@ -905,8 +904,7 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   pars <- coefficients(fits_list[[well_idx]]$result$FitResult)
 
   if (bulkshift)
-    par_names <- as_vector(flatten(c(Rmax_label, "ka", R0_label, "kd", bulkshift_label)))
-  else
+    par_names <- as_vector(flatten(c(Rmax_label, "ka", R0_label, "kd", bulkshift_label))) else
     par_names <- as_vector(flatten(c(Rmax_label, "ka", R0_label, "kd")))
 
   # result_summary <- summary(fits_list[[well_idx]]$result$FitResult)
