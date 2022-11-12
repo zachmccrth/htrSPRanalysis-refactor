@@ -490,6 +490,7 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path, files_directory)
     basecorr_note,
     "",
     "",
+    "",
     ""
   )
   check1 <- data.frame(parameter, flag, sample_sheet_path)

@@ -156,7 +156,7 @@ create_dataframe_with_conc <- function(begin_conc_idx, end_conc_idx, x_vals, y_v
       tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
       dplyr::select("value")
 
-    purrr::map_dfr(.x = tibble(numerical_concentrations), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+    purrr::map_dfr(.x = tibble::tibble(numerical_concentrations), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
       dplyr::arrange(numerical_concentrations) -> numerical_concentrations
     Concentrations <- numerical_concentrations
     df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
@@ -822,7 +822,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
                          incl_concentrations = incl_concentrations, num_conc = num_conc, association = association,
                          bulkshift,
                          global_rmax = global_rmax,
-                         control = minpack.lm::.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
+                         control = minpack.lm::nls.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
                          lower = c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd, rep(-100, num_conc)),
                          jac = NULL,
                        upper = c(rep(400, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1, rep(100, num_conc)))
@@ -834,7 +834,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
                          incl_concentrations = incl_concentrations, num_conc = num_conc, association = association,
                          bulkshift,
                          global_rmax = global_rmax,
-                         control = minpack.lm::.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
+                         control = minpack.lm::nls.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
                          lower = c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd),
                          jac = NULL,
                          upper = c(rep(400, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1))
