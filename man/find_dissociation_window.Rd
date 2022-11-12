@@ -31,10 +31,9 @@ find_dissociation_window(
 }
 \value{
 A number. The end dissociation time required to capture the decay in all of the selected concentrations for the given well
+
+find_dissociation_window(well_idx, sample_info, x_vals, y_vals, incl_concentrations_ligand, max_RU_tol, min_RU_tol)
 }
 \description{
 Automatically determine dissociation window
-}
-\examples{
-find_dissociation_window(well_idx, sample_info, x_vals, y_vals, incl_concentrations_ligand, max_RU_tol, min_RU_tol)
 }

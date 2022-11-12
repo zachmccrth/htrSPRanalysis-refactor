@@ -30,11 +30,10 @@ get_response_curve(
 \item{n_time_points}{A number. The maximum number of time points collected in this experiment. It is the number of rows in the Time and RU tibbles.}
 }
 \value{
-A ggplot object. The plot of the response curve.
+A ggplot2::ggplot object. The plot of the response curve.
+
+get_response_curve <- function(well_idx, sample_info, x_vals, y_vals, all_concentrations_values, incl_concentrations_values, n_time_points)
 }
 \description{
 Obtain the response curve of log concentrations vs. RU averaged over 5 time points at the end of the association phase.
-}
-\examples{
-get_response_curve <- function(well_idx, sample_info, x_vals, y_vals, all_concentrations_values, incl_concentrations_values, n_time_points)
 }

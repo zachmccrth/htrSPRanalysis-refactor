@@ -19,14 +19,13 @@ get_baseline_indices(well_idx, sample_info, x_vals, y_vals)
 
 \item{min_baseline}{A number. The average of the minimum baseline}
 
-\item{baseline_negative}{A logical. TRUE if the baseline for the highest concentrate has a negative average.}
+\item{baseline_negative}{A logical. TRUE if the baseline for the highest concentrate has a negative average.
+
+get_baseline_indices(well_idx, sample_info, x_vals, y_vals)}
 }
 \value{
 A list.
 }
 \description{
 Determine the index of the baseline concentration
-}
-\examples{
-get_baseline_indices(well_idx, sample_info, x_vals, y_vals)
 }

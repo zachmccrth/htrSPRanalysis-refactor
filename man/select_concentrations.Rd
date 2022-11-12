@@ -19,7 +19,10 @@ each sample.}
 
 \item{incl_concentrations_values}{A vector. The value of the included concentrations.}
 
-\item{error_idx}{A vector. Indicies for wells that have encountered an error in the selection process.}
+\item{error_idx}{A vector. Indicies for wells that have encountered an error in the selection process.
+
+
+select_concentrations <- function(sample_info, x_vals, y_vals)}
 }
 \value{
 A list.
@@ -27,8 +30,4 @@ A list.
 \description{
 Select the concentrations to be used in model fitting. The concentrations may be selected by the user in the `Incl. Concentrations`
 column in the sample sheet, or the algorithm will determine the 'best' range from the linear part of the average RU vs log concentration plot.
-}
-\examples{
-
-select_concentrations <- function(sample_info, x_vals, y_vals)
 }

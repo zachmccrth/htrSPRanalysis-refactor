@@ -2,14 +2,13 @@
 % Please edit documentation in R/InputProcessingFunctions.R
 \name{select_samples}
 \alias{select_samples}
-\title{Expand sample sheet so that replicates are each represented by one row}
+\title{Remove samples not selected for analysis from the sample sheet. Also remove the corresponding columns in the titration data.
+Note: This function should be run *after* `process_sample_sheet`.}
 \usage{
-select_samples(sample_info, titration_select_data)
+select_samples(sample_info, titration_data)
 }
 \arguments{
 \item{sample_info}{A tibble. The expanded sample information with only the samples selected for analysis}
-
-\item{sample_sheet}{A tibble. This is the sample sheet as read in by read_excel}
 
 \item{titration_data_select}{A tibble. Contains the Carterra output as read by read_excel}
 
@@ -20,22 +19,15 @@ select_samples(sample_info, titration_select_data)
 \item{all_concentrations_values}{A vector. Concentration values corresponding to the columns in the Time and RU tibbles.}
 
 \item{n_time_points}{= A number. The maximum number of time points for any concentration. This is the number of rows in
-the Time and RU tibbles.}
+the Time and RU tibbles.
+
+
+select_samples <- function(sample_info, titration_select_data)}
 }
 \value{
-A tibble. The expanded sample information
-
 A list.
 }
 \description{
-Expand sample sheet so that replicates are each represented by one row
-}
-\examples{
-
-process_sample_sheet <- function(sample_sheet)
 Remove samples not selected for analysis from the sample sheet. Also remove the corresponding columns in the titration data.
 Note: This function should be run *after* `process_sample_sheet`.
-
-
-select_samples <- function(sample_info, titration_select_data)
 }

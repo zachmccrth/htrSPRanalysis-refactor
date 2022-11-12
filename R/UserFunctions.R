@@ -3,10 +3,10 @@
 #' returns a list object with the titration time series, processed sample information, all user inputs directing
 #' file outputs and fitting options
 ##' @return A list.
-#' @examples
-
-#' @export
+#'
 #' process_input <- function()
+
+#' @export process_input
 
 process_input <- function(){
   files_directory  <-  rstudioapi::selectDirectory(
@@ -18,7 +18,7 @@ process_input <- function(){
                                               filter = "All Files (*.xlsx)",
                                               existing = TRUE,
                                               path = files_directory)
-  sample_sheet <- read_excel(sample_sheet_path)
+  sample_sheet <- readxl::read_excel(sample_sheet_path)
 
   #identify if any flags present in the sample sheet
   flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path, files_directory)
@@ -32,7 +32,7 @@ process_input <- function(){
                                                 filter = "All Files (*.xlsx)",
                                                 existing = TRUE,
                                                 path = files_directory)
-    sample_sheet <- read_excel(sample_sheet_path)
+    sample_sheet <- readxl::read_excel(sample_sheet_path)
     flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path, files_directory)
   }
 
@@ -47,11 +47,11 @@ process_input <- function(){
 
 
   # check if this is new or old file format
-  titration_data <- read_excel(data_file_path, col_names = TRUE, skip = 0, n_max = 1000)
+  titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 0, n_max = 1000)
 
   if (titration_data[1,1] == "X")
     # file may be in new format. We should skip first line
-    titration_data <- read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000)
+    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000)
 
   #identify if any flags present in the sample sheet
   flagspresent <- check_titration_data(titration_data, files_directory)
@@ -65,7 +65,7 @@ process_input <- function(){
                                              filter = "All Files (*.xlsx)",
                                              existing = TRUE,
                                              path = files_directory)
-    titration_data <- read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000)
+    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000)
     flagspresent <- check_titration_data(titration_data, files_directory)
   }
 
@@ -126,7 +126,7 @@ process_input <- function(){
     }
   }
   # Windows does not use fork. Figure out how to use multi-core on Windows
-  detected_num_cores <- detectCores()/2
+  detected_num_cores <- parallel::detectCores()/2
 
   if (detected_num_cores < 1)
     detected_num_cores <- 1
@@ -144,7 +144,7 @@ process_input <- function(){
   }
 
   ########### Set output file names #######################################
-  output_file_path <- str_split(sample_sheet_path, "-", n = 2)[[1]][1]
+  output_file_path <- stringr::str_split(sample_sheet_path, "-", n = 2)[[1]][1]
   output_pdf <- paste0(output_file_path, date(), " - output.pdf")
   output_csv <- paste0(output_file_path, date()," - output.csv")
   error_pdf <- paste0(output_file_path, date()," - error.pdf")
@@ -211,15 +211,15 @@ process_input <- function(){
   # get index of first concentration (selected for analysis) for each well
 
 
-  first_conc_idx_list <- purr::map(.x = 1:nwells, .f = first_conc_indices,
+  first_conc_idx_list <- purrr::map(.x = 1:nwells, .f = first_conc_indices,
                              sample_info$NumConc)
 
-  sample_info$FirstConcIdx <- purr::as_vector(flatten(first_conc_idx_list))
+  sample_info$FirstConcIdx <- purrr::as_vector(purrr::flatten(first_conc_idx_list))
 
   # get baseline averages for each well (first time point)
   sample_info$BaselineAverage <- rep(0, nwells)
 
-  baseline_info_list <- purr::map_dfr(.x = 1:nwells, .f = get_baseline_indices,
+  baseline_info_list <- purrr::map_dfr(.x = 1:nwells, .f = get_baseline_indices,
                                 sample_info,
                                 Time, RU)
 
@@ -230,7 +230,7 @@ process_input <- function(){
 
   sample_info$WellIdx <- 1:nwells
 
-  corrected_RU <- purr::map_dfc(.x = 1:nwells, .f = baseline_correction,
+  corrected_RU <- purrr::map_dfc(.x = 1:nwells, .f = baseline_correction,
                           Time,
                           RU,
                           sample_info)
@@ -242,10 +242,10 @@ process_input <- function(){
   keep_concentrations <- selected_concentrations$keep_concentrations
   sample_info <- selected_concentrations$sample_info
 
-  first_incl_conc_idx_list <- purr::map(.x = 1:nwells, .f = first_conc_indices,
+  first_incl_conc_idx_list <- purrr::map(.x = 1:nwells, .f = first_conc_indices,
                                   sample_info$NumInclConc)
 
-  sample_info$FirstInclConcIdx <- purr::as_vector(flatten(first_incl_conc_idx_list))
+  sample_info$FirstInclConcIdx <- purrr::as_vector(purrr::flatten(first_incl_conc_idx_list))
 
   incl_concentrations_values <- selected_concentrations$incl_concentrations_values
 
@@ -259,7 +259,7 @@ process_input <- function(){
 
   sample_info_fits <- sample_info[wells, ]
 
-  end_dissoc_list <- mclapply(X = 1:n_fit_wells, FUN = safely(find_dissociation_window), mc.cores = num_cores, sample_info_fits,
+  end_dissoc_list <- parallel::mclapply(X = 1:n_fit_wells, FUN = purrr::safely(find_dissociation_window), mc.cores = num_cores, sample_info_fits,
                               Time[, keep_concentrations],
                               RU[, keep_concentrations],
                               incl_concentrations_values,
@@ -271,7 +271,7 @@ process_input <- function(){
   #how to extract this?
 
 
-  sample_info_fits$DissocEnd <- purr::map_dbl(.x = end_dissoc_list,
+  sample_info_fits$DissocEnd <- purrr::map_dbl(.x = end_dissoc_list,
                                         .f = function(x){ifelse(is.null(x$error) & !is.null(x$result), x$result, NA)})
 
   # keep_concentrations <- processed_input$keep_concentrations
@@ -290,7 +290,8 @@ process_input <- function(){
        output_csv = output_csv, error_pdf = error_pdf, error_idx_concentrations = error_idx_concentrations)
 }
 
-#' @export
+#' @export get_plots_before_baseline
+
 get_plots_before_baseline <- function(processed_input){
   sample_info <- processed_input$sample_info
   Time <- processed_input$Time
@@ -300,14 +301,15 @@ get_plots_before_baseline <- function(processed_input){
   n_time_points <- processed_input$n_time_points
   num_cores <- processed_input$num_cores
   nwells <- processed_input$nwells
-  mclapply(X = 1:nwells, FUN = plot_sensorgrams, sample_info,
+  parallel::mclapply(X = 1:nwells, FUN = plot_sensorgrams, sample_info,
            Time, RU,
            incl_concentrations_values,
            all_concentrations_values,
            n_time_points, all_concentrations = TRUE, mc.cores = num_cores)
 }
 
-#' @export
+#' @export get_fits
+
 get_fits <- function(processed_input){
 
   n_fit_wells <- processed_input$n_fit_wells
@@ -323,7 +325,7 @@ get_fits <- function(processed_input){
   ptol <- processed_input$ptol
   ftol <- processed_input$ftol
 
-  mclapply(X = 1:n_fit_wells, FUN = safely(fit_association_dissociation), mc.cores = num_cores, sample_info_fits,
+  parallel::mclapply(X = 1:n_fit_wells, FUN = purrr::safely(fit_association_dissociation), mc.cores = num_cores, sample_info_fits,
            Time[, keep_concentrations],
            RU[, keep_concentrations],
            incl_concentrations_values,
@@ -334,7 +336,8 @@ get_fits <- function(processed_input){
            ftol)
 }
 
-#' @export
+#' @export get_fitted_plots
+
 get_fitted_plots <- function(processed_input, fits_list){
   n_fit_wells <- processed_input$n_fit_wells
   n_time_points <- processed_input$n_time_points
@@ -346,14 +349,15 @@ get_fitted_plots <- function(processed_input, fits_list){
   Time <- processed_input$Time
 
 
-  mclapply(X = 1:n_fit_wells, FUN = plot_sensorgrams_with_fits,
+  parallel::mclapply(X = 1:n_fit_wells, FUN = plot_sensorgrams_with_fits,
            sample_info_fits, fits_list,
            Time[, keep_concentrations], RU[, keep_concentrations],
            incl_concentrations_values,
            n_time_points, mc.cores = num_cores)
 }
 
-#' @export
+#' @export get_rc_plots
+
 get_rc_plots <- function(processed_input){
 
   n_fit_wells <- processed_input$n_fit_wells
@@ -366,14 +370,14 @@ get_rc_plots <- function(processed_input){
   Time <- processed_input$Time
 
 
-  mclapply(X = 1:n_fit_wells, FUN = get_response_curve, sample_info_fits,
+  parallel::mclapply(X = 1:n_fit_wells, FUN = get_response_curve, sample_info_fits,
            Time, RU,
            all_concentrations_values,
            incl_concentrations_values, n_time_points, mc.cores = num_cores)
 
 }
 
-#' @export
+#' @export create_pdf
 create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
   nwells <- processed_input$nwells
   n_fit_wells <- processed_input$n_fit_wells
@@ -383,19 +387,19 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
   error_pdf <- processed_input$error_pdf
   error_idx_concentrations <- processed_input$error_idx_concentrations
 
-  pages_list <-lapply(1:n_fit_wells, safely(combine_output),
+  pages_list <-lapply(1:n_fit_wells, purrr::safely(combine_output),
                       fits_list, plot_list, rc_list, sample_info_fits)
 
   pdf(file = output_pdf)
   for (well_idx in 1:n_fit_wells){
     if (!is.null(pages_list[[well_idx]]$result)){
-      grid.arrange(pages_list[[well_idx]]$result)
+      gridExtra::grid.arrange(pages_list[[well_idx]]$result)
 
     } else {
       error_msg <- paste("An error occurred when producing final output", well_idx,
                          "\n\n The sample info is: \n")
-      sample_info_fits[well_idx,] %>% select(Block, Row, Column, Ligand, Analyte) -> sample_info_error
-      grid.arrange(textGrob(error_msg), tableGrob(sample_info_error))
+      sample_info_fits[well_idx,] %>% dplyr::select(Block, Row, Column, Ligand, Analyte) -> sample_info_error
+      gridExtra::grid.arrange(grid::textGrob(error_msg), gridExtra::tableGrob(sample_info_error))
     }
   }
   dev.off()
@@ -405,22 +409,22 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
     if (well_idx %in% error_idx_concentrations){
       error_msg <- paste("Optimal Concentration could not be determined for well", well_idx,
                          "\n\n This could be addressed by explicitly choosing concentrations to analyze. \n The sample info is: \n")
-      sample_info[well_idx,] %>% select(Block, Row, Column, Ligand, Analyte) -> sample_info_error
-      grid.arrange(textGrob(error_msg), tableGrob(sample_info_error))
+      sample_info[well_idx,] %>% dplyr::select(Block, Row, Column, Ligand, Analyte) -> sample_info_error
+      gridExtra::grid.arrange(grid::textGrob(error_msg), gridExtra::tableGrob(sample_info_error))
     }
   }
   dev.off()
 
 }
 
-#' @export
+#' @export create_csv
 create_csv <- function(processed_input, fits_list){
 
   sample_info_fits <- processed_input$sample_info_fits
   n_fit_wells <- processed_input$n_fit_wells
   output_csv <- processed_input$output_csv
 
-  csv_data <- purr::map_dfr(.x = 1:n_fit_wells, .f = get_csv, fits_list, sample_info_fits)
+  csv_data <- purrr::map_dfr(.x = 1:n_fit_wells, .f = get_csv, fits_list, sample_info_fits)
 
   csv_data$Ligand <- sample_info_fits$Ligand
   csv_data$Analyte <- sample_info_fits$Analyte
@@ -428,8 +432,8 @@ create_csv <- function(processed_input, fits_list){
   csv_data$Row <- sample_info_fits$Row
   csv_data$Column <- sample_info_fits$Column
 
-  csv_data %>% relocate(Ligand, Analyte, Block, Row, Column) -> csv_data
+  csv_data %>% dplyr::relocate(Ligand, Analyte, Block, Row, Column) -> csv_data
 
-  write_csv(csv_data, file = output_csv)
+  readr::write_csv(csv_data, file = output_csv)
 
 }

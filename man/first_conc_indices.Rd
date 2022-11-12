@@ -13,10 +13,9 @@ first_conc_indices(well_idx, num_conc_ligand)
 }
 \value{
 A number. The first index in the Carterra ouput that corresponds to this ligand (well)
+
+first_conc_indices(well_idx, num_conc_ligand)
 }
 \description{
 Determine the first concentration index in the Carterra output for a sample in the extended sample sheet
-}
-\examples{
-first_conc_indices(well_idx, num_conc_ligand)
 }

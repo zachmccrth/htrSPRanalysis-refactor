@@ -11,11 +11,10 @@ process_sample_sheet(sample_sheet)
 }
 \value{
 A tibble. The expanded sample information
+
+
+process_sample_sheet <- function(sample_sheet)
 }
 \description{
 Expand sample sheet so that replicates are each represented by one row
-}
-\examples{
-
-process_sample_sheet <- function(sample_sheet)
 }

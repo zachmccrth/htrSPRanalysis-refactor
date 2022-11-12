@@ -15,7 +15,7 @@ translate_rows_for_sort <- function(x){
 #'
 #' @param sample_sheet A tibble. This is the sample sheet as read in by read_excel
 #' @return A tibble. The expanded sample information
-#' @examples
+#'
 #'
 #' process_sample_sheet <- function(sample_sheet)
 
@@ -37,9 +37,9 @@ process_sample_sheet <- function(sample_sheet){
 
 
 
-  sample_sheet %>% dplyr::separate(`Position/Channel/Sensor`, into = c("BeginPosition", "EndPosition", sep = "-")) %>%
-    dplyr::separate(BeginPosition, into = c("Row", "Column"), sep = 1) %>%
-    dplyr::separate(EndPosition, into = c("EndRow", "EndColumn"), sep = 1) %>%
+  sample_sheet %>% tidyr::separate(`Position/Channel/Sensor`, into = c("BeginPosition", "EndPosition", sep = "-")) %>%
+    tidyr::separate(BeginPosition, into = c("Row", "Column"), sep = 1) %>%
+    tidyr::separate(EndPosition, into = c("EndRow", "EndColumn"), sep = 1) %>%
     dplyr::mutate(Column = as.integer(Column)) %>%
     dplyr::mutate(EndColumn = as.integer(EndColumn)) -> RowExpansionTemplate
 
@@ -49,8 +49,8 @@ process_sample_sheet <- function(sample_sheet){
   for(i in 1:length_ss){
 
     old_row <- RowExpansionTemplate[i,]
-    old_row$Row <- str_to_upper(old_row$Row)
-    old_row$EndRow <- str_to_upper(old_row$EndRow)
+    old_row$Row <- stringr::str_to_upper(old_row$Row)
+    old_row$EndRow <- stringr::str_to_upper(old_row$EndRow)
 
     start_letter <- old_row$Row
     end_letter   <- old_row$EndRow
@@ -111,16 +111,16 @@ process_sample_sheet <- function(sample_sheet){
 
   for(i in 1:nsamples){
 
-    num_blocks <- str_count(ss_exp[i,]$`Block/Chip/Tray`, ",") + 1
+    num_blocks <- stringr::str_count(ss_exp[i,]$`Block/Chip/Tray`, ",") + 1
 
-    blocks <- as.numeric(flatten(str_split(ss_exp[i,]$`Block/Chip/Tray`, ",")))
+    blocks <- as.numeric(purrr::flatten(stringr::str_split(ss_exp[i,]$`Block/Chip/Tray`, ",")))
 
     # create an expanded sample sheet with one row for each block
 
     tmp_sample_info_expanded <- purrr::map_dfr(seq_len(num_blocks), ~ss_exp[i,])
     tmp_sample_info_expanded$Block <- blocks
     #  tmp_sample_info_expanded <- data.frame(tmp_sample_info_expanded)
-    sample_info_expanded <- bind_rows(sample_info_expanded, tmp_sample_info_expanded)
+    sample_info_expanded <- dplyr::bind_rows(sample_info_expanded, tmp_sample_info_expanded)
 
   }
   # Rows are sorted A,E,B,F,C,G,D,H
@@ -128,18 +128,10 @@ process_sample_sheet <- function(sample_sheet){
   sample_info_expanded %>% dplyr::mutate(RowSort = translate_rows_for_sort(Row)) ->
     sample_info_expanded
 
-  sample_info_expanded %>% arrange(RowSort, Column, Block) -> sample_info_expanded
+  sample_info_expanded %>% dplyr::arrange(RowSort, Column, Block) -> sample_info_expanded
 
   sample_info_expanded
 }
-
-#' Expand sample sheet so that replicates are each represented by one row
-#'
-#' @param sample_sheet A tibble. This is the sample sheet as read in by read_excel
-#' @return A tibble. The expanded sample information
-#' @examples
-#'
-#' process_sample_sheet <- function(sample_sheet)
 
 
 #' Remove samples not selected for analysis from the sample sheet. Also remove the corresponding columns in the titration data.
@@ -154,7 +146,7 @@ process_sample_sheet <- function(sample_sheet){
 #' @param all_concentrations_values A vector. Concentration values corresponding to the columns in the Time and RU tibbles.
 #' @param n_time_points = A number. The maximum number of time points for any concentration. This is the number of rows in
 #' the Time and RU tibbles.
-#' @examples
+#'
 #'
 #' select_samples <- function(sample_info, titration_select_data)
 
@@ -163,8 +155,8 @@ select_samples <- function(sample_info, titration_data){
   remove_ligands <- which(sample_info$Incl. == "N")
   keep_ligands <- which(sample_info$Incl. == "Y")
 
-  titration_data %>% dplyr::select(everything(), -starts_with("Y")) -> x_vals
-  titration_data %>% dplyr::select(everything(), -starts_with("X")) -> y_vals
+  titration_data %>% dplyr::select(tidyselect::everything(), -tidyselect::starts_with("Y")) -> x_vals
+  titration_data %>% dplyr::select(tidyselect::everything(), -tidyselect::starts_with("X")) -> y_vals
 
   n_time_points <- dim(x_vals)[1]
   nsamples <- dim(sample_info)[1]
@@ -178,7 +170,7 @@ select_samples <- function(sample_info, titration_data){
 
   for(i in 1:nsamples){
 
-    num_conc <- str_count(sample_info$`All Concentrations`[i], ",") + 1
+    num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
 
     if (sample_info$Incl.[i] == "N"){
       displacement_in_titration_data <- displacement_in_titration_data + num_conc
@@ -186,7 +178,7 @@ select_samples <- function(sample_info, titration_data){
     }
 
     concentrations <-
-      as.numeric(flatten(str_split(sample_info$`All Concentrations`[i], ",")))
+      as.numeric(purrr::flatten(stringr::str_split(sample_info$`All Concentrations`[i], ",")))
     all_concentrations_ligand <- c(all_concentrations_ligand, num_conc)
     all_concentrations_values <- c(all_concentrations_values, concentrations)
 
@@ -224,7 +216,7 @@ select_samples <- function(sample_info, titration_data){
 #' each sample.
 #' @param incl_concentrations_values A vector. The value of the included concentrations.
 #' @param error_idx A vector. Indicies for wells that have encountered an error in the selection process.
-#' @examples
+#'
 #'
 #' select_concentrations <- function(sample_info, x_vals, y_vals)
 
@@ -249,7 +241,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
 ### The Tomaras lab has sometimes placed the wrong number of concentrations in this field. It causes havoc,
 ### because the sample sheet and Carterra output are out of sync. Need to add code to check dimensions
 
-    num_conc <- str_count(sample_info$`All Concentrations`[i], ",") + 1
+    num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
 
     if (sample_info$Incl.[i] == "N"){
       displacement_in_titration_data <- num_conc + displacement_in_titration_data
@@ -257,13 +249,13 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
     }
 
     concentrations <-
-      as.numeric(flatten(str_split(sample_info$`All Concentrations`[i], ",")))
+      as.numeric(purrr::flatten(stringr::str_split(sample_info$`All Concentrations`[i], ",")))
 
-    if (str_to_upper(sample_info$`Incl. Conc.`[i]) == "ALL"){
+    if (stringr::str_to_upper(sample_info$`Incl. Conc.`[i]) == "ALL"){
       incl_concentrations <- concentrations
     } else {
       incl_concentrations <-
-        as.numeric(flatten(str_split(sample_info$`Incl. Conc.`[i], ",")))
+        as.numeric(purrr::flatten(stringr::str_split(sample_info$`Incl. Conc.`[i], ",")))
     }
     num_incl <- length(incl_concentrations)
 
@@ -504,7 +496,7 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path, files_directory)
   #change to txt
   if (any(check1$flag != "")) {
     flagspresent <- TRUE
-    readr::readr::write_csv(check1,
+    readr::write_csv(check1,
               paste(files_directory, "Error_note_sample_sheet.csv", sep = "/"))
     print("Error in sample sheet file. See Error_note_sample_sheet.csv")
   } else {

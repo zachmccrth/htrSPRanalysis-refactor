@@ -13,13 +13,23 @@ Suggests:
     knitr,
     rmarkdown
 Imports:
-  tidyverse
-  readxl
-  minpack.lm
-  zoo
-  gridExtra
-  grid
-  kableExtra
-  parallel
-  svDialogs
+  readxl,
+  minpack.lm,
+  zoo,
+  gridExtra,
+  grid,
+  kableExtra,
+  parallel,
+  svDialogs,
+  readr,
+  dplyr,
+  stringr,
+  tidyselect,
+  ggplot2,
+  purrr,
+  forcats,
+  rstudioapi,
+  tibble,
+  magrittr,
+  tidyr
 VignetteBuilder: knitr
