@@ -37,12 +37,11 @@ process_sample_sheet <- function(sample_sheet){
 
 
 
-  sample_sheet %>% separate(`Position/Channel/Sensor`, into = c("BeginPosition", "EndPosition", sep = "-")) %>%
-    #  filter(!is.na(EndPosition)) %>%
-    separate(BeginPosition, into = c("Row", "Column"), sep = 1) %>%
-    separate(EndPosition, into = c("EndRow", "EndColumn"), sep = 1) %>%
-    mutate(Column = as.integer(Column)) %>%
-    mutate(EndColumn = as.integer(EndColumn)) -> RowExpansionTemplate
+  sample_sheet %>% dplyr::separate(`Position/Channel/Sensor`, into = c("BeginPosition", "EndPosition", sep = "-")) %>%
+    dplyr::separate(BeginPosition, into = c("Row", "Column"), sep = 1) %>%
+    dplyr::separate(EndPosition, into = c("EndRow", "EndColumn"), sep = 1) %>%
+    dplyr::mutate(Column = as.integer(Column)) %>%
+    dplyr::mutate(EndColumn = as.integer(EndColumn)) -> RowExpansionTemplate
 
   length_ss <- dim(RowExpansionTemplate)[1]
   ss_exp <- NULL
@@ -102,7 +101,7 @@ process_sample_sheet <- function(sample_sheet){
       ss_exp <- rbind(ss_exp, RowExpansionTemplate[i,])
   }
 
-  ss_exp %>% select(-EndRow, -EndColumn, -"-") -> ss_exp
+  ss_exp %>% dplyr::select(-EndRow, -EndColumn, -"-") -> ss_exp
 
   # Now expand blocks
   current_idx <- 0
@@ -126,7 +125,7 @@ process_sample_sheet <- function(sample_sheet){
   }
   # Rows are sorted A,E,B,F,C,G,D,H
 
-  sample_info_expanded %>% mutate(RowSort = translate_rows_for_sort(Row)) ->
+  sample_info_expanded %>% dplyr::mutate(RowSort = translate_rows_for_sort(Row)) ->
     sample_info_expanded
 
   sample_info_expanded %>% arrange(RowSort, Column, Block) -> sample_info_expanded
@@ -164,8 +163,8 @@ select_samples <- function(sample_info, titration_data){
   remove_ligands <- which(sample_info$Incl. == "N")
   keep_ligands <- which(sample_info$Incl. == "Y")
 
-  titration_data %>% select(everything(), -starts_with("Y")) -> x_vals
-  titration_data %>% select(everything(), -starts_with("X")) -> y_vals
+  titration_data %>% dplyr::select(everything(), -starts_with("Y")) -> x_vals
+  titration_data %>% dplyr::select(everything(), -starts_with("X")) -> y_vals
 
   n_time_points <- dim(x_vals)[1]
   nsamples <- dim(sample_info)[1]
@@ -485,7 +484,6 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path, files_directory)
     incl_note,
     block_note,
     position_note,
-    analyte_note,
     ligand_note,
     baseline_note,
     association_note,
@@ -506,7 +504,7 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path, files_directory)
   #change to txt
   if (any(check1$flag != "")) {
     flagspresent <- TRUE
-    write_csv(check1,
+    readr::readr::write_csv(check1,
               paste(files_directory, "Error_note_sample_sheet.csv", sep = "/"))
     print("Error in sample sheet file. See Error_note_sample_sheet.csv")
   } else {
@@ -539,7 +537,7 @@ check_titration_data <- function(titration_data, files_directory) {
 
   if (columns_note != "") {
     check2 <- data.frame(columns_note, data_file_path)
-    write_csv(check2,
+    readr::write_csv(check2,
               paste(files_directory, "Error_note_titration_data.csv", sep = "/"))
     print("Error in titration data file. See Error_note_titration_data.csv")
     flagspresent <- TRUE

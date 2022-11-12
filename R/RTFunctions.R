@@ -33,7 +33,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
   for (i in start_idx:end_idx){
     Time <- x_vals[, i]
     RU <- y_vals[, i]
-    df <- suppressMessages(bind_cols(Time, RU))
+    df <- suppressMessages(dplyr::bind_cols(Time, RU))
     names(df) <- c("Time", "RU")
     df %>% filter(Time > (start_time - 50)) -> df
 
@@ -42,10 +42,10 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
       next
     df_zoo <- as.zoo(df)
     #  max_idx <- max_idx + 1
-    as_tibble(
-      rollapply(
+    tibble::as_tibble(
+      zoo::rollapply(
         data = df_zoo, FUN =  function(x){
-          x_df <- as_tibble(x)
+          x_df <- tibble::as_tibble(x)
           if (all(is.na(x_df$RU)| is.nan(x_df$RU)))
             return(c(NA,NA))
           else
@@ -124,7 +124,7 @@ get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
   for (i in start_idx:end_idx){
       Time <- x_vals[, i]
       RU <- y_vals[, i]
-      df <- suppressMessages(bind_cols("Time" = Time, "RU" = RU))
+      df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU))
       colnames(df) <- c("Time", "RU")
       df %>% filter(Time > baseline_start & Time < baseline+ baseline_start)  %>% .$RU -> base_meas
       baseline_avg <- mean(base_meas, na.rm = TRUE)
@@ -156,10 +156,10 @@ create_dataframe_with_conc <- function(begin_conc_idx, end_conc_idx, x_vals, y_v
       pivot_longer(cols = everything()) %>% arrange(as.numeric(name)) %>%
       select("value")
 
-    map_dfr(.x = tibble(numerical_concentrations), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+    purr:map_dfr(.x = tibble(numerical_concentrations), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
       arrange(numerical_concentrations) -> numerical_concentrations
     Concentrations <- numerical_concentrations
-    df <- suppressMessages(bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
+    df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
     colnames(df) <- c("Time", "RU", "Concentration")
     df
 }
@@ -216,7 +216,7 @@ baseline_correction <- function(well_idx, x_vals, y_vals, sample_info){
       Time <- x_vals[, start_idx + (i-1)]
       RU <- y_vals[, start_idx + (i-1)]
 
-      df <- suppressMessages(bind_cols("Time" = Time, "RU" = RU))
+      df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU))
       colnames(df) <- c("Time", "RU")
 
       df %>% filter(Time > baseline_start & Time < baseline + baseline_start) %>% .$RU -> base_meas # select for defined baseline time period
@@ -238,7 +238,7 @@ baseline_correction <- function(well_idx, x_vals, y_vals, sample_info){
 #' @param all_concentrations_values A vector. All concentrations measured.
 #' @param incl_concentrations_values A vector. Concentrations to include in fitting.
 #' @param n_time_points A number. The maximum number of time points collected in this experiment. It is the number of rows in the Time and RU tibbles.
-#' @return A ggplot object. The plot of the response curve.
+#' @return A ggplot2::ggplot object. The plot of the response curve.
 #' @examples
 #' get_response_curve <- function(well_idx, sample_info, x_vals, y_vals, all_concentrations_values, incl_concentrations_values, n_time_points)
 
@@ -266,17 +266,17 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
 
   df %>% filter((Time >= baseline + baseline_start + association - 10)
                 & (Time <= baseline + baseline_start + association - 5)) %>%
-    group_by(Concentration) %>%
-    summarise(AverageRU = mean(RU, na.rm = TRUE)) -> df_RC
+    dplyr::group_by(Concentration) %>%
+    dplyr::summarise(AverageRU = mean(RU, na.rm = TRUE)) -> df_RC
   df_RC %>% mutate(Included =
-                     as_factor(ifelse(Concentration %in% incl_conc_values,
+                     forcats::as_factor(ifelse(Concentration %in% incl_conc_values,
                                       "Yes", "No"))) -> df_RC
-  ggplot(df_RC, aes(x = Concentration,
+  ggplot2::ggplot(df_RC, aes(x = Concentration,
                     y = AverageRU)) +
-    geom_point(aes(color = Included)) +
-    geom_line() +
-    scale_x_log10() +
-    ggtitle(ligand_desc)
+    ggplot2::ggplot2::geom_point(aes(color = Included)) +
+    ggplot2::ggplot2::geom_line() +
+    ggplot2::scale_x_log10() +
+    ggplot2::ggtitle(ligand_desc)
 }
 
 #' Determine the best range of concentrations for fitting. The algorithm will attempt to find 5 concentrations
@@ -316,8 +316,8 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   #this has failed in some data sets where these observations are missing.
   df %>% filter((Time >= baseline + baseline_start + association - 10)
                 & (Time <= baseline + baseline_start + association - 5)) %>%
-    group_by(Concentration) %>%
-    summarise(AverageRU = mean(RU, na.rm = TRUE)) -> df_RC
+    dplyr::group_by(Concentration) %>%
+    dplyr::summarise(AverageRU = mean(RU, na.rm = TRUE)) -> df_RC
 
   # check to see if any results for df_RC
 
@@ -327,10 +327,10 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   # record the differences between consecutive responses
   sum_diff <- NULL
   for (i in 1:(num_conc - 1)){
-    sum_diff <- suppressMessages(bind_cols(sum_diff, df_RC[i+1,]$AverageRU - df_RC[i,]$AverageRU))
+    sum_diff <- suppressMessages(dplyr::bind_cols(sum_diff, df_RC[i+1,]$AverageRU - df_RC[i,]$AverageRU))
   }
   # add sums for each 5 cycle window.
-  cum_sum <- rollapply(as_vector(flatten(sum_diff)), 4, FUN = sum)
+  cum_sum <- zoo::rollapply(as_vector(flatten(sum_diff)), 4, FUN = sum)
   start_conc_idx <- which(cum_sum == max(cum_sum))
 
   # check start and end slopes, may be better to fit 4 instead of five
@@ -347,8 +347,8 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   # low end or high end, depending on which slope is smaller
 
   # remove_concentration has at least one '1' value
-  # if both first and last are tagged, we remove the smallest
-  # if only one is tagged, it will still be the smallest
+  # if both first and last are taggplot2::gged, we remove the smallest
+  # if only one is taggplot2::gged, it will still be the smallest
   if (slopes[1] < slopes[4])
       return(concentrations[(start_conc_idx+1):(start_conc_idx + 4)])
   else
@@ -367,7 +367,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
 #' the number of rows in the titration data tibble.
 #' @param all_concentrations A logical. Whether or not to include all observed concentrations in the plot.
 #' The default is FALSE. This will plot only concentrations included in the fit.
-#' @return A ggplot object. The plotted sensorgram.
+#' @return A ggplot2::ggplot object. The plotted sensorgram.
 #' @examples
 #' plot_sensorgrams <- function(well_idx, sample_info, x_vals, y_vals,
 #' incl_conc_values, all_concentrations_values, n_time_points,
@@ -410,23 +410,23 @@ plot_sensorgrams <- function(well_idx,
     select("value")
 
 
-  map_dfr(.x = tibble(incl_conc_values), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+  purr:map_dfr(.x = tibble(incl_conc_values), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
     arrange(incl_conc_values) -> incl_conc_values
 
    Concentrations <- incl_conc_values
 
-  df <- suppressMessages(bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
+  df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
 
   colnames(df) <- c("Time", "RU", "Concentration")
 
-  df$Concentration <- as_factor(formatC(df$Concentration, format = "e",digits = 2))
+  df$Concentration <- forcats::as_factor(formatC(df$Concentration, format = "e",digits = 2))
 
 
   sub_title <- paste("Block", sample_info[well_idx,]$Block, "Row", sample_info[well_idx,]$Row,
                      "Column", sample_info[well_idx,]$Column)
 
-  ggplot(df, aes(x = Time, y = RU, color = Concentration)) + geom_point(size = 0.5) +
-    ggtitle(ligand_desc, subtitle = sub_title)
+  ggplot2::ggplot(df, aes(x = Time, y = RU, color = Concentration)) + ggplot2::ggplot2::geom_point(size = 0.5) +
+    ggplot2::ggtitle(ligand_desc, subtitle = sub_title)
 }
 
 #' Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, use plot_sensorgrams_with_fits
@@ -438,7 +438,7 @@ plot_sensorgrams <- function(well_idx,
 #' @param incl_conc_values A vector. The number of concentrations to be included in this plot.
 #' @param n_time_points A number. The maximum number of time points observed in this experiment. It is
 #' the number of rows in the titration data tibble.
-#' @return A ggplot object. The plotted sensorgram with fitted curves.
+#' @return A ggplot2::ggplot object. The plotted sensorgram with fitted curves.
 #' @examples
 #' plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_vals,
 #' incl_conc_values, n_time_points)
@@ -477,12 +477,12 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
   numerical_concentration <- incl_conc_values[start_idx:end_idx]
 
-  map_dfr(.x = tibble(numerical_concentration), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+  purr:map_dfr(.x = tibble(numerical_concentration), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
     arrange(numerical_concentration) -> numerical_concentration
 
   Concentrations <- numerical_concentration
 
-  df <- suppressMessages(bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
+  df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
 
   colnames(df) <- c("Time", "RU", "Concentration")
 
@@ -490,7 +490,7 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
   df %>% filter(Time > baseline + baseline_start & Time < end_time) -> df
 
-  suppressMessages(bind_cols(df,FittedRU = fit_RU)) -> df
+  suppressMessages(dplyr::bind_cols(df,FittedRU = fit_RU)) -> df
 
   # Correct to zero time
 
@@ -498,16 +498,16 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
   colnames(df) <- c("Time", "RU", "Concentration", "FittedRU")
 
-  df$Concentration <- as_factor(formatC(df$Concentration, format = "e",digits = 2))
+  df$Concentration <- forcats::as_factor(formatC(df$Concentration, format = "e",digits = 2))
 
   sub_title <- paste("Block", sample_info[well_idx,]$Block, "Row",
                      sample_info[well_idx,]$Row,
                      "Column", sample_info[well_idx,]$Column)
 
 
-  ggplot(df, aes(x = Time, y = RU)) + geom_point(size = 0.09, aes(color = Concentration)) +
-    ggtitle(ligand_desc, subtitle = sub_title) +
-    geom_line(aes(x = Time, y = FittedRU, group = Concentration), color = "black")
+  ggplot2::ggplot(df, aes(x = Time, y = RU)) + ggplot2::ggplot2::geom_point(size = 0.09, aes(color = Concentration)) +
+    ggplot2::ggtitle(ligand_desc, subtitle = sub_title) +
+    ggplot2::ggplot2::geom_line(aes(x = Time, y = FittedRU, group = Concentration), color = "black")
 }
 
 # This function is used internally. It is a replacement for summary.nlm that allows for a non-singular
@@ -536,7 +536,7 @@ summary_fit_with_constraints <- function(fit_object){
 
   std_err_full <- rep(NA, n)
 
-# get table directly. Code is pulled from summary.nls.lm
+# get table directly. Code is pulled from summary.minpack.lm
 
   if (info != 5) {            # when info is 5, that means the iterations maxed out and fit is not valid
     ibb <- chol(hessian)
@@ -707,7 +707,7 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
 
     df_dissoc$RU <- dissoc_formula_full
 
-    full_output_RU <- bind_rows(full_output_RU, df_assoc, df_dissoc)
+    full_output_RU <- dplyr::bind_rows(full_output_RU, df_assoc, df_dissoc)
 
   }
   # return fitted values
@@ -783,11 +783,11 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   incl_concentrations <-
     incl_concentrations_values[start_idx:end_idx]
 
-  map_dfr(.x = tibble(incl_concentrations),
+  purr:map_dfr(.x = tibble(incl_concentrations),
           .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
     arrange(incl_concentrations) -> incl_concentrations_rep
 
-  df <- suppressMessages(bind_cols("Time" = Time, "RU" = RU, "Concentration" = incl_concentrations_rep))
+  df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = incl_concentrations_rep))
   colnames(df) <- c("Time", "RU", "Concentration") #force correct names - dplyr is doing weird things
 
 
@@ -797,8 +797,8 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
                          DissocIndicator = ifelse(Time > dissoc_start & Time < dissoc_end, 1, 0)) -> df
   df %>% filter((AssocIndicator == 1 | DissocIndicator == 1)) -> df
 
-  df %>% group_by(Concentration) %>% summarise(max = max(RU, na.rm = TRUE)) -> Rmax_start_df
-  df %>% group_by(Concentration) %>% summarise(min = min(RU, na.rm = TRUE)) -> R0_start
+  df %>% dplyr::group_by(Concentration) %>% dplyr::summarise(max = max(RU, na.rm = TRUE)) -> Rmax_start_df
+  df %>% dplyr::group_by(Concentration) %>% dplyr::summarise(min = min(RU, na.rm = TRUE)) -> R0_start
   t0_start <- rep(0, num_conc)
 
   if (global_rmax){
@@ -818,11 +818,11 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
 
   if (bulkshift){
     init_params <- c(Rmax_start, ka_start, t0_start, kd_start, shift)
-    fit_result <- nls.lm(init_params,fn = fit_as_system, df = df,
+    fit_result <- minpack.lm(init_params,fn = fit_as_system, df = df,
                          incl_concentrations = incl_concentrations, num_conc = num_conc, association = association,
                          bulkshift,
                          global_rmax = global_rmax,
-                         control = nls.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
+                         control = minpack.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
                          lower = c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd, rep(-100, num_conc)),
                          jac = NULL,
                        upper = c(rep(400, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1, rep(100, num_conc)))
@@ -830,11 +830,11 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   } else {
     init_params <- c(Rmax_start, ka_start, t0_start, kd_start)
 
-    fit_result <- nls.lm(init_params,fn = fit_as_system, df = df,
+    fit_result <- minpack.lm(init_params,fn = fit_as_system, df = df,
                          incl_concentrations = incl_concentrations, num_conc = num_conc, association = association,
                          bulkshift,
                          global_rmax = global_rmax,
-                         control = nls.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
+                         control = minpack.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
                          lower = c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd),
                          jac = NULL,
                          upper = c(rep(400, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1))
@@ -894,11 +894,11 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
 
   if (global_rmax)
     Rmax_label <- "Rmax" else
-      Rmax_label <- map_dfr(tibble(1:num_conc), function(x) paste("Rmax", x))
+      Rmax_label <- purr:map_dfr(tibble(1:num_conc), function(x) paste("Rmax", x))
 
 
-  R0_label <- map_dfr(tibble(1:num_conc), function(x) paste("R_0", x))
-  bulkshift_label <- map_dfr(tibble(1:num_conc), function(x) paste("Bulkshift", x))
+  R0_label <- purr:map_dfr(tibble(1:num_conc), function(x) paste("R_0", x))
+  bulkshift_label <- purr:map_dfr(tibble(1:num_conc), function(x) paste("Bulkshift", x))
 
 
   pars <- coefficients(fits_list[[well_idx]]$result$FitResult)
@@ -912,13 +912,13 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   # I've adapted the function to return NA's for std error when the limits are reached.
 
   result_summary <- summary_fit_with_constraints(fits_list[[well_idx]]$result$FitResult)
-  #summary_fit_with_constraints returns the coefficients table from summary.nls.lm
+  #summary_fit_with_constraints returns the coefficients table from summary.minpack.lm
 
   summary_names <- colnames(result_summary)
-  result_summary %>% as_tibble -> par_err_table
+  result_summary %>% tibble::as_tibble -> par_err_table
 
   colnames(par_err_table) <- summary_names
-  par_err_table <- suppressMessages(bind_cols(Names = par_names, par_err_table))
+  par_err_table <- suppressMessages(dplyr::bind_cols(Names = par_names, par_err_table))
 
   par_err_table %>% filter(!str_detect(Names,"R_0")) -> par_err_table
   par_err_table %>% filter(!str_detect(Names,"Bulkshift")) -> par_err_table
@@ -938,7 +938,7 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
     mutate(Estimate = format(round(Estimate,2),big.mark=",",decimal.mark=".", scientific = FALSE))  %>%
     mutate(`Std. Error` = format(round(`Std. Error`, 2),big.mark=",",decimal.mark=".", scientific = FALSE)) -> rest_out
 
-  bind_rows(rest_out, kakd_out) %>%
+  dplyr::bind_rows(rest_out, kakd_out) %>%
     tableGrob(rows = par_names, theme = ttheme_minimal()) -> tb1
 
   residuals(fits_list[[well_idx]]$result$FitResult) -> RU_resid
@@ -946,9 +946,9 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   fits_list[[well_idx]]$result$FitOutcomes$Concentration -> Concentration_resid
 
 
-  resid_plot <- ggplot(data = tibble(Residuals = RU_resid, Time = Time_resid, Concentration = as_factor(Concentration_resid)),
-                       aes(x = Time, y = Residuals, color = Concentration)) + geom_point(size = 0.01) +
-                          ggtitle(label = "Residuals")
+  resid_plot <- ggplot2::ggplot(data = tibble(Residuals = RU_resid, Time = Time_resid, Concentration = forcats::as_factor(Concentration_resid)),
+                       aes(x = Time, y = Residuals, color = Concentration)) + ggplot2::ggplot2::geom_point(size = 0.01) +
+                          ggplot2::ggtitle(label = "Residuals")
 
   grid.arrange(plot_list_out[[well_idx]], tb1, resid_plot,
                rc_list[[well_idx]], ncol=2)
@@ -1003,32 +1003,32 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
   numerical_concentration_incl <-
     incl_concentrations_values[start_incl_idx:end_incl_idx]
 
-  map_dfr(.x = tibble(numerical_concentration), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+  purr:map_dfr(.x = tibble(numerical_concentration), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
     arrange(numerical_concentration) -> numerical_concentration
 
   Concentrations <- numerical_concentration
 
-  df <- suppressMessages(bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
+  df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
 
   colnames(df) <- c("Time", "RU", "Concentration")
 
 
   df %>% filter((Time >= baseline + baseline_start + association - 10)
                 & (Time <= baseline + baseline_start + association - 5)) %>%
-    group_by(Concentration) %>%
-    summarise(AverageRU = mean(RU, na.rm = TRUE)) -> df_RC
+    dplyr::group_by(Concentration) %>%
+    dplyr::summarise(AverageRU = mean(RU, na.rm = TRUE)) -> df_RC
 
   df_RC %>% mutate(Included =
-                     as_factor(ifelse(Concentration %in% numerical_concentration_incl,
+                     forcats::as_factor(ifelse(Concentration %in% numerical_concentration_incl,
                                       "Yes", "No"))) -> df_RC
 
 
-  ggplot(df_RC, aes(x = Concentration,
+  ggplot2::ggplot(df_RC, aes(x = Concentration,
                     y = AverageRU)) +
-    geom_point(aes(color = Included)) +
-    geom_line() +
-    scale_x_log10() +
-    ggtitle(ligand_desc)
+    ggplot2::ggplot2::geom_point(aes(color = Included)) +
+    ggplot2::ggplot2::geom_line() +
+    ggplot2::scale_x_log10() +
+    ggplot2::ggtitle(ligand_desc)
 }
 
 get_csv <- function(well_idx, fits_list, sample_info){
@@ -1073,7 +1073,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
   # first column of summary is the estimate. Second is standard error
 
   summary_names <- colnames(result_summary)
-  result_summary %>% as_tibble %>% select(Estimate, `Std. Error`) -> par_err_table
+  result_summary %>% tibble::as_tibble %>% select(Estimate, `Std. Error`) -> par_err_table
 
   colnames(par_err_table) <- summary_names[1:2]
 

@@ -1,3 +1,13 @@
+#' Process user input files. Performs all functions selected in sample information, such as
+#' automated dissociation window detection, automated concentration range, automated bulk shift detection and
+#' returns a list object with the titration time series, processed sample information, all user inputs directing
+#' file outputs and fitting options
+##' @return A list.
+#' @examples
+
+#' @export
+#' process_input <- function()
+
 process_input <- function(){
   files_directory  <-  rstudioapi::selectDirectory(
     caption <- "Select Directory",
@@ -201,15 +211,15 @@ process_input <- function(){
   # get index of first concentration (selected for analysis) for each well
 
 
-  first_conc_idx_list <- map(.x = 1:nwells, .f = first_conc_indices,
+  first_conc_idx_list <- purr::map(.x = 1:nwells, .f = first_conc_indices,
                              sample_info$NumConc)
 
-  sample_info$FirstConcIdx <- as_vector(flatten(first_conc_idx_list))
+  sample_info$FirstConcIdx <- purr::as_vector(flatten(first_conc_idx_list))
 
   # get baseline averages for each well (first time point)
   sample_info$BaselineAverage <- rep(0, nwells)
 
-  baseline_info_list <- map_dfr(.x = 1:nwells, .f = get_baseline_indices,
+  baseline_info_list <- purr::map_dfr(.x = 1:nwells, .f = get_baseline_indices,
                                 sample_info,
                                 Time, RU)
 
@@ -220,7 +230,7 @@ process_input <- function(){
 
   sample_info$WellIdx <- 1:nwells
 
-  corrected_RU <- map_dfc(.x = 1:nwells, .f = baseline_correction,
+  corrected_RU <- purr::map_dfc(.x = 1:nwells, .f = baseline_correction,
                           Time,
                           RU,
                           sample_info)
@@ -232,10 +242,10 @@ process_input <- function(){
   keep_concentrations <- selected_concentrations$keep_concentrations
   sample_info <- selected_concentrations$sample_info
 
-  first_incl_conc_idx_list <- map(.x = 1:nwells, .f = first_conc_indices,
+  first_incl_conc_idx_list <- purr::map(.x = 1:nwells, .f = first_conc_indices,
                                   sample_info$NumInclConc)
 
-  sample_info$FirstInclConcIdx <- as_vector(flatten(first_incl_conc_idx_list))
+  sample_info$FirstInclConcIdx <- purr::as_vector(flatten(first_incl_conc_idx_list))
 
   incl_concentrations_values <- selected_concentrations$incl_concentrations_values
 
@@ -261,7 +271,7 @@ process_input <- function(){
   #how to extract this?
 
 
-  sample_info_fits$DissocEnd <- map_dbl(.x = end_dissoc_list,
+  sample_info_fits$DissocEnd <- purr::map_dbl(.x = end_dissoc_list,
                                         .f = function(x){ifelse(is.null(x$error) & !is.null(x$result), x$result, NA)})
 
   # keep_concentrations <- processed_input$keep_concentrations
@@ -280,6 +290,7 @@ process_input <- function(){
        output_csv = output_csv, error_pdf = error_pdf, error_idx_concentrations = error_idx_concentrations)
 }
 
+#' @export
 get_plots_before_baseline <- function(processed_input){
   sample_info <- processed_input$sample_info
   Time <- processed_input$Time
@@ -296,6 +307,7 @@ get_plots_before_baseline <- function(processed_input){
            n_time_points, all_concentrations = TRUE, mc.cores = num_cores)
 }
 
+#' @export
 get_fits <- function(processed_input){
 
   n_fit_wells <- processed_input$n_fit_wells
@@ -322,6 +334,7 @@ get_fits <- function(processed_input){
            ftol)
 }
 
+#' @export
 get_fitted_plots <- function(processed_input, fits_list){
   n_fit_wells <- processed_input$n_fit_wells
   n_time_points <- processed_input$n_time_points
@@ -340,6 +353,7 @@ get_fitted_plots <- function(processed_input, fits_list){
            n_time_points, mc.cores = num_cores)
 }
 
+#' @export
 get_rc_plots <- function(processed_input){
 
   n_fit_wells <- processed_input$n_fit_wells
@@ -359,6 +373,7 @@ get_rc_plots <- function(processed_input){
 
 }
 
+#' @export
 create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
   nwells <- processed_input$nwells
   n_fit_wells <- processed_input$n_fit_wells
@@ -398,13 +413,14 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
 
 }
 
+#' @export
 create_csv <- function(processed_input, fits_list){
 
   sample_info_fits <- processed_input$sample_info_fits
   n_fit_wells <- processed_input$n_fit_wells
   output_csv <- processed_input$output_csv
 
-  csv_data <- map_dfr(.x = 1:n_fit_wells, .f = get_csv, fits_list, sample_info_fits)
+  csv_data <- purr::map_dfr(.x = 1:n_fit_wells, .f = get_csv, fits_list, sample_info_fits)
 
   csv_data$Ligand <- sample_info_fits$Ligand
   csv_data$Analyte <- sample_info_fits$Analyte
@@ -417,5 +433,3 @@ create_csv <- function(processed_input, fits_list){
   write_csv(csv_data, file = output_csv)
 
 }
-
-
