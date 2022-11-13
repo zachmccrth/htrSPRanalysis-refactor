@@ -1,4 +1,6 @@
-#' Process user input files. Performs all functions selected in sample information, such as
+#' Process user input files and obtain options for fitting.
+#'
+#' Performs all functions selected in sample information, such as
 #' automated dissociation window detection, automated concentration range, automated bulk shift detection and
 #' returns a list object with the titration time series, processed sample information, all user inputs directing
 #' file outputs and fitting options
