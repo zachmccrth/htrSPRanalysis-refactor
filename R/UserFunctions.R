@@ -68,8 +68,10 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
 
   if (titration_data[1,1] == "X")
     # file may be in new format. We should skip first line
-    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000) else
-    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 0, n_max = 1000)
+    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000,
+                                         col_types = "numeric") else
+    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 0, n_max = 1000,
+                                         col_types = "numeric")
 
   #identify if any flags present in the sample sheet
   flagspresent <- check_titration_data(titration_data, files_directory)
