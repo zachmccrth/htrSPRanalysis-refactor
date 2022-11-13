@@ -62,16 +62,14 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
                                              path = files_directory)
   }
 
-
+  # readxl is *horribly* slow right now. Switching to openxlsx for the moment, may switch if readxl gets fixed.
   # check if this is new or old file format
-  titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, range = "A1:D3")
+  titration_data <- openxlsx::read.xlsx(data_file_path, colNames = TRUE, sheet = 1, startRow = 1, rows = 2)
 
   if (titration_data[1,1] == "X")
     # file may be in new format. We should skip first line
-    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000,
-                                         col_types = "numeric") else
-    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 0, n_max = 1000,
-                                         col_types = "numeric")
+    titration_data <- openxlsx::read.xlsx(data_file_path, colNames = TRUE, sheet = 1, startRow = 2, check.names = TRUE) else
+    titration_data <- openxlsx::read.xlsx(data_file_path, colNames = TRUE, sheet = 1, startRow = 1, check.names = TRUE)
 
   #identify if any flags present in the sample sheet
   flagspresent <- check_titration_data(titration_data, files_directory)
