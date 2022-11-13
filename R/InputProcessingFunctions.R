@@ -35,8 +35,6 @@ process_sample_sheet <- function(sample_sheet){
 
   }
 
-
-
   sample_sheet %>% tidyr::separate(`Position/Channel/Sensor`, into = c("BeginPosition", "EndPosition", sep = "-")) %>%
     tidyr::separate(BeginPosition, into = c("Row", "Column"), sep = 1) %>%
     tidyr::separate(EndPosition, into = c("EndRow", "EndColumn"), sep = 1) %>%

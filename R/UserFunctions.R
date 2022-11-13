@@ -2,24 +2,35 @@
 #' automated dissociation window detection, automated concentration range, automated bulk shift detection and
 #' returns a list object with the titration time series, processed sample information, all user inputs directing
 #' file outputs and fitting options
-##' @return A list.
 #'
-#' process_input <- function()
+#' When called without arguments, the Rstudio interface will be used to obtain file names and paths.
+#'
+#' @param files_directory The directory that contains the input files
+#' @param sample_sheet_path The full path to the sample information file
+#' @param data_file_path The full path to the titration data file
+#'
+#' @return A list.
+#'
+#' process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data_file_path = NULL)
 
 #' @export process_input
 
-process_input <- function(){
-  files_directory  <-  rstudioapi::selectDirectory(
-    caption <- "Select Directory",
-    label <- "Select"
-  )
-  #import file
-  sample_sheet_path <- rstudioapi::selectFile(caption = "Select the sample sheet file",
-                                              filter = "All Files (*.xlsx)",
-                                              existing = TRUE,
-                                              path = files_directory)
-  sample_sheet <- readxl::read_excel(sample_sheet_path)
+process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data_file_path = NULL){
 
+  if (is.null(files_directory)){
+    files_directory  <-  rstudioapi::selectDirectory(
+       caption <- "Select Directory",
+         label <- "Select")
+  }
+
+  #import file
+  if (is.null(sample_sheet_path)){
+    sample_sheet_path <- rstudioapi::selectFile(caption = "Select the sample sheet file",
+                                                filter = "All Files (*.xlsx)",
+                                                existing = TRUE,
+                                                path = files_directory)
+    sample_sheet <- readxl::read_excel(sample_sheet_path)
+  }
   #identify if any flags present in the sample sheet
   flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path, files_directory)
 
@@ -40,18 +51,23 @@ process_input <- function(){
   sample_info <- process_sample_sheet(sample_sheet)
 
   #import filter
-  data_file_path <- rstudioapi::selectFile(caption = "Select the data file",
-                                           filter = "All Files (*.xlsx)",
-                                           existing = TRUE,
-                                           path = files_directory)
+
+  if (is.null(data_file_path)){
+
+    data_file_path <- rstudioapi::selectFile(caption = "Select the data file",
+                                             filter = "All Files (*.xlsx)",
+                                             existing = TRUE,
+                                             path = files_directory)
+  }
 
 
   # check if this is new or old file format
-  titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 0, n_max = 1000)
+  titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, range = "A1:D3")
 
   if (titration_data[1,1] == "X")
     # file may be in new format. We should skip first line
-    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000)
+    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000) else
+    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 0, n_max = 1000)
 
   #identify if any flags present in the sample sheet
   flagspresent <- check_titration_data(titration_data, files_directory)
@@ -290,7 +306,14 @@ process_input <- function(){
        output_csv = output_csv, error_pdf = error_pdf, error_idx_concentrations = error_idx_concentrations)
 }
 
+#' Plot all raw data that has been selected to be processed (via the `Incl.` column in the sample information). No
+#' adjustments are made to the data.
+#'
+#' @param processed_input The list file that is output from the `process_input` function.
+#' @return A list of all plots that have been selected via the `Incl.` column in sample information
 #' @export get_plots_before_baseline
+#' get_plots_before_baseline <- function(processed_input)
+
 
 get_plots_before_baseline <- function(processed_input){
   sample_info <- processed_input$sample_info
@@ -308,6 +331,10 @@ get_plots_before_baseline <- function(processed_input){
            n_time_points, all_concentrations = TRUE, mc.cores = num_cores)
 }
 
+#' Get fits of all selected sensorgrams as indicated in the sample information.
+#' @param processed_input The processed_input object returned by the function `process_input`.
+#' @return A list of all fits. The fits are performed using the `safely` function, so that the list has a `$result` entry
+#' and a `$error` entry for each item. If `$error` is `NULL`, the sensorgram was fit succesfully.
 #' @export get_fits
 
 get_fits <- function(processed_input){
@@ -336,6 +363,9 @@ get_fits <- function(processed_input){
            ftol)
 }
 
+#' Plot fitted sensorgras and raw data.
+#' @param processed_input processed_input as returned by `process_input`
+#' @param fits_list List of fits as returned by `get_fits`
 #' @export get_fitted_plots
 
 get_fitted_plots <- function(processed_input, fits_list){
@@ -356,6 +386,8 @@ get_fitted_plots <- function(processed_input, fits_list){
            n_time_points, mc.cores = num_cores)
 }
 
+#' Plot response curve. Average RU versus log10 of concentration. Color coded for concentrations selected for fitting.
+#' @param processed_input Processed input object as returned from `process_input` function.
 #' @export get_rc_plots
 
 get_rc_plots <- function(processed_input){
@@ -376,6 +408,15 @@ get_rc_plots <- function(processed_input){
            incl_concentrations_values, n_time_points, mc.cores = num_cores)
 
 }
+
+#' Create pdf file with sensorgrams with fitted curves, residuals, table of fit parameters, and response curves.
+#'
+#' @param processed_input#' Processed_input as returned by `process_input`
+#' @param fits_list List of fits as returned by `get_fits`
+#' @param rc_list List of response curves as returned by `get_rc_plots`
+#' @param plot_list List of plots as returned by `get_fitted_plots`
+#' @return `NULL` A pdf file is created using the path name supplied to `process_input`
+
 
 #' @export create_pdf
 create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
@@ -416,6 +457,13 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
   dev.off()
 
 }
+
+#' Create csv file with all fit parameters.
+#'
+#' @param processed_input#' Processed_input as returned by `process_input`
+#' @param fits_list List of fits as returned by `get_fits`
+#' @return `NULL` A csv file is created using the path name supplied to `process_input`
+
 
 #' @export create_csv
 create_csv <- function(processed_input, fits_list){
