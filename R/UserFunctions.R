@@ -99,11 +99,11 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
   flagspresent <- TRUE
 
   while(flagspresent){
-    min_allowed_kd <- dlg_input("Please enter the minimum allowed kd", print(10^(-5)))
+    min_allowed_kd <- svDialogs::dlg_input("Please enter the minimum allowed kd", print(10^(-5)))
     min_allowed_kd <- as.numeric(min_allowed_kd$res)
     flagspresent <- FALSE
     if (is.na(min_allowed_kd) | min_allowed_kd < 10^(-7) | min_allowed_kd > 10^(-3)){
-      dlg_message("Please enter a number in the form 1e-n, where n is between 3 and 7")
+      svDialogs::dlg_message("Please enter a number in the form 1e-n, where n is between 3 and 7")
       flagspresent <- TRUE
     }
   }
@@ -111,11 +111,11 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
   flagspresent <- TRUE
 
   while(flagspresent){
-    max_iterations <- dlg_input("Please enter the maximum number of iterations for optimization algorithm", print(1000))
+    max_iterations <- svDialogs::dlg_input("Please enter the maximum number of iterations for optimization algorithm", print(1000))
     max_iterations <- as.numeric(max_iterations$res)
     flagspresent <- FALSE
     if (is.na(max_iterations) | max_iterations < 500 | max_iterations > 100000){
-      dlg_message("Please enter a number between 500 and 100000")
+      svDialogs::dlg_message("Please enter a number between 500 and 100000")
       flagspresent <- TRUE
     }
   }
@@ -123,11 +123,11 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
   flagspresent <- TRUE
 
   while(flagspresent){
-    min_RU_tol <- dlg_input("Please enter the minimum RU value for choosing dissociation window", print(20))
+    min_RU_tol <- svDialogs::dlg_input("Please enter the minimum RU value for choosing dissociation window", print(20))
     min_RU_tol <- as.numeric(min_RU_tol$res)
     flagspresent <- FALSE
     if (is.na(min_RU_tol) | min_RU_tol < 0 | min_RU_tol > 300){
-      dlg_message("Please enter a number between 0 and 300")
+      svDialogs::dlg_message("Please enter a number between 0 and 300")
       flagspresent <- TRUE
     }
   }
@@ -135,11 +135,11 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
   flagspresent <- TRUE
 
   while(flagspresent){
-    max_RU_tol <- dlg_input("Please enter the maximum RU value for choosing the dissociation window", print(400))
+    max_RU_tol <- svDialogs::dlg_input("Please enter the maximum RU value for choosing the dissociation window", print(400))
     max_RU_tol <- as.numeric(max_RU_tol$res)
     flagspresent <- FALSE
     if (is.na(max_RU_tol) | max_RU_tol < 50 | max_RU_tol > 500){
-      dlg_message("Please enter a number between 50 and 500")
+      svDialogs::dlg_message("Please enter a number between 50 and 500")
       flagspresent <- TRUE
     }
   }
@@ -152,11 +152,11 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
   flagspresent <- TRUE
 
   while(flagspresent){
-    num_cores <- dlg_input("Please enter the number of cores to use for parallel processing", print(detected_num_cores))
+    num_cores <- svDialogs::dlg_input("Please enter the number of cores to use for parallel processing", print(detected_num_cores))
     num_cores <- as.integer(num_cores$res)
     flagspresent <- FALSE
     if (is.na(num_cores) | num_cores > detected_num_cores | num_cores < 1){
-      dlg_message(paste("Please enter a number between 1 and", detected_num_cores))
+      svDialogs::dlg_message(paste("Please enter a number between 1 and", detected_num_cores))
       flagspresent <- TRUE
     }
   }
@@ -171,7 +171,7 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
   flagspresent <- TRUE
 
   while(flagspresent){
-    output_pdf_new <- dlg_input("Please enter a filename for the plot output", print(output_pdf))
+    output_pdf_new <- svDialogs::dlg_input("Please enter a filename for the plot output", print(output_pdf))
     output_pdf_new <- output_pdf_new$res
     flagspresent <- FALSE
     if (is.null(output_pdf_new)){
@@ -183,7 +183,7 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
   flagspresent <- TRUE
 
   while(flagspresent){
-    error_pdf_new <- dlg_input("Please enter a filename for the error output", print(error_pdf))
+    error_pdf_new <- svDialogs::dlg_input("Please enter a filename for the error output", print(error_pdf))
     error_pdf_new <- error_pdf_new$res
     flagspresent <- FALSE
     if (is.null(error_pdf_new)){
@@ -196,7 +196,7 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
   flagspresent <- TRUE
 
   while(flagspresent){
-    output_csv_new <- dlg_input("Please enter a filename for the csv output", print(output_csv))
+    output_csv_new <- svDialogs::dlg_input("Please enter a filename for the csv output", print(output_csv))
     output_csv_new <- output_csv_new$res
     flagspresent <- FALSE
     if (is.null(output_csv_new)){
@@ -314,7 +314,7 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
 #' @param processed_input The list file that is output from the `process_input` function.
 #' @return A list of all plots that have been selected via the `Incl.` column in sample information
 #' @export get_plots_before_baseline
-#' get_plots_before_baseline <- function(processed_input)
+
 
 
 get_plots_before_baseline <- function(processed_input){
