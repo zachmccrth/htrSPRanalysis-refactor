@@ -316,7 +316,7 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
 #' @param processed_input The list file that is output from the `process_input` function.
 #' @return A list of all plots that have been selected via the `Incl.` column in sample information
 #' @export get_plots_before_baseline
-#' get_plots_before_baseline <- function(processed_input)
+
 
 
 get_plots_before_baseline <- function(processed_input){
