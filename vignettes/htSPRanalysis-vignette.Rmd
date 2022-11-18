@@ -67,7 +67,24 @@ The user must provide two input files
 
 The function `process_input` when executed in Rstudio will prompt the user for the sample information file and the titration data file. It will also prompt for settings such as the minimum and maximum RU to use for the dissocation window determination, the maximum iterations and the tolerances `ptol` and `ftol`to use for the non-linear least squares curve fit. It returns a `list` object with the sample information, the original time series, the baseline adjusted RUs and several other variables used internally. This is the object that will be passed to the functions for fitting and plotting.
 
-```{r}
+The first prompt is for directory choice. This is the directory where the data files are stored. The Rstudio interface will default to this directory for the input files and the output files.
+
+![](figs/DirectoryChoice.png){ width=120% }
+Once the directory is chosen the user will be prompted to select the sample information file:
+
+![](figs/SampleInfo.png){ width=120% }
+
+followed by the titration data file:
+
+![](figs/TitrationData.png){ width=120% }
+As soon as these files are selected, the software will read in both files and check that the formats are correct. This may take some time, depending on the size of the titration data file. 
+
+Next, the user will be prompted to select the minimum allowed $k_d$. This is used in the curve/parameter fitting as a lower bound. 
+
+![](figs/){ width=120% }
+
+
+```{r warning=FALSE, message=FALSE}
 processed_input <- process_input()
 ```
 
@@ -75,8 +92,51 @@ processed_input <- process_input()
 ### Obtain plots of raw data
 
 ```{r}
-
+plots_before_processing <- get_plots_before_baseline(processed_input)
 
 ```
 
+### Fit the data to the 1:1 Languir model
+
+```{r}
+fits_list <- get_fits(processed_input)
+```
+
+### Plot the sensorgrams with fitted curves
+
+```{r}
+plot_list <- get_fitted_plots(processed_input, fits_list)
+```
+Example plot:
+
+```{r}
+plot_list[[1]]
+```
+
+### Create the response curve plots
+
+These plots show the average response vs $log_{10}$ of the concentration of analyte. The color indicates the concentrations selected for fitting. These should be within the linear part of the curve.
+
+```{r}
+rc_list <- get_rc_plots(processed_input)
+```
+
+Example plot
+
+```{r}
+rc_list[[1]]
+```
+
+
+### Create a pdf with fitted sensorgrams, curve parameters, standard errors, residual plot and response curve.
+
+```{r}
+create_pdf(processed_input, fits_list, rc_list, plot_list)
+```
+
+### Create a .csv file with all model parameters and standard errors.
+
+```{r}
+create_csv(processed_input, fits_list)
+```
 

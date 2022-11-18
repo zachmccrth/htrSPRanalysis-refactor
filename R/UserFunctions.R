@@ -64,7 +64,7 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
 
   # readxl is *horribly* slow right now. Switching to openxlsx for the moment, may switch if readxl gets fixed.
   # check if this is new or old file format
-  titration_data <- openxlsx::read.xlsx(data_file_path, colNames = TRUE, sheet = 1, startRow = 1, rows = 2)
+  titration_data <- openxlsx::read.xlsx(data_file_path, colNames = TRUE, sheet = 1, startRow = 1, check.names = TRUE)
 
   if (titration_data[1,1] == "X")
     # file may be in new format. We should skip first line
@@ -144,7 +144,7 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
     }
   }
   # Windows does not use fork. Figure out how to use multi-core on Windows
-  detected_num_cores <- parallel::detectCores()/2
+  detected_num_cores <- parallel::detectCores()
 
   if (detected_num_cores < 1)
     detected_num_cores <- 1

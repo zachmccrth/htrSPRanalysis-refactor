@@ -11,4 +11,3 @@ export(process_input)
 importFrom(magrittr,"%>%")
 importFrom("grDevices", "dev.off", "pdf")
 
-
