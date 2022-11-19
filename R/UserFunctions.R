@@ -46,6 +46,7 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
                                                 existing = TRUE,
                                                 path = files_directory)
     sample_sheet <- readxl::read_excel(sample_sheet_path)
+    sample_sheet <- tibble::tibble(sample_sheet)
     flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path, files_directory)
   }
 
@@ -70,6 +71,8 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
     # file may be in new format. We should skip first line
     titration_data <- openxlsx::read.xlsx(data_file_path, colNames = TRUE, sheet = 1, startRow = 2, check.names = TRUE) else
     titration_data <- openxlsx::read.xlsx(data_file_path, colNames = TRUE, sheet = 1, startRow = 1, check.names = TRUE)
+
+  titration_data <- tibble::tibble(titration_data)
 
   #identify if any flags present in the sample sheet
   flagspresent <- check_titration_data(titration_data, files_directory)

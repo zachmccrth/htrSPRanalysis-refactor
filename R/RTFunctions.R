@@ -915,7 +915,7 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   #summary_fit_with_constraints returns the coefficients table from summary.minpack.lm
 
   summary_names <- colnames(result_summary)
-  result_summary %>% tibble::as_tibble -> par_err_table
+  result_summary %>% tibble::tibble() -> par_err_table
 
   colnames(par_err_table) <- summary_names
   par_err_table <- suppressMessages(dplyr::bind_cols(Names = par_names, par_err_table))
@@ -1073,7 +1073,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
   # first column of summary is the estimate. Second is standard error
 
   summary_names <- colnames(result_summary)
-  result_summary %>% tibble::as_tibble %>% dplyr::select(Estimate, `Std. Error`) -> par_err_table
+  result_summary %>% tibble::tibble() %>% dplyr::select(Estimate, `Std. Error`) -> par_err_table
 
   colnames(par_err_table) <- summary_names[1:2]
 

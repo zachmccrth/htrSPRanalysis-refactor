@@ -81,8 +81,44 @@ As soon as these files are selected, the software will read in both files and ch
 
 Next, the user will be prompted to select the minimum allowed $k_d$. This is used in the curve/parameter fitting as a lower bound. 
 
-![](figs/){ width=120% }
+![](figs/kd.png){ width=40% }
 
+The maximum number of iterations is the number of iterations at which the optimization algorithm should stop if convergence is not obtained.
+
+![](figs/maxiter.png){ width=40% }
+
+The automatic detection of the dissociation window will be suppressed if the maximum RU is too high or the minimum RU is too low. The following prompts allow the user to determine these.
+
+
+![](figs/minRU.png){ width=40% }
+![](figs/maxRU.png){ width=40% }
+It is **highly** recommended that this software be run on a high-performance platform. The compute-intensive processes are all parallelized. The software automatically detects the total number of cores available. The user can change this to their preferred value.
+
+![](figs/numcores.png){ width=40% }
+There are three default output files:
+
+1. A `.pdf` file with each page corresponding to a spot on the chip. For each spot, there is a sensorgram with the baseline corrected data and the fitted RU curve for each concentration used to fit the curves/parameters, a residual plot, a response curve showing the selected concentrations and a table of kinetics parameters and their standard errors.
+
+2. A `.pdf` file that tracks any errors encountered in fitting/plotting
+
+3. A `.csv` file that outputs all fitted parameters and their standard errors 
+
+The software uses the data directory as the default output path, and uses the sample information filename along with a time/date stamp to name each output file. These can be changed by the user:
+
+![](figs/output_pdf.png){ width=40% }
+
+![](figs/error_pdf.png){ width=40% }
+
+![](figs/csv.png){ width=40% }
+
+### Output
+
+As explained in the previous section, the standard pipeline outputs $3$ files, a `.pdf` consisting of plots and tables for each spot on the chip:
+
+
+
+
+### The Pipline
 
 ```{r warning=FALSE, message=FALSE}
 processed_input <- process_input()
