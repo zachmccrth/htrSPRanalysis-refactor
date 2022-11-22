@@ -447,13 +447,13 @@ get_rc_plots <- function(processed_input){
 
 
   cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
-  clusterEvalQ(cl, library("SPRanalysis"))
+  parallel::clusterEvalQ(cl, library("SPRanalysis"))
 
   rc_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = get_response_curve, sample_info_fits,
            Time, RU,
            all_concentrations_values,
            incl_concentrations_values, n_time_points)
-  stopCluster(cl)
+  parallel::stopCluster(cl)
   rc_result
 
 }

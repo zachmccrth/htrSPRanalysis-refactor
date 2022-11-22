@@ -156,6 +156,7 @@ These plots show the average response vs $log_{10}$ of the concentration of anal
 
 ```{r}
 rc_list <- get_rc_plots(processed_input)
+
 ```
 
 Example plot
