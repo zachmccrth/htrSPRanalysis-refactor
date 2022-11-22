@@ -280,12 +280,18 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
 
   sample_info_fits <- sample_info[wells, ]
 
-  end_dissoc_list <- parallel::mclapply(X = 1:n_fit_wells, FUN = purrr::safely(find_dissociation_window), mc.cores = num_cores, sample_info_fits,
+
+  cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
+  parallel::clusterEvalQ(cl, library("SPRanalysis"))
+
+  end_dissoc_list <- parallel::parLapply(cl, X = 1:n_fit_wells, FUN = purrr::safely(find_dissociation_window),
+                              sample_info_fits,
                               Time[, keep_concentrations],
                               RU[, keep_concentrations],
                               incl_concentrations_values,
                               max_RU_tol,
                               min_RU_tol)
+  parallel::stopCluster(cl)
 
   sample_info_fits$DissocEnd <- rep(NA, n_fit_wells)
 
@@ -329,11 +335,16 @@ get_plots_before_baseline <- function(processed_input){
   n_time_points <- processed_input$n_time_points
   num_cores <- processed_input$num_cores
   nwells <- processed_input$nwells
-  parallel::mclapply(X = 1:nwells, FUN = plot_sensorgrams, sample_info,
+
+  cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
+  parallel::clusterEvalQ(cl, library("SPRanalysis"))
+
+  parallel::parLapply(cl, X = 1:nwells, FUN = plot_sensorgrams, sample_info,
            Time, RU,
            incl_concentrations_values,
            all_concentrations_values,
-           n_time_points, all_concentrations = TRUE, mc.cores = num_cores)
+           n_time_points, all_concentrations = TRUE)
+  parallel::stopCluster(cl)
 }
 
 #' Get fits of all selected sensorgrams as indicated in the sample information.
@@ -357,7 +368,22 @@ get_fits <- function(processed_input){
   ptol <- processed_input$ptol
   ftol <- processed_input$ftol
 
-  parallel::mclapply(X = 1:n_fit_wells, FUN = purrr::safely(fit_association_dissociation), mc.cores = num_cores, sample_info_fits,
+
+
+  # parallel::mclapply(X = 1:n_fit_wells, FUN = purrr::safely(fit_association_dissociation), mc.cores = num_cores, sample_info_fits,
+  #          Time[, keep_concentrations],
+  #          RU[, keep_concentrations],
+  #          incl_concentrations_values,
+  #          n_time_points,
+  #          min_allowed_kd,
+  #          max_iterations,
+  #          ptol,
+  #          ftol)
+
+  cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
+  parallel::clusterEvalQ(cl, library("SPRanalysis"))
+
+  parallel::parLapply(cl, X = 1:n_fit_wells, FUN = purrr::safely(fit_association_dissociation), sample_info_fits,
            Time[, keep_concentrations],
            RU[, keep_concentrations],
            incl_concentrations_values,
@@ -366,7 +392,11 @@ get_fits <- function(processed_input){
            max_iterations,
            ptol,
            ftol)
+  parallel::stopCluster(cl)
+
+
 }
+
 
 #' Plot fitted sensorgras and raw data.
 #' @param processed_input processed_input as returned by `process_input`
@@ -384,11 +414,16 @@ get_fitted_plots <- function(processed_input, fits_list){
   Time <- processed_input$Time
 
 
-  parallel::mclapply(X = 1:n_fit_wells, FUN = plot_sensorgrams_with_fits,
+  cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
+  parallel::clusterEvalQ(cl, library("SPRanalysis"))
+
+  parallel::parLapply(cl, X = 1:n_fit_wells, FUN = plot_sensorgrams_with_fits,
            sample_info_fits, fits_list,
            Time[, keep_concentrations], RU[, keep_concentrations],
            incl_concentrations_values,
-           n_time_points, mc.cores = num_cores)
+           n_time_points)
+
+  parallel::stopCluster(cl)
 }
 
 #' Plot response curve. Average RU versus log10 of concentration. Color coded for concentrations selected for fitting.
@@ -407,10 +442,14 @@ get_rc_plots <- function(processed_input){
   Time <- processed_input$Time
 
 
-  parallel::mclapply(X = 1:n_fit_wells, FUN = get_response_curve, sample_info_fits,
+  cl <- makeCluster(getOption("cl.cores", detectCores() - 1))
+  clusterEvalQ(cl, library("SPRanalysis"))
+
+  parallel::parLapply(cl, X = 1:n_fit_wells, FUN = get_response_curve, sample_info_fits,
            Time, RU,
            all_concentrations_values,
-           incl_concentrations_values, n_time_points, mc.cores = num_cores)
+           incl_concentrations_values, n_time_points)
+  stopCluster(cl)
 
 }
 
