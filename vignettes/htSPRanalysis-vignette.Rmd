@@ -19,6 +19,7 @@ This R package consists of a library of functions for processing and analyzing d
 `htSPRanalysis` can be installed using `devtools::install_git`. If you do not already have `devtools` installed, you can install it using `install.packages(devtools)`. Once devtools is installed, install the package via:
 
 ```{r eval=FALSE}
+
 devtools::install_git("https://gitlab.oit.duke.edu/janice/SPRanalysis")
 
 ```
