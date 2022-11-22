@@ -339,12 +339,13 @@ get_plots_before_baseline <- function(processed_input){
   cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
   parallel::clusterEvalQ(cl, library("SPRanalysis"))
 
-  parallel::parLapply(cl, X = 1:nwells, fun = plot_sensorgrams, sample_info,
+  plot_result <- parallel::parLapply(cl, X = 1:nwells, fun = plot_sensorgrams, sample_info,
            Time, RU,
            incl_concentrations_values,
            all_concentrations_values,
            n_time_points, all_concentrations = TRUE)
   parallel::stopCluster(cl)
+  plot_result
 }
 
 #' Get fits of all selected sensorgrams as indicated in the sample information.
@@ -383,7 +384,7 @@ get_fits <- function(processed_input){
   cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
   parallel::clusterEvalQ(cl, library("SPRanalysis"))
 
-  parallel::parLapply(cl, X = 1:n_fit_wells, fun = purrr::safely(fit_association_dissociation), sample_info_fits,
+  fit_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = purrr::safely(fit_association_dissociation), sample_info_fits,
            Time[, keep_concentrations],
            RU[, keep_concentrations],
            incl_concentrations_values,
@@ -392,7 +393,9 @@ get_fits <- function(processed_input){
            max_iterations,
            ptol,
            ftol)
+
   parallel::stopCluster(cl)
+  fit_result
 
 
 }
@@ -417,13 +420,14 @@ get_fitted_plots <- function(processed_input, fits_list){
   cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
   parallel::clusterEvalQ(cl, library("SPRanalysis"))
 
-  parallel::parLapply(cl, X = 1:n_fit_wells, fun = plot_sensorgrams_with_fits,
+  plot_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = plot_sensorgrams_with_fits,
            sample_info_fits, fits_list,
            Time[, keep_concentrations], RU[, keep_concentrations],
            incl_concentrations_values,
            n_time_points)
 
   parallel::stopCluster(cl)
+  plot_result
 }
 
 #' Plot response curve. Average RU versus log10 of concentration. Color coded for concentrations selected for fitting.
@@ -445,11 +449,12 @@ get_rc_plots <- function(processed_input){
   cl <- makeCluster(getOption("cl.cores", detectCores() - 1))
   clusterEvalQ(cl, library("SPRanalysis"))
 
-  parallel::parLapply(cl, X = 1:n_fit_wells, fun = get_response_curve, sample_info_fits,
+  rc_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = get_response_curve, sample_info_fits,
            Time, RU,
            all_concentrations_values,
            incl_concentrations_values, n_time_points)
   stopCluster(cl)
+  rc_result
 
 }
 
