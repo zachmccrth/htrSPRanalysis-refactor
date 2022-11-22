@@ -446,7 +446,7 @@ get_rc_plots <- function(processed_input){
   Time <- processed_input$Time
 
 
-  cl <- makeCluster(getOption("cl.cores", detectCores() - 1))
+  cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
   clusterEvalQ(cl, library("SPRanalysis"))
 
   rc_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = get_response_curve, sample_info_fits,
