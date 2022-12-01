@@ -202,26 +202,26 @@ select_samples <- function(sample_info, titration_data){
        n_time_points = n_time_points)
 }
 
-get_auto_bulkshift <- function(sample_info, Time, RU){
+get_auto_bulkshift <- function(well_idx, sample_info, Time, RU){
 
-  bulkshift <- sample_info$Bulkshift
-  auto_bulkshift <- sample_info$`Automate Bulkshift`
-  num_conc <- sample_info$NumConc
+  bulkshift <- sample_info[well_idx, ]$Bulkshift
+  auto_bulkshift <- sample_info[well_idx, ]$`Automate Bulkshift`
+  num_conc <- sample_info[well_idx, ]$NumConc
 
   if (bulkshift == "Y")
     return(bulkshift)
   if (auto_bulkshift != "Y")
     return(bulkshift)
 
-  start_conc <- sample_info$FirstConcIdx
+  start_conc <- sample_info[well_idx, ]$FirstConcIdx
   end_conc <- start_conc + num_conc - 1
 
   Time <- Time[, start_conc:end_conc]
   RU <- RU[, start_conc:end_conc]
 
-  association <- sample_info$Association
-  baseline <- sample_info$Baseline
-  baseline_start <- sample_info$`Bsl Start`
+  association <- sample_info[well_idx, ]$Association
+  baseline <- sample_info[well_idx, ]$Baseline
+  baseline_start <- sample_info[well_idx, ]$`Bsl Start`
 
   # get last ten seconds of assoc and first 10 of dissoc
 

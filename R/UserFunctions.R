@@ -256,7 +256,7 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
                           RU,
                           sample_info)
 
-  bulkshift <- purrr::map_dfr(.x = sample_info, .f = get_auto_bulkshift, Time, RU)
+  bulkshift <- purrr::map_dfr(.x = 1:nwells, .f = get_auto_bulkshift, sample_info, Time, RU)
 
   sample_info$Bulkshift <- as.vector(bulkshift)
 
