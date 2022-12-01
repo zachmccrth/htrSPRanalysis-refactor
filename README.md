@@ -1,4 +1,4 @@
-# SPR Kinetics Analysis Software
+# High-Throughput SPR Kinetics Analysis Software
 
 This R package provides functions and a pipeline to analyze SPR data. It takes as input the sample information and the Carterra time series and produces a pdf with sensorgrams, fits, rate constants, Rmax, plots of residuals and standard errors of parameter estimates. It also produces a .csv file with the relevant parameters and standard errors.
 

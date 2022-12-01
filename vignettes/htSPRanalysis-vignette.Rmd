@@ -27,7 +27,7 @@ devtools::install_git("https://gitlab.oit.duke.edu/janice/SPRanalysis")
 Then load the library using:
 
 ```{r}
-library(SPRanalysis)
+library(htSPRanalysis)
 ```
 
 ## Input

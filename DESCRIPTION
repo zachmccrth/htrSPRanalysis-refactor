@@ -1,4 +1,4 @@
-Package: SPRanalysis
+Package: htSPRanalysis
 Type: Package
 Title: Analysis of SPR Data
 Version: 0.1.0
