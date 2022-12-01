@@ -256,7 +256,11 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
                           RU,
                           sample_info)
 
-  ############################ Get Concentrations for fits ##############################################
+  bulkshift <- purrr::map_dfr(.x = sample_info, .f = get_auto_bulkshift, Time, RU)
+
+  sample_info$Bulkshift <- as.vector(bulkshift)
+
+  ############################  Concentrations for fits ##############################################
 
   selected_concentrations <- select_concentrations(sample_info, Time, RU)
 
