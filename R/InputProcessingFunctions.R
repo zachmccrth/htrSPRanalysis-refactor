@@ -203,16 +203,18 @@ select_samples <- function(sample_info, titration_data){
 }
 
 get_auto_bulkshift <- function(sample_info, Time, RU){
+
   bulkshift <- sample_info$Bulkshift
   auto_bulkshift <- sample_info$`Automate Bulkshift`
+  num_conc <- sample_info$NumConc
 
   if (bulkshift == "Y")
     return(bulkshift)
-  if (auto_bulkshift !+ "Y")
+  if (auto_bulkshift != "Y")
     return(bulkshift)
 
   start_conc <- sample_info$FirstConcIdx
-  end_conc <- start_conc + sample_info$NumConc - 1
+  end_conc <- start_conc + num_conc - 1
 
   Time <- Time[, start_conc:end_conc]
   RU <- RU[, start_conc:end_conc]
@@ -228,19 +230,26 @@ get_auto_bulkshift <- function(sample_info, Time, RU){
 
   df <- tibble::tibble(Time = Time, RU = RU)
 
+# This is over every concentration. Need to do this for one at a time.
+
+
   df %>%
     filter(Time >= end_assoc_frame & Time <= end_assoc_frame + 10) %>%
-    select(RU) %>%
-    as.vector(.) %>%
-    mean(., na.rm = TRUE) -> avg_assoc
+    select(RU) -> RU_assoc
+
 
   df %>%
     filter(Time >= end_assoc_frame + 10 & Time <= begin_dissoc_frame) %>%
-    select(RU) %>%
-    as.vector(.) %>%
-    mean(., na.rm = TRUE) -> avg_dissoc
+    select(RU) -> RU_dissoc
 
+  avg_assoc <- purrr::map_dfc(.x = RU_assoc, .f = mean, na.rm = TRUE)
+  avg_dissoc <- purrr::map_dfc(.x = RU_dissoc, .f = mean, na.rm = TRUE)
 
+  # fit bulkshift if the difference in response is more than 10 % of the total response
+  if (abs(avg_assoc - avg_diss)/(avg_dissoc + avg_assoc) > 0.1)
+    return("Y")
+
+  return("N")
 }
 
 #' Select the concentrations to be used in model fitting. The concentrations may be selected by the user in the `Incl. Concentrations`
