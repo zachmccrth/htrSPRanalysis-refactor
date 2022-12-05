@@ -206,7 +206,7 @@ get_auto_bulkshift <- function(well_idx, sample_info, Time, RU){
 
   bulkshift <- sample_info[well_idx, ]$Bulkshift
   auto_bulkshift <- sample_info[well_idx, ]$`Automate Bulkshift`
-  num_conc <- sample_info[well_idx, ]$NumConc
+  num_conc <- sample_info[well_idx, ]$NumInclConc
 
   if (bulkshift == "Y")
     return(bulkshift)
@@ -225,33 +225,44 @@ get_auto_bulkshift <- function(well_idx, sample_info, Time, RU){
 
   # get last ten seconds of assoc and first 10 of dissoc
 
-  end_assoc_frame <- association + baseline + baseline_start - 10
-  begin_dissoc_frame <- end_assoc_frame + 20
+  end_assoc_frame <- association + baseline + baseline_start - 20
+  # This means the end of the dissoc window to use
+  begin_dissoc_frame <- end_assoc_frame + 40
 
-  df <- tibble::tibble(Time = Time, RU = RU)
+  avgs <- purrr::map_dfc(1:num_conc, .f = get_averages, Time, RU, end_assoc_frame, begin_dissoc_frame)
 
-# This is over every concentration. Need to do this for one at a time.
+  avg_assoc <- avgs[1,]
+  avg_dissoc <- avgs[2,]
 
-
-  df %>%
-    filter(Time >= end_assoc_frame & Time <= end_assoc_frame + 10) %>%
-    select(RU) -> RU_assoc
-
-
-  df %>%
-    filter(Time >= end_assoc_frame + 10 & Time <= begin_dissoc_frame) %>%
-    select(RU) -> RU_dissoc
-
-  avg_assoc <- purrr::map_dfc(.x = RU_assoc, .f = mean, na.rm = TRUE)
-  avg_dissoc <- purrr::map_dfc(.x = RU_dissoc, .f = mean, na.rm = TRUE)
+  test_bulkshift <- as.vector(abs(avg_assoc - avg_dissoc)/(avg_dissoc + avg_assoc))
 
   # fit bulkshift if the difference in response is more than 10 % of the total response
-  if (abs(avg_assoc - avg_diss)/(avg_dissoc + avg_assoc) > 0.1)
+
+  if (sum(ifelse(test_bulkshift > 0.1, 1, 0)) > 0)
     return("Y")
 
   return("N")
 }
 
+get_averages <- function(conc_idx, Time, RU, end_assoc_frame, begin_dissoc_frame){
+
+   df <- dplyr::bind_cols(Time = Time[, conc_idx], RU = RU[, conc_idx])
+   names(df) <- c("Time", "RU")
+
+  df %>%
+    dplyr::filter(Time >= end_assoc_frame & Time <= (end_assoc_frame + 20)) %>%
+    dplyr::select(RU) -> RU_assoc
+
+  df %>%
+    dplyr::filter(Time >= end_assoc_frame + 20 & Time <= begin_dissoc_frame) %>%
+    dplyr::select(RU) -> RU_dissoc
+
+  avg_assoc <- mean(RU_assoc$RU, na.rm = TRUE)
+  avg_dissoc <- mean(RU_dissoc$RU, na.rm = TRUE)
+
+  c(avg_assoc, avg_dissoc)
+
+}
 #' Select the concentrations to be used in model fitting. The concentrations may be selected by the user in the `Incl. Concentrations`
 #' column in the sample sheet, or the algorithm will determine the 'best' range from the linear part of the average RU vs log concentration plot.
 #'

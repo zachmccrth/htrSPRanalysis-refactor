@@ -256,9 +256,6 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
                           RU,
                           sample_info)
 
-  bulkshift <- purrr::map_dfr(.x = 1:nwells, .f = get_auto_bulkshift, sample_info, Time, RU)
-
-  sample_info$Bulkshift <- as.vector(bulkshift)
 
   ############################  Concentrations for fits ##############################################
 
@@ -284,14 +281,19 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
 
   sample_info_fits <- sample_info[wells, ]
 
+  bulkshift <- purrr::map(.x = 1:n_fit_wells, .f = get_auto_bulkshift,
+                              sample_info_fits,
+                              Time[, keep_concentrations],
+                              corrected_RU[, keep_concentrations])
 
+  sample_info_fits$Bulkshift <- as.vector(bulkshift)
   cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
   parallel::clusterEvalQ(cl, library("SPRanalysis"))
 
   end_dissoc_list <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = purrr::safely(find_dissociation_window),
                               sample_info_fits,
                               Time[, keep_concentrations],
-                              RU[, keep_concentrations],
+                              corrected_RU[, keep_concentrations],
                               incl_concentrations_values,
                               max_RU_tol,
                               min_RU_tol)

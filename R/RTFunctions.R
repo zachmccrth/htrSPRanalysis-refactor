@@ -156,7 +156,7 @@ create_dataframe_with_conc <- function(begin_conc_idx, end_conc_idx, x_vals, y_v
       tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
       dplyr::select("value")
 
-    purrr::map_dfr(.x = tibble::tibble(numerical_concentrations), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+    purrr::map_dfr(.x = tibble::as_tibble(numerical_concentrations), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
       dplyr::arrange(numerical_concentrations) -> numerical_concentrations
     Concentrations <- numerical_concentrations
     df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
@@ -410,7 +410,7 @@ plot_sensorgrams <- function(well_idx,
     dplyr::select("value")
 
 
-  purrr::map_dfr(.x = tibble::tibble(incl_conc_values), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+  purrr::map_dfr(.x = tibble::as_tibble(incl_conc_values), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
     dplyr::arrange(incl_conc_values) -> incl_conc_values
 
    Concentrations <- incl_conc_values
@@ -477,7 +477,7 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
   numerical_concentration <- incl_conc_values[start_idx:end_idx]
 
-  purrr::map_dfr(.x = tibble::tibble(numerical_concentration), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+  purrr::map_dfr(.x = tibble::as_tibble(numerical_concentration), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
     dplyr::arrange(numerical_concentration) -> numerical_concentration
 
   Concentrations <- numerical_concentration
@@ -782,7 +782,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   incl_concentrations <-
     incl_concentrations_values[start_idx:end_idx]
 
-  purrr::map_dfr(.x = tibble::tibble(incl_concentrations),
+  purrr::map_dfr(.x = tibble::as_tibble(incl_concentrations),
           .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
     dplyr::arrange(incl_concentrations) -> incl_concentrations_rep
 
@@ -893,11 +893,11 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
 
   if (global_rmax)
     Rmax_label <- "Rmax" else
-      Rmax_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("Rmax", x))
+      Rmax_label <- purrr::map_dfr(tibble::as_tibble(1:num_conc), function(x) paste("Rmax", x))
 
 
-  R0_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("R_0", x))
-  bulkshift_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("Bulkshift", x))
+  R0_label <- purrr::map_dfr(tibble::as_tibble(1:num_conc), function(x) paste("R_0", x))
+  bulkshift_label <- purrr::map_dfr(tibble::as_tibble(1:num_conc), function(x) paste("Bulkshift", x))
 
 
   pars <- stats::coefficients(fits_list[[well_idx]]$result$FitResult)
@@ -914,7 +914,7 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   #summary_fit_with_constraints returns the coefficients table from summary.minpack.lm
 
   summary_names <- colnames(result_summary)
-  result_summary %>% tibble::tibble() -> par_err_table
+  result_summary %>% tibble::as_tibble() -> par_err_table
 
   colnames(par_err_table) <- summary_names
   par_err_table <- suppressMessages(dplyr::bind_cols(Names = par_names, par_err_table))
@@ -945,7 +945,7 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   fits_list[[well_idx]]$result$FitOutcomes$Concentration -> Concentration_resid
 
 
-  resid_plot <- ggplot2::ggplot(data = tibble::tibble(Residuals = RU_resid, Time = Time_resid, Concentration = forcats::as_factor(Concentration_resid)),
+  resid_plot <- ggplot2::ggplot(data = tibble::as_tibble(Residuals = RU_resid, Time = Time_resid, Concentration = forcats::as_factor(Concentration_resid)),
                        ggplot2::aes(x = Time, y = Residuals, color = Concentration)) + ggplot2::geom_point(size = 0.01) +
                           ggplot2::ggtitle(label = "Residuals")
 
@@ -1002,7 +1002,7 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
   numerical_concentration_incl <-
     incl_concentrations_values[start_incl_idx:end_incl_idx]
 
-  purrr::map_dfr(.x = tibble::tibble(numerical_concentration), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+  purrr::map_dfr(.x = tibble::as_tibble(numerical_concentration), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
     dplyr::arrange(numerical_concentration) -> numerical_concentration
 
   Concentrations <- numerical_concentration
@@ -1072,7 +1072,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
   # first column of summary is the estimate. Second is standard error
 
   summary_names <- colnames(result_summary)
-  result_summary %>% tibble::tibble() %>% dplyr::select(Estimate, `Std. Error`) -> par_err_table
+  result_summary %>% tibble::as_tibble() %>% dplyr::select(Estimate, `Std. Error`) -> par_err_table
 
   colnames(par_err_table) <- summary_names[1:2]
 

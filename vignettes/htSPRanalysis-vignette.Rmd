@@ -133,6 +133,13 @@ plots_before_processing <- get_plots_before_baseline(processed_input)
 
 ```
 
+Example plot:
+
+```{r}
+plots_before_processing[[1]]
+```
+
+
 ### Fit the data to the 1:1 Languir model
 
 ```{r}
