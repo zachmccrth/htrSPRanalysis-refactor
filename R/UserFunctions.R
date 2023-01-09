@@ -17,51 +17,33 @@
 
 #' @export process_input
 
-process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data_file_path = NULL){
+process_input <- function(files_directory = NULL,
+                          sample_sheet_path = NULL,
+                          data_file_path = NULL,
+                          output_file_path,
+                          output_pdf,
+                          output_csv,
+                          error_pdf,
+                          min_allowed_kd = 10^(-5),
+                          max_iterations = 1000,
+                          ptol = 10^(-10),
+                          ftol = 10^(-10),
+                          min_RU_tol = 20,
+                          max_RU_tol = 300){
 
-  if (is.null(files_directory)){
-    files_directory  <-  rstudioapi::selectDirectory(
-       caption <- "Select Directory",
-         label <- "Select")
-  }
-
-  #import file
-  if (is.null(sample_sheet_path)){
-    sample_sheet_path <- rstudioapi::selectFile(caption = "Select the sample sheet file",
-                                                filter = "All Files (*.xlsx)",
-                                                existing = TRUE,
-                                                path = files_directory)
-    sample_sheet <- readxl::read_excel(sample_sheet_path)
-  }
+  sample_sheet <- readxl::read_excel(sample_sheet_path)
   #identify if any flags present in the sample sheet
   flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path, files_directory)
 
-  # requesting re-selection of the file is empty or in different format
-
-  usr_msg <- "Error in sample sheet file. See Error_note_sample_sheet.csv for detailed description, then select updated file"
-
-  while (flagspresent) {
-    sample_sheet_path <- rstudioapi::selectFile(caption = usr_msg,
-                                                filter = "All Files (*.xlsx)",
-                                                existing = TRUE,
-                                                path = files_directory)
-    sample_sheet <- readxl::read_excel(sample_sheet_path)
-    sample_sheet <- tibble::tibble(sample_sheet)
-    flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path, files_directory)
+  if (flagspresent){
+     usr_msg <- "Error in sample sheet file. See Error_note_sample_sheet.csv for detailed description, then select updated file"
+     stop(usr_msg)
   }
 
   #formatting sample_sheet data
   sample_info <- process_sample_sheet(sample_sheet)
 
   #import filter
-
-  if (is.null(data_file_path)){
-
-    data_file_path <- rstudioapi::selectFile(caption = "Select the data file",
-                                             filter = "All Files (*.xlsx)",
-                                             existing = TRUE,
-                                             path = files_directory)
-  }
 
   # readxl is *horribly* slow right now. Switching to openxlsx for the moment, may switch if readxl gets fixed.
   # check if this is new or old file format
@@ -77,138 +59,60 @@ process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data
   #identify if any flags present in the sample sheet
   flagspresent <- check_titration_data(titration_data, files_directory)
 
-
-  # requesting re-selection of the file is empty or in different format
-
-  usr_msg <- "Error in titration data file. See Error_note_titration_data.csv for detailed description, then select corrected file"
-  while (flagspresent) {
-    data_file_path <- rstudioapi::selectFile(caption = usr_msg,
-                                             filter = "All Files (*.xlsx)",
-                                             existing = TRUE,
-                                             path = files_directory)
-    titration_data <- readxl::read_excel(data_file_path, col_names = TRUE, skip = 1, n_max = 1000)
-    flagspresent <- check_titration_data(titration_data, files_directory)
+  if (flagspresent){
+    usr_msg <- "Error in titration data file. See Error_note_titration_data.csv for detailed description, then select corrected file"
+    stop(usr_msg)
   }
 
   ################################ Set fitting options - not allowing user to change ptol or ftol at the moment ###############################
-  min_allowed_kd <- 10^(-5)
-  max_iterations <- 1000
-  ptol <- 10^(-10)
-  ftol <- 10^(-10)
 
-  min_RU_tol <- 20
-  max_RU_tol <- 300
-
-  flagspresent <- TRUE
-
-  while(flagspresent){
-    min_allowed_kd <- svDialogs::dlg_input("Please enter the minimum allowed kd", print(10^(-5)))
-    min_allowed_kd <- as.numeric(min_allowed_kd$res)
-    flagspresent <- FALSE
-    if (is.na(min_allowed_kd) | min_allowed_kd < 10^(-7) | min_allowed_kd > 10^(-3)){
-      svDialogs::dlg_message("Please enter a number in the form 1e-n, where n is between 3 and 7")
-      flagspresent <- TRUE
-    }
+  if (is.na(min_allowed_kd) | min_allowed_kd < 10^(-7) | min_allowed_kd > 10^(-3)){
+      usr_msg <- "Invalid min_allowed_kd. Please use a number in the form 1e-n, where n is between 3 and 7"
+      stop(usr_msg)
+  }
+  if (is.na(max_iterations) | max_iterations < 500 | max_iterations > 100000){
+     usr_msg <- "Invalid max_iterations. Please use a number between 500 and 100000"
+     stop(usr_msg)
   }
 
-  flagspresent <- TRUE
-
-  while(flagspresent){
-    max_iterations <- svDialogs::dlg_input("Please enter the maximum number of iterations for optimization algorithm", print(1000))
-    max_iterations <- as.numeric(max_iterations$res)
-    flagspresent <- FALSE
-    if (is.na(max_iterations) | max_iterations < 500 | max_iterations > 100000){
-      svDialogs::dlg_message("Please enter a number between 500 and 100000")
-      flagspresent <- TRUE
-    }
+  if (is.na(min_RU_tol) | min_RU_tol < 0 | min_RU_tol > 300){
+      usr_msg <- "Invalid min_RU_tol. Please use a number between 0 and 300"
+      stop(usr_msg)
   }
 
-  flagspresent <- TRUE
-
-  while(flagspresent){
-    min_RU_tol <- svDialogs::dlg_input("Please enter the minimum RU value for choosing dissociation window", print(20))
-    min_RU_tol <- as.numeric(min_RU_tol$res)
-    flagspresent <- FALSE
-    if (is.na(min_RU_tol) | min_RU_tol < 0 | min_RU_tol > 300){
-      svDialogs::dlg_message("Please enter a number between 0 and 300")
-      flagspresent <- TRUE
-    }
+  if (is.na(max_RU_tol) | max_RU_tol < 50 | max_RU_tol > 500){
+      usr_msg <- "Invalid max_RU_tol. Please use a number between 50 and 500"
+      stop(usr_msg)
   }
 
-  flagspresent <- TRUE
-
-  while(flagspresent){
-    max_RU_tol <- svDialogs::dlg_input("Please enter the maximum RU value for choosing the dissociation window", print(400))
-    max_RU_tol <- as.numeric(max_RU_tol$res)
-    flagspresent <- FALSE
-    if (is.na(max_RU_tol) | max_RU_tol < 50 | max_RU_tol > 500){
-      svDialogs::dlg_message("Please enter a number between 50 and 500")
-      flagspresent <- TRUE
-    }
-  }
   # Windows does not use fork. Figure out how to use multi-core on Windows
   detected_num_cores <- parallel::detectCores()
 
   if (detected_num_cores < 1)
     detected_num_cores <- 1
 
-  flagspresent <- TRUE
-
-  while(flagspresent){
-    num_cores <- svDialogs::dlg_input("Please enter the number of cores to use for parallel processing", print(detected_num_cores))
-    num_cores <- as.integer(num_cores$res)
-    flagspresent <- FALSE
-    if (is.na(num_cores) | num_cores > detected_num_cores | num_cores < 1){
-      svDialogs::dlg_message(paste("Please enter a number between 1 and", detected_num_cores))
-      flagspresent <- TRUE
-    }
+  if (is.na(num_cores) | num_cores > detected_num_cores | num_cores < 1){
+      usr_msg <- paste("Invalid value for num_cores. Please enter a number between 1 and", detected_num_cores)
+      stop(usr_msg)
   }
 
   ########### Set output file names #######################################
-  output_file_path <- stringr::str_split(sample_sheet_path, "-", n = 2)[[1]][1]
-  output_pdf <- paste0(output_file_path, date(), " - output.pdf")
-  output_csv <- paste0(output_file_path, date()," - output.csv")
-  error_pdf <- paste0(output_file_path, date()," - error.pdf")
+  output_file_path_default <- stringr::str_split(sample_sheet_path, "-", n = 2)[[1]][1]
+  output_pdf_default <- paste0(output_file_path, date(), " - output.pdf")
+  output_csv_default <- paste0(output_file_path, date()," - output.csv")
+  error_pdf_default <- paste0(output_file_path, date()," - error.pdf")
 
+  if (is.null(output_file_path))
+    output_file_path <- output_file_path_default
 
-  flagspresent <- TRUE
+  if (is.null(output_pdf))
+    output_pdf <- output_pdf_default
 
-  while(flagspresent){
-    output_pdf_new <- svDialogs::dlg_input("Please enter a filename for the plot output", print(output_pdf))
-    output_pdf_new <- output_pdf_new$res
-    flagspresent <- FALSE
-    if (is.null(output_pdf_new)){
-      flagspresent <- TRUE
-    }
-  }
-  output_pdf <- output_pdf_new
+  if (is.null(output_csv))
+    output_csv <- output_csv_default
 
-  flagspresent <- TRUE
-
-  while(flagspresent){
-    error_pdf_new <- svDialogs::dlg_input("Please enter a filename for the error output", print(error_pdf))
-    error_pdf_new <- error_pdf_new$res
-    flagspresent <- FALSE
-    if (is.null(error_pdf_new)){
-      flagspresent <- TRUE
-    }
-  }
-  error_pdf <- error_pdf_new
-
-
-  flagspresent <- TRUE
-
-  while(flagspresent){
-    output_csv_new <- svDialogs::dlg_input("Please enter a filename for the csv output", print(output_csv))
-    output_csv_new <- output_csv_new$res
-    flagspresent <- FALSE
-    if (is.null(output_csv_new)){
-      flagspresent <- TRUE
-    }
-  }
-  output_csv <- output_csv_new
-
-
+  if (is.null(error_pdf))
+    error_pdf <- error_pdf_default
 
   ####### Process sample sheet #############################################
   # There are different numbers of concentrations exported for each well.
