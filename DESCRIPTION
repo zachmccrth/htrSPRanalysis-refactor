@@ -2,8 +2,8 @@ Package: htrSPRanalysis
 Type: Package
 Title: Analysis of SPR Data
 Version: 0.1.0
-Author: Janice McCarthy, Kyle Nguyen, Jonathan Li and Moses Sekeran
-Maintainer: The package maintainer <janice.mccarthy@duke.edut>
+Author: Janice M. McCarthy, Kan Li and S. Moses Dennison
+Maintainer: Janice M. McCarthy <janice.mccarthy@duke.edu>
 Description: Analysis of SPR data, with automations for high-throughput SPR. This version of the package fits the 1: 1 binding model, with and without bulkshift. It offers optional local or global Rmax fitting. The user must provide a sample sheet and a Carterra output file in Carterra's current format. There is a utility function to convert from Carterra's old output format. The user may run a custom pipeline or use the provided 'Runscript', which will produce a pdf file containing fitted Rmax, ka, kd and standard errors, a plot of the sensorgram and fits, and a plot of residuals. The script will also produce a .csv file with all of the relevant parameters for each spot on the SPR chip.
 License: GPL-3 + file LICENSE
 Encoding: UTF-8

@@ -60,8 +60,12 @@ returns a list object with the titration time series, processed sample informati
 file outputs and fitting options
 }
 \examples{
+# set up file paths for example
+
 files_directory <- system.file("extdata", package="htrSPRanalysis")
 sample_sheet_path <- system.file("extdata", "sample_sheet.xlsx", package="htrSPRanalysis")
-data_file_path <- system.file("extdata", "sample_sheet.xlsx", package="htrSPRanalysis")
+data_file_path <- system.file("extdata", "titration_data.xlsx", package="htrSPRanalysis")
+
+# process the input
 processed_input <- process_input(files_directory = files_directory, sample_sheet_path = sample_sheet_path, data_file_path = data_file_path)
 }
