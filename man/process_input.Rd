@@ -46,9 +46,9 @@ process_input(
 
 \item{ftol}{Curve fitting parameter. If the squared error between observed and predicted values is smaller than ftol, the optimization is considered converged. The default is 10^(-10)}
 
-\item{min_RU_tol}{= 20}
+\item{min_RU_tol}{Minimum RU required for dissociation window detection}
 
-\item{max_RU_tol}{= 300}
+\item{max_RU_tol}{Maximum RU required for dissociation window detection.}
 }
 \value{
 A list.
@@ -60,6 +60,8 @@ returns a list object with the titration time series, processed sample informati
 file outputs and fitting options
 }
 \examples{
-processed_input <- process_input(files_directory = "inst", sample_sheet_path = "inst/extdata/Antigen 2 - info sheet.xlsx", data_file_path = "inst/Antigen 2 - new output format.xlsx")
-
+files_directory <- system.file("extdata", package="htrSPRanalysis")
+sample_sheet_path <- system.file("extdata", "sample_sheet.xlsx", package="htrSPRanalysis")
+data_file_path <- system.file("extdata", "sample_sheet.xlsx", package="htrSPRanalysis")
+processed_input <- process_input(files_directory = files_directory, sample_sheet_path = sample_sheet_path, data_file_path = data_file_path)
 }

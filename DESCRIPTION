@@ -13,6 +13,7 @@ Suggests:
     knitr,
     rmarkdown
 Imports:
+  magrittr,
   readxl,
   openxlsx,
   minpack.lm,
@@ -30,6 +31,5 @@ Imports:
   purrr,
   forcats,
   tibble,
-  magrittr,
   tidyr
 VignetteBuilder: knitr
