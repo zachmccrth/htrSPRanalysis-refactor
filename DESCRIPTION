@@ -29,7 +29,6 @@ Imports:
   ggplot2,
   purrr,
   forcats,
-  rstudioapi,
   tibble,
   magrittr,
   tidyr
