@@ -5,7 +5,6 @@
 #' returns a list object with the titration time series, processed sample information, all user inputs directing
 #' file outputs and fitting options
 #'
-#' When called without arguments, the Rstudio interface will be used to obtain file names and paths.
 #'
 #' @param files_directory The directory that contains the input files.
 #' @param sample_sheet_path The full path to the sample information file.
@@ -24,7 +23,7 @@
 #'
 #' @return A list.
 
-#' @examples processed_input <- process_input(files_directory = "inst", sample_sheet_path = "inst/Antigen 2 - info sheet.xlsx", data_file_path = "inst/extdata/Antigen 2 - new output format.xlsx")
+#' @examples processed_input <- process_input(files_directory = "inst", sample_sheet_path = "inst/extdata/Antigen 2 - info sheet.xlsx", data_file_path = "inst/Antigen 2 - new output format.xlsx")
 #'
 #' @export process_input
 
