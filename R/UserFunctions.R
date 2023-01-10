@@ -7,23 +7,35 @@
 #'
 #' When called without arguments, the Rstudio interface will be used to obtain file names and paths.
 #'
-#' @param files_directory The directory that contains the input files
-#' @param sample_sheet_path The full path to the sample information file
-#' @param data_file_path The full path to the titration data file
+#' @param files_directory The directory that contains the input files.
+#' @param sample_sheet_path The full path to the sample information file.
+#' @param data_file_path The full path to the titration data file.
+#' @param output_file_path The full path where output should be stored. This directory needs to exist.
+#' @param output_pdf The name of the file for the pdf output.
+#' @param output_csv The name of the file for the csv output.
+#' @param error_pdf The name of the file for error output.
+#' @param num_cores The number of cores to use for parallel processing. The default is( the number of cores detected by `parallel::detectCores()`.
+#' @param min_allowed_kd The minimum value for the dissociation constant. The default is 10^(-5).
+#' @param max_iterations The maximum number of iterations for curve fitting. The default is 1000.
+#' @param ptol Curve fitting parameter. If the proposed changes in parameters is smaller than this value, the optimization is considered converged. The default is 10^(-10)
+#' @param ftol Curve fitting parameter. If the squared error between observed and predicted values is smaller than ftol, the optimization is considered converged. The default is 10^(-10)
+#' @param min_RU_tol = 20
+#' @param max_RU_tol = 300
 #'
 #' @return A list.
-#'
-#' process_input <- function(files_directory = NULL, sample_sheet_path = NULL, data_file_path = NULL)
 
+#' @examples processed_input <- process_input(files_directory = "inst", sample_sheet_path = "inst/Antigen 2 - info sheet.xlsx", data_file_path = "inst/extdata/Antigen 2 - new output format.xlsx")
+#'
 #' @export process_input
 
 process_input <- function(files_directory = NULL,
                           sample_sheet_path = NULL,
                           data_file_path = NULL,
-                          output_file_path,
-                          output_pdf,
-                          output_csv,
-                          error_pdf,
+                          output_file_path = NULL,
+                          output_pdf = NULL,
+                          output_csv = NULL,
+                          error_pdf = NULL,
+                          num_cores = NULL,
                           min_allowed_kd = 10^(-5),
                           max_iterations = 1000,
                           ptol = 10^(-10),
@@ -85,14 +97,16 @@ process_input <- function(files_directory = NULL,
       stop(usr_msg)
   }
 
-  # Windows does not use fork. Figure out how to use multi-core on Windows
   detected_num_cores <- parallel::detectCores()
 
   if (detected_num_cores < 1)
     detected_num_cores <- 1
 
+  if (is.null(num_cores))
+     num_cores <- detected_num_cores
+
   if (is.na(num_cores) | num_cores > detected_num_cores | num_cores < 1){
-      usr_msg <- paste("Invalid value for num_cores. Please enter a number between 1 and", detected_num_cores)
+      usr_msg <- paste("Invalid value for num_cores. Please use a number between 1 and", detected_num_cores)
       stop(usr_msg)
   }
 
@@ -192,7 +206,7 @@ process_input <- function(files_directory = NULL,
 
   sample_info_fits$Bulkshift <- as.vector(bulkshift)
   cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
-  parallel::clusterEvalQ(cl, library("SPRanalysis"))
+  parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
   end_dissoc_list <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = purrr::safely(find_dissociation_window),
                               sample_info_fits,
@@ -247,7 +261,7 @@ get_plots_before_baseline <- function(processed_input){
   nwells <- processed_input$nwells
 
   cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
-  parallel::clusterEvalQ(cl, library("SPRanalysis"))
+  parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
   plot_result <- parallel::parLapply(cl, X = 1:nwells, fun = plot_sensorgrams, sample_info,
            Time, RU,
@@ -292,7 +306,7 @@ get_fits <- function(processed_input){
   #          ftol)
 
   cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
-  parallel::clusterEvalQ(cl, library("SPRanalysis"))
+  parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
   fit_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = purrr::safely(fit_association_dissociation), sample_info_fits,
            Time[, keep_concentrations],
@@ -328,7 +342,7 @@ get_fitted_plots <- function(processed_input, fits_list){
 
 
   cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
-  parallel::clusterEvalQ(cl, library("SPRanalysis"))
+  parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
   plot_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = plot_sensorgrams_with_fits,
            sample_info_fits, fits_list,
@@ -357,7 +371,7 @@ get_rc_plots <- function(processed_input){
 
 
   cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
-  parallel::clusterEvalQ(cl, library("SPRanalysis"))
+  parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
   rc_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = get_response_curve, sample_info_fits,
            Time, RU,

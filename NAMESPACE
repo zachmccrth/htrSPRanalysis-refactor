@@ -7,7 +7,3 @@ export(get_fitted_plots)
 export(get_plots_before_baseline)
 export(get_rc_plots)
 export(process_input)
-
-importFrom(magrittr,"%>%")
-importFrom("grDevices", "dev.off", "pdf")
-
