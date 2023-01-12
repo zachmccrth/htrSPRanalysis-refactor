@@ -211,7 +211,7 @@ process_input <- function(files_directory = NULL,
                               corrected_RU[, keep_concentrations])
 
   sample_info_fits$Bulkshift <- as.vector(bulkshift)
-  cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
+  cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
   parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
   end_dissoc_list <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = purrr::safely(find_dissociation_window),
@@ -225,18 +225,8 @@ process_input <- function(files_directory = NULL,
 
   sample_info_fits$DissocEnd <- rep(NA, n_fit_wells)
 
-  #how to extract this?
-
-
   sample_info_fits$DissocEnd <- purrr::map_dbl(.x = end_dissoc_list,
                                         .f = function(x){ifelse(is.null(x$error) & !is.null(x$result), x$result, NA)})
-
-  # keep_concentrations <- processed_input$keep_concentrations
-  # Time <- processed_input$Time
-  # RU <- processed_input$RU
-  # corrected_RU <- processed_input$corrected_RU
-  # all_concentrations_values <- processed_input$all_concentrations_values
-  # n_time_points <- processed_input$n_time_points
 
   list(sample_info = sample_info, sample_info_fits = sample_info_fits, Time = Time, RU = RU, corrected_RU = corrected_RU,
        keep_concentrations = keep_concentrations, all_concentrations_values = all_concentrations_values,
@@ -266,7 +256,7 @@ get_plots_before_baseline <- function(processed_input){
   num_cores <- processed_input$num_cores
   nwells <- processed_input$nwells
 
-  cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
+  cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
   parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
   plot_result <- parallel::parLapply(cl, X = 1:nwells, fun = plot_sensorgrams, sample_info,
@@ -311,7 +301,7 @@ get_fits <- function(processed_input){
   #          ptol,
   #          ftol)
 
-  cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
+  cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
   parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
   fit_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = purrr::safely(fit_association_dissociation), sample_info_fits,
@@ -347,7 +337,7 @@ get_fitted_plots <- function(processed_input, fits_list){
   Time <- processed_input$Time
 
 
-  cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
+  cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
   parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
   plot_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = plot_sensorgrams_with_fits,
@@ -376,7 +366,7 @@ get_rc_plots <- function(processed_input){
   Time <- processed_input$Time
 
 
-  cl <- parallel::makeCluster(getOption("cl.cores", parallel::detectCores() - 1))
+  cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
   parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
   rc_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = get_response_curve, sample_info_fits,
