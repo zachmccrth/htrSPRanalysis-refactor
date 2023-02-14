@@ -840,7 +840,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
 
   }
 
-  pars <- stats::coefficients(fit_result)
+  pars <- minpack.lm:::coef.nls.lm(fit_result)
 
   if (global_rmax){
     #pars (global "Rmax","ka", "tstart" one for each concentration)
@@ -900,7 +900,7 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   bulkshift_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("Bulkshift", x))
 
 
-  pars <- stats::coefficients(fits_list[[well_idx]]$result$FitResult)
+  pars <- minpack.lm:::coef.nls.lm(fits_list[[well_idx]]$result$FitResult)
 
   if (bulkshift)
     par_names <- purrr::as_vector(purrr::flatten(c(Rmax_label, "ka", R0_label, "kd", bulkshift_label))) else
@@ -1053,13 +1053,13 @@ get_csv <- function(well_idx, fits_list, sample_info){
   R0 <- rep(NA,5)
   R0_se <- rep(NA,5)
 
-  if (is.null(fits_list[well_idx]$FitResult)){
+  if (is.null(fits_list[well_idx]$result$FitResult)){
     return(c(Rmax = Rmax, Rmax_se = Rmax_se, ka = NA, ka_se = NA, kd = NA,
              kd_se = NA, Bulkshift = Bulkshift, Bulkshift_se = Bulkshift_se, R0 = R0, R0_se = R0_se))
 
   }
 
-  pars <- stats::coefficients(fits_list[[well_idx]]$result$FitResult)
+  pars <- minpack.lm:::coef.nls.lm(fits_list[[well_idx]]$result$FitResult)
 
   if (sample_info[well_idx, ]$Bulkshift == "Y")
     bulkshift <- TRUE else

@@ -20,7 +20,7 @@ This R package consists of a library of functions for processing and analyzing d
 
 ```{r eval=FALSE}
 
-#devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis")
+devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis")
 
 ```
 
@@ -169,5 +169,49 @@ create_pdf(processed_input, fits_list, rc_list, plot_list)
 
 ```{r}
 create_csv(processed_input, fits_list)
+```
+
+
+## Bulk shift example
+
+### Pipeline
+
+```{r}
+files_directory <- system.file("extdata", package="htrSPRanalysis")
+sample_sheet_path <- system.file("extdata", "bulkshift_example_sample_sheet.xlsx", package="htrSPRanalysis")
+data_file_path <- system.file("extdata", "bulkshift_example_titration_data.xlsx", package="htrSPRanalysis")
+
+# process the input
+
+bulkshift_example <- process_input(files_directory = files_directory,
+                                 sample_sheet_path = sample_sheet_path,
+                                 data_file_path = data_file_path)
+
+bulkshift_plots_before_processing <- get_plots_before_baseline(bulkshift_example)
+
+bulkshift_fits <- get_fits(bulkshift_example)
+
+bulkshift_plots <- get_fitted_plots(processed_input = bulkshift_example,
+                                    fits_list = bulkshift_fits)
+
+bulkshift_rc <- get_rc_plots(processed_input = bulkshift_example)
+
+```
+
+### Output
+
+```{r}
+bulkshift_plots_before_processing[[1]]
+
+bulkshift_plots[[1]]
+
+bulkshift_rc[[1]]
+
+create_pdf(processed_input = bulkshift_example, 
+           fits_list = bulkshift_fits,
+           rc_list = bulkshift_rc)
+
+create_csv(processed_input = bulkshift_example, 
+           fits_list = bulkshift_fits)
 ```
 
