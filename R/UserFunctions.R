@@ -229,7 +229,7 @@ process_input <- function(files_directory = NULL,
   sample_info_fits$DissocEnd <- purrr::map_dbl(.x = end_dissoc_list,
                                         .f = function(x){ifelse(is.null(x$error) & !is.null(x$result), x$result, NA)})
 
-  list(expanded_sample_sheet = exapanded_sample_sheet,
+  list(expanded_sample_sheet = expanded_sample_sheet,
        sample_info = sample_info,
        sample_info_fits = sample_info_fits,
        Time = Time, RU = RU, corrected_RU = corrected_RU,
