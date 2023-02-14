@@ -145,6 +145,7 @@ process_input <- function(files_directory = NULL,
   selected_samples <- select_samples(sample_info, titration_data)
   selected_samples
 
+  expanded_sample_sheet <- sample_info
   sample_info <- selected_samples$sample_info
   keep_concentrations <- selected_samples$keep_concentrations
   Time <- selected_samples$Time
@@ -228,8 +229,12 @@ process_input <- function(files_directory = NULL,
   sample_info_fits$DissocEnd <- purrr::map_dbl(.x = end_dissoc_list,
                                         .f = function(x){ifelse(is.null(x$error) & !is.null(x$result), x$result, NA)})
 
-  list(sample_info = sample_info, sample_info_fits = sample_info_fits, Time = Time, RU = RU, corrected_RU = corrected_RU,
-       keep_concentrations = keep_concentrations, all_concentrations_values = all_concentrations_values,
+  list(expanded_sample_sheet = exapanded_sample_sheet,
+       sample_info = sample_info,
+       sample_info_fits = sample_info_fits,
+       Time = Time, RU = RU, corrected_RU = corrected_RU,
+       keep_concentrations = keep_concentrations,
+       all_concentrations_values = all_concentrations_values,
        incl_concentrations_values = incl_concentrations_values,
        n_time_points = n_time_points, max_RU_tol = max_RU_tol, min_RU_tol = min_RU_tol, nwells = nwells,
        n_fit_wells = n_fit_wells, num_cores = num_cores, min_allowed_kd = min_allowed_kd,
