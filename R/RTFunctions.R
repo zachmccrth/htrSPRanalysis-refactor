@@ -347,8 +347,8 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   # low end or high end, depending on which slope is smaller
 
   # remove_concentration has at least one '1' value
-  # if both first and last are taggplot2::gged, we remove the smallest
-  # if only one is taggplot2::gged, it will still be the smallest
+  # if both first and last are tagged, we remove the smallest
+  # if only one is tagged, it will still be the smallest
   if (slopes[1] < slopes[4])
       return(concentrations[(start_conc_idx+1):(start_conc_idx + 4)])
   else
