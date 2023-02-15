@@ -206,7 +206,7 @@ process_input <- function(files_directory = NULL,
 
   sample_info_fits <- sample_info[wells, ]
 
-  first_incl_conc_idx_list <- purrr::map(.x = 1:nwells, .f = first_conc_indices,
+  first_incl_conc_idx_list <- purrr::map(.x = 1:n_fit_wells, .f = first_conc_indices,
                                          sample_info_fits$NumInclConc)
 
   sample_info_fits$FirstInclConcIdx <- purrr::as_vector(purrr::flatten(first_incl_conc_idx_list))
