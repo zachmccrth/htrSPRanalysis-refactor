@@ -331,7 +331,8 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
 
     #Use this to match to ligand_conc and to x_vals, y_vals
 
-    # need to account for the indices
+    # the following keeps all of the concentrations for each of the wells selected to include, but
+    # excludes the wells not selected
     if (num_incl > 3){
       incl_idx <- which(concentrations %in% incl_concentrations) + displacement_in_titration_data
       keep_concentrations <- c(keep_concentrations, incl_idx)
@@ -341,10 +342,6 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
     else
       error_idx <- c(error_idx, i)
 
-    # the following keeps all of the concentrations for each of the wells selected to include, but
-    # excludes the wells not selected
-
-    displacement_in_titration_data <- num_conc + displacement_in_titration_data
 
   }
 
