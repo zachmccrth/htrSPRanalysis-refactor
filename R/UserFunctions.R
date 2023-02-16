@@ -189,12 +189,8 @@ process_input <- function(files_directory = NULL,
   keep_concentrations <- selected_concentrations$keep_concentrations
   sample_info <- selected_concentrations$sample_info
 
-  first_incl_conc_idx_list <- purrr::map(.x = 1:nwells, .f = first_conc_indices,
-                                  sample_info$NumInclConc)
-
-  sample_info$FirstInclConcIdx <- purrr::as_vector(purrr::flatten(first_incl_conc_idx_list))
-
   incl_concentrations_values <- selected_concentrations$incl_concentrations_values
+  incl_concentrations_ligand <- selected_concentrations$incl_concentrations_ligand
 
   error_idx_concentrations <- selected_concentrations$error_idx
 
@@ -205,6 +201,8 @@ process_input <- function(files_directory = NULL,
   # we'll create a new sample sheet, because we need the full sheet later to display error information
 
   sample_info_fits <- sample_info[wells, ]
+
+  sample_info_fits$NumInclConc <- incl_concentrations_ligand
 
   first_incl_conc_idx_list <- purrr::map(.x = 1:n_fit_wells, .f = first_conc_indices,
                                          sample_info_fits$NumInclConc)

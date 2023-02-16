@@ -346,10 +346,10 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
 
   }
 
-  sample_info$NumInclConc <- incl_concentrations_ligand
 
   list(keep_concentrations = keep_concentrations,
        sample_info = sample_info, incl_concentrations_values = incl_concentrations_values,
+       incl_concentrations_ligand = incl_concentrations_ligand,
        error_idx = error_idx)
 
 }
