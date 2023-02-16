@@ -449,6 +449,7 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
   if (!is.null(fits[[well_idx]]$error))
     return(NULL)
 
+  print(well_idx)
   start_idx <- sample_info[well_idx,]$FirstInclConcIdx
   num_conc <- sample_info[well_idx,]$NumInclConc
   end_idx <- start_idx + num_conc - 1
