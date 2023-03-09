@@ -35,10 +35,11 @@ process_sample_sheet <- function(sample_sheet){
 
   }
 
-  sample_sheet %>% suppressWarnings(tidyr::separate(`Position/Channel/Sensor`, into = c("BeginPosition", "EndPosition", sep = "-"))) %>%
+  sample_sheet %>%
+    suppressWarnings(tidyr::separate(`Position/Channel/Sensor`, into = c("BeginPosition", "EndPosition", sep = "-"))) %>%
     suppressWarnings(tidyr::separate(BeginPosition, into = c("Row", "Column"), sep = 1)) %>%
     suppressWarnings(tidyr::separate(EndPosition, into = c("EndRow", "EndColumn"), sep = 1)) %>%
-    suppressWarnings(dplyr::mutate(Column = as.integer(Column)) %>%
+    suppressWarnings(dplyr::mutate(Column = as.integer(Column))) %>%
     dplyr::mutate(EndColumn = as.integer(EndColumn)) -> RowExpansionTemplate
 
   length_ss <- dim(RowExpansionTemplate)[1]
