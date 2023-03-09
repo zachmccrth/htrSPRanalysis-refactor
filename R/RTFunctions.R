@@ -732,7 +732,6 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
 #' fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
 #' incl_concentrations_values, min_allowed_kd = 10^(-5),
 #' max_iterations = 500, ptol = 10^(-10), ftol = 10^(-10))
-write.xlsx(sample_info_input, "~/mathematicaproject/data/Example data files/bulkshift_example_sample_sheet.xlsx", row.names = FALSE)
 
 fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
                             incl_concentrations_values, n_time_points,
