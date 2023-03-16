@@ -338,12 +338,12 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
 
       incl_idx <- which(concentrations %in% incl_concentrations) + displacement_in_titration_data
       keep_concentrations <- c(keep_concentrations, incl_idx)
-      displacement_in_titration_data <- num_conc + displacement_in_titration_data
 
     }
     else
       error_idx <- c(error_idx, i)
 
+    displacement_in_titration_data <- num_conc + displacement_in_titration_data
 
   }
 

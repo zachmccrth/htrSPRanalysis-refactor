@@ -356,7 +356,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
 
 }
 
-#' Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, use plot_sensorgrams_with_fits
+#' Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, useplot_sensorgrams_with_fits
 #' @param well_idx The corresponding well in the extended sample sheet.
 #' @param sample_info A tibble. The expanded sample sheet.
 #' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
@@ -449,7 +449,6 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
   if (!is.null(fits[[well_idx]]$error))
     return(NULL)
 
-  print(well_idx)
   start_idx <- sample_info[well_idx,]$FirstInclConcIdx
   num_conc <- sample_info[well_idx,]$NumInclConc
   end_idx <- start_idx + num_conc - 1

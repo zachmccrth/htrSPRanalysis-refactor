@@ -194,11 +194,16 @@ process_input <- function(files_directory = NULL,
 
   error_idx_concentrations <- selected_concentrations$error_idx
 
+  # Delete NumConc corresponding to error_idx from all FirstConcIdx after the error_idx
+  # Also need to delete corresponding rows in Time and RU data frames
+  # and fix all_concentrations_values
+
   wells <- which(!(1:nwells %in% error_idx_concentrations))
   n_fit_wells <- length(wells)
 
-  # now the list doesn't match with sample info... maybe need to remove those from the sample sheet?
+  # now the list doesn't match with sample info
   # we'll create a new sample sheet, because we need the full sheet later to display error information
+  # any errors now make the first concentration index off.
 
   sample_info_fits <- sample_info[wells, ]
 
@@ -299,17 +304,6 @@ get_fits <- function(processed_input){
   ftol <- processed_input$ftol
 
 
-
-  # parallel::mclapply(X = 1:n_fit_wells, fun = purrr::safely(fit_association_dissociation), mc.cores = num_cores, sample_info_fits,
-  #          Time[, keep_concentrations],
-  #          RU[, keep_concentrations],
-  #          incl_concentrations_values,
-  #          n_time_points,
-  #          min_allowed_kd,
-  #          max_iterations,
-  #          ptol,
-  #          ftol)
-
   cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
   parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
@@ -369,12 +363,14 @@ get_rc_plots <- function(processed_input){
   n_time_points <- processed_input$n_time_points
   num_cores <- processed_input$num_cores
   sample_info_fits <- processed_input$sample_info_fits
+  sample_info <- processed_input$sample_info
   incl_concentrations_values <- processed_input$incl_concentrations_values
   all_concentrations_values <- processed_input$all_concentrations_values
   RU <- processed_input$corrected_RU
   Time <- processed_input$Time
 
-
+# Need to fix first concentration index in sample_info_fits. If we've skipped any because of errors,
+# the first index is off.
   cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
   parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
@@ -426,7 +422,7 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
   pdf(file = error_pdf)
   for (well_idx in 1:nwells){
     if (well_idx %in% error_idx_concentrations){
-      error_msg <- paste("Optimal Concentration could not be determined for well", well_idx,
+      error_msg <- paste("Too few concentrations selected/found for well", well_idx,
                          "\n\n This could be addressed by explicitly choosing concentrations to analyze. \n The sample info is: \n")
       sample_info[well_idx,] %>% dplyr::select(Block, Row, Column, Ligand, Analyte) -> sample_info_error
       gridExtra::grid.arrange(grid::textGrob(error_msg), gridExtra::tableGrob(sample_info_error))
