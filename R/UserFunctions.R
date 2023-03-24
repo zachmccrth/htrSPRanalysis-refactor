@@ -393,7 +393,7 @@ get_rc_plots <- function(processed_input){
 
 
 #' @export create_pdf
-create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
+create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
   nwells <- processed_input$nwells
   n_fit_wells <- processed_input$n_fit_wells
   sample_info <- processed_input$sample_info
@@ -405,7 +405,7 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list){
   pages_list <-lapply(1:n_fit_wells, purrr::safely(combine_output),
                       fits_list, plot_list, rc_list, sample_info_fits)
 
-  pdf(file = output_pdf)
+  pdf(file = output_pdf, ...)
   for (well_idx in 1:n_fit_wells){
     if (!is.null(pages_list[[well_idx]]$result)){
       gridExtra::grid.arrange(pages_list[[well_idx]]$result)

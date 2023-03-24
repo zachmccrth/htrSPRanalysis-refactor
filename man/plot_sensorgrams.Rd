@@ -2,7 +2,7 @@
 % Please edit documentation in R/RTFunctions.R
 \name{plot_sensorgrams}
 \alias{plot_sensorgrams}
-\title{Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, use plot_sensorgrams_with_fits}
+\title{Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, useplot_sensorgrams_with_fits}
 \usage{
 plot_sensorgrams(
   well_idx,
@@ -42,5 +42,5 @@ incl_conc_values, all_concentrations_values, n_time_points,
 all_concentrations = FALSE)
 }
 \description{
-Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, use plot_sensorgrams_with_fits
+Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, useplot_sensorgrams_with_fits
 }
