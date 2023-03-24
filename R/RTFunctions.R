@@ -585,19 +585,33 @@ fit_kd <- function(pars, df, incl_concentrations, num_conc, kd, t0 = t0){
 }
 
 # Internal function that is passed to nlm. It computes the objective function for the fit.
-fit_as_system <- function(pars, df, incl_concentrations, num_conc, association, bulkshift, global_rmax){
+fit_as_system <- function(pars, df, incl_concentrations,
+                          num_conc,
+                          association,
+                          bulkshift,
+                          global_rmax,
+                          regenerated_surface){
 
+  t0 <- rep(0, num_conc)
   if(global_rmax){
     #pars (global "Rmax","ka", "R0" one for each concentration, kd, shift one for each concentration)
 
     Rmax <- pars[1]
 
     ka <- pars[2]
-    t0 <- pars[3:(2 + num_conc)]
-    kd <- pars[(3+num_conc)]
 
-    if (bulkshift)
+    if (!regenerated_surface){
+      t0 <- pars[3:(2 + num_conc)]
+      kd <- pars[(3+num_conc)]
+    } else
+      kd <- pars[3]
+
+
+    if (bulkshift & !regenerated_surface)
       shift <- pars[(4 + num_conc):(3 + 2*num_conc)]
+    else
+      if (bulkshift)
+        shift <- pars[4:(3 + num_conc)]
 
   } else{
     #pars ("Rmax" one for each concentration,"ka", "R0" one for each concentration, kd, shift one for each concentration)
@@ -605,11 +619,19 @@ fit_as_system <- function(pars, df, incl_concentrations, num_conc, association, 
     Rmax <- pars[1:num_conc]
 
     ka <- pars[num_conc+1]
-    t0 <- pars[(num_conc + 2):(2*num_conc + 1)]
-    kd <- pars[2*num_conc + 2]
 
-    if (bulkshift)
+    if (!regenerated_surface){
+      t0 <- pars[(num_conc + 2):(2*num_conc + 1)]
+      kd <- pars[2*num_conc + 2]
+    } else
+      kd <- pars[(num_conc + 2)]
+
+
+    if (bulkshift & !regenerated_surface)
       shift <- pars[(2*num_conc + 3):(3*num_conc + 2)]
+    else
+      if (bulkshift)
+        shift <- pars[(num_conc + 3):(2*num_conc + 2)]
 
   }
 
@@ -660,7 +682,10 @@ fit_as_system <- function(pars, df, incl_concentrations, num_conc, association, 
 # Internal. Called by fit_association_dissociation
 
 get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
-                             incl_concentrations, association, shift, global_rmax){
+                             incl_concentrations,
+                             association,
+                             shift,
+                             global_rmax){
 
   full_output_RU <- NULL
 
@@ -752,6 +777,10 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
     global_rmax <- TRUE else
       global_rmax <- FALSE
 
+  if (sample_info[well_idx,]$`Regen.` == "Y")
+    regenerated_surface <- TRUE else
+      regenerated_surface <- FALSE
+
   start_idx <- sample_info[well_idx,]$FirstInclConcIdx
   num_conc <- sample_info[well_idx,]$NumInclConc
   end_idx <- start_idx + num_conc - 1
@@ -815,43 +844,63 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   # bulkshift initial value
   shift <- rep(0, num_conc)
 
-  if (bulkshift){
+  if (bulkshift & !regenerated_surface){
     init_params <- c(Rmax_start, ka_start, t0_start, kd_start, shift)
-    fit_result <- minpack.lm::nls.lm(init_params,fn = fit_as_system, df = df,
-                         incl_concentrations = incl_concentrations, num_conc = num_conc, association = association,
-                         bulkshift,
-                         global_rmax = global_rmax,
-                         control = minpack.lm::nls.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
-                         lower = c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd, rep(-100, num_conc)),
-                         jac = NULL,
-                       upper = c(rep(400, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1, rep(100, num_conc)))
-                       #upper = NULL)
-  } else {
-    init_params <- c(Rmax_start, ka_start, t0_start, kd_start)
+    param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd, rep(-100, num_conc))
+    param_upper_bounds <- c(rep(400, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1, rep(100, num_conc))
+  } else { if (!bulkshift & !regenerated_surface){
+              init_params <- c(Rmax_start, ka_start, t0_start, kd_start)
+              param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd)
+              param_upper_bounds <- c(rep(400, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1)
 
-    fit_result <- minpack.lm::nls.lm(init_params,fn = fit_as_system, df = df,
-                         incl_concentrations = incl_concentrations, num_conc = num_conc, association = association,
-                         bulkshift,
-                         global_rmax = global_rmax,
-                         control = minpack.lm::nls.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
-                         lower = c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd),
-                         jac = NULL,
-                         upper = c(rep(400, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1))
+  } else { if (bulkshift & regenerated_surface){
+              init_params <- c(Rmax_start, ka_start, kd_start, shift)
+              param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, min_allowed_kd, rep(-100, num_conc))
+              param_upper_bounds <- c(rep(400, length(Rmax_start)), 10^7, 1, rep(100, num_conc))
 
-  }
+  } else { if(!bulkshift & regenerated_surface){
+            init_params <- c(Rmax_start, ka_start, kd_start)
+            param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, min_allowed_kd)
+            param_upper_bounds <- c(rep(400, length(Rmax_start)), 10^7, 1)
+  }}}}
+
+  fit_result <- minpack.lm::nls.lm(init_params,fn = fit_as_system, df = df,
+                                   incl_concentrations = incl_concentrations,
+                                   num_conc = num_conc,
+                                   association = association,
+                                   bulkshift,
+                                   global_rmax = global_rmax,
+                                   regenerated_surface = regenerated_surface,
+                                   control = minpack.lm::nls.lm.control(maxiter = max_iterations, ptol = ptol, ftol = ftol),
+                                   lower = param_lower_bounds,
+                                   jac = NULL,
+                                   upper = param_upper_bounds)
 
   pars <- minpack.lm:::coef.nls.lm(fit_result)
 
+  # initialize t0. If the surface is regenerated, we need to pass something to get_fit_outcomes
+  t0 <- rep(0, num_conc)
+
   if (global_rmax){
     #pars (global "Rmax","ka", "tstart" one for each concentration)
+    # tstart is only used if the surface is not regenerated
 
     Rmax <- pars[1]
     ka <- pars[2]
-    t0 <- pars[3:(2 + num_conc)]
-    kd <- pars[(3 + num_conc)]
 
-    if (bulkshift)
+    if (!regenerated_surface){
+       t0 <- pars[3:(2 + num_conc)]
+       kd <- pars[(3 + num_conc)]
+    } else {
+       kd <- pars[3]
+    }
+
+
+    if (bulkshift & !regenerated_surface)
       shift <- pars[(num_conc + 4):(2*num_conc + 3)]
+    else
+      if (bulkshift)
+        shift <- pars[4:(num_conc + 3)]
 
 
   } else {
@@ -859,18 +908,28 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
 
     Rmax <- pars[1:num_conc]
     ka <- pars[num_conc+1]
-    t0 <- pars[(num_conc + 2):(2*num_conc + 1)]
-    kd <- pars[2*num_conc + 2]
 
-    if (bulkshift)
+    if (!regenerated_surface){
+      t0 <- pars[(num_conc + 2):(2*num_conc + 1)]
+      kd <- pars[2*num_conc + 2]
+    } else
+      kd <- pars[num_conc + 2]
+
+
+    if (bulkshift & !regenerated_surface)
       shift <- pars[(2*num_conc +3):(3*num_conc + 2)]
-
+    else
+      if (bulkshift)
+        shift <- pars[(num_conc +3):(2*num_conc + 2)]
   }
 
 
 
   fit_outcomes <- get_fit_outcomes(Rmax, ka, t0, kd, df, num_conc,
-                                   incl_concentrations, association = association, shift = shift, global_rmax = global_rmax)
+                                   incl_concentrations,
+                                   association = association,
+                                   shift = shift,
+                                   global_rmax = global_rmax)
 
    list("FitResult" = fit_result, "FitOutcomes" = fit_outcomes)
 }
