@@ -1103,6 +1103,16 @@ get_csv <- function(well_idx, fits_list, sample_info){
     global_rmax <- TRUE else
       global_rmax <- FALSE
 
+
+    if (sample_info[well_idx, ]$Bulkshift == "Y")
+      bulkshift <- TRUE else
+        bulkshift <- FALSE
+
+    if (sample_info[well_idx, ]$`Regen.` == "Y" | sample_info[well_idx,]$BaselineNegative)
+        regenerated_surface <- TRUE else
+          regenerated_surface <- FALSE
+
+
   if (!global_rmax){
     Rmax <- rep(NA, 5)
     Rmax_se <- rep(NA,5)
@@ -1115,6 +1125,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
 
   Bulkshift <- rep(NA, 5)
   Bulkshift_se <- rep(NA,5)
+
   R0 <- rep(NA,5)
   R0_se <- rep(NA,5)
 
@@ -1125,10 +1136,6 @@ get_csv <- function(well_idx, fits_list, sample_info){
   }
 
   pars <- minpack.lm:::coef.nls.lm(fits_list[[well_idx]]$result$FitResult)
-
-  if (sample_info[well_idx, ]$Bulkshift == "Y")
-    bulkshift <- TRUE else
-    bulkshift <- FALSE
 
 
 
@@ -1144,33 +1151,33 @@ get_csv <- function(well_idx, fits_list, sample_info){
   if (global_rmax){
     Rmax <- par_err_table[1,]$Estimate
     Rmax_se <- par_err_table[1,]$`Std. Error`
-    ka <- par_err_table[2,]$Estimate
-    ka_se <- par_err_table[2,]$`Std. Error`
-    R0[1:num_conc] <- par_err_table[3:(num_conc + 2), ]$Estimate
-    R0_se[1:num_conc] <- par_err_table[3:(num_conc + 2), ]$`Std. Error`
-    kd <- par_err_table[2*num_conc + 3,]$Estimate
-    kd_se <- par_err_table[2*num_conc + 3,]$`Std. Error`
-    if (bulkshift){
-      Bulkshift[1:num_conc] <- par_err_table[(2*num_conc + 4):(3*num_conc+3), ]$Estimate
-      Bulkshift_se[1:num_conc] <- par_err_table[(2*num_conc + 4):(3*num_conc+3), ]$`Std. Error`
-    }
-
-
+    curr_idx <- 2
   } else {
-    Rmax[1:num_conc] <- par_err_table[1:num_conc,]$Estimate
-    Rmax_se[1:num_conc] <- par_err_table[1:num_conc,]$`Std. Error`
-    ka <- par_err_table[num_conc + 1,]$Estimate
-    ka_se <- par_err_table[num_conc + 1,]$`Std. Error`
-    R0[1:num_conc] <- par_err_table[(num_conc+2):(2*num_conc + 1), ]$Estimate
-    R0_se[1:num_conc] <- par_err_table[(num_conc+2):(2*num_conc + 1), ]$`Std. Error`
-    kd <- par_err_table[2*num_conc + 2,]$Estimate
-    kd_se <- par_err_table[2*num_conc + 2,]$`Std. Error`
-    if (bulkshift){
-      Bulkshift[1:num_conc] <- par_err_table[(2*num_conc + 3):(3*num_conc+2), ]$Estimate
-      Bulkshift_se[1:num_conc] <- par_err_table[(2*num_conc + 3):(3*num_conc+2), ]$`Std. Error`
-    }
+       Rmax[1:num_conc] <- par_err_table[1:num_conc,]$Estimate
+       Rmax_se[1:num_conc] <- par_err_table[1:num_conc,]$`Std. Error`
+       curr_idx <- num_conc + 1
 
   }
+
+  ka <- par_err_table[curr_idx,]$Estimate
+  ka_se <- par_err_table[curr_idx,]$`Std. Error`
+  curr_idx <- curr_idx + 2
+
+  if (!regenerated_surface){
+    R0[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$Estimate
+    R0_se[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$`Std. Error`
+    curr_idx <- curr_idx + 2*num_conc
+  }
+
+  kd <- par_err_table[curr_idx,]$Estimate
+  kd_se <- par_err_table[cur_idx,]$`Std. Error`
+  curr_idx <- curr_idx + 2
+
+  if (bulkshift){
+    Bulkshift[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$Estimate
+    Bulkshift_se[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$`Std. Error`
+  }
+
 
   c(Rmax = Rmax, Rmax_se = Rmax_se, ka = ka, ka_se = ka_se, kd = kd, kd_se = kd_se, Bulkshift = Bulkshift, Bulkshift_se = Bulkshift_se, R0 = R0, R0_se = R0_se)
 }
