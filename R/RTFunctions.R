@@ -777,7 +777,8 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
     global_rmax <- TRUE else
       global_rmax <- FALSE
 
-  if (sample_info[well_idx,]$`Regen.` == "Y")
+  if (sample_info[well_idx,]$`Regen.` == "Y" |
+      sample_info[well_idx,]$BaselineNegative)
     regenerated_surface <- TRUE else
       regenerated_surface <- FALSE
 
@@ -948,14 +949,19 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
     bulkshift <- TRUE else
       bulkshift <- FALSE
 
+  if (sample_info[well_idx,]$Regen. == "Y" | sample_info[well_idx, ]$BaselineNegative)
+      regenerated_surface <- TRUE else
+        regenerated_surface <- FALSE
+
   num_conc <- sample_info[well_idx,]$NumInclConc
 
   if (global_rmax)
     Rmax_label <- "Rmax" else
       Rmax_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("Rmax", x))
 
-
-  R0_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("R_0", x))
+  if (!regenerated_surface)
+     R0_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("R_0", x)) else
+       R0_label <- NULL
   bulkshift_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("Bulkshift", x))
 
 
