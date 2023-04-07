@@ -1129,7 +1129,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
   R0 <- rep(NA,5)
   R0_se <- rep(NA,5)
 
-  if (is.null(fits_list[well_idx]$result$FitResult)){
+  if (is.null(fits_list[[well_idx]]$result$FitResult)){
     return(c(Rmax = Rmax, Rmax_se = Rmax_se, ka = NA, ka_se = NA, kd = NA,
              kd_se = NA, Bulkshift = Bulkshift, Bulkshift_se = Bulkshift_se, R0 = R0, R0_se = R0_se))
 
@@ -1170,7 +1170,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
   }
 
   kd <- par_err_table[curr_idx,]$Estimate
-  kd_se <- par_err_table[cur_idx,]$`Std. Error`
+  kd_se <- par_err_table[curr_idx,]$`Std. Error`
   curr_idx <- curr_idx + 2
 
   if (bulkshift){
@@ -1179,5 +1179,14 @@ get_csv <- function(well_idx, fits_list, sample_info){
   }
 
 
-  c(Rmax = Rmax, Rmax_se = Rmax_se, ka = ka, ka_se = ka_se, kd = kd, kd_se = kd_se, Bulkshift = Bulkshift, Bulkshift_se = Bulkshift_se, R0 = R0, R0_se = R0_se)
+  c(Rmax = round(Rmax, 2),
+    Rmax_se = round(Rmax_se, 2),
+    ka = round(ka,2),
+    ka_se = round(ka_se, 2),
+    kd = round(kd,2),
+    kd_se = round(kd_se, 2),
+    Bulkshift = round(Bulkshift, 2),
+    Bulkshift_se = round(Bulkshift_se, 2),
+    R0 = round(R0, 2),
+    R0_se = round(R0_se, 2))
 }
