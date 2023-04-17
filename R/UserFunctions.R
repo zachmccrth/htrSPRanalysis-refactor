@@ -223,7 +223,7 @@ process_input <- function(files_directory = NULL,
 
   ############################  Concentrations for fits ##############################################
 
-  selected_concentrations <- select_concentrations(sample_info, Time, RU)
+  selected_concentrations <- select_concentrations(sample_info, Time, corrected_RU)
 
   keep_concentrations <- selected_concentrations$keep_concentrations
   sample_info <- selected_concentrations$sample_info

@@ -348,7 +348,6 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
   error_idx <- NULL
 
   for(i in 1:nsamples){
-
 ###    num_conc <- str_count(sample_info$`All Concentrations`[i], ",") + 1
 ### The Tomaras lab has sometimes placed the wrong number of concentrations in this field. It causes havoc,
 ### because the sample sheet and Carterra output are out of sync. Need to add code to check dimensions
@@ -391,8 +390,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
       incl_idx <- which(concentrations %in% incl_concentrations) + displacement_in_titration_data
       keep_concentrations <- c(keep_concentrations, incl_idx)
 
-    }
-    else
+    } else
       error_idx <- c(error_idx, i)
 
     displacement_in_titration_data <- num_conc + displacement_in_titration_data
