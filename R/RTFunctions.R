@@ -464,15 +464,17 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
   fit_RU <- fits[[well_idx]]$result$FitOutcomes$RU
 
   n_vals <- dim(x_vals)[2]
-  names(x_vals) <- 1:n_vals
-  names(y_vals) <- 1:n_vals
+  names(x_vals) <- as.character(1:n_vals)
+  names(y_vals) <- as.character(1:n_vals)
 
 
   Time <- x_vals[, start_idx:end_idx] %>%
-    tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
+    tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+    dplyr::arrange(as.numeric(name)) %>%
     dplyr::select(value)
   RU <- y_vals[, start_idx:end_idx]%>%
-    tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
+    tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+    dplyr::arrange(as.numeric(name)) %>%
     dplyr::select("value")
 
   numerical_concentration <- incl_conc_values[start_idx:end_idx]
@@ -485,6 +487,9 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
   df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
 
   colnames(df) <- c("Time", "RU", "Concentration")
+
+  if (sample_info[well_idx, ]$DissocEnd == -Inf)
+    sample_info[well_idx, ]$DissocEnd <- NA
 
   end_time <- ifelse(is.na(sample_info[well_idx, ]$DissocEnd), baseline + baseline_start + association + dissociation, sample_info[well_idx, ]$DissocEnd)
 
