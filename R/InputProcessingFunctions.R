@@ -652,13 +652,17 @@ check_titration_data <- function(titration_data, files_directory) {
   }
   flagspresent
 }
-check_sample_and_data_match <- function(sample_info, titration_data, ligand_and_ROI){
+check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
 # At this point, the sample sheet is expanded, so it has 384 rows
 # Also, the ith row corresponds to the ith ROI
 
   nrows <- dim(sample_info)[1]
 
   for (i in 1:nrows){
+
+      if (sample_info$Incl.[i] == "N")
+        return(NULL)
+
       num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
 
       ligand_and_ROI %>%
@@ -681,10 +685,10 @@ check_sample_and_data_match <- function(sample_info, titration_data, ligand_and_
         if(sum(is.na(incl_concentrations)) > 0)
           return(paste("Invalid include concentration value for spot", i))
 
-        if(sum(incl_concentrations %in% concentrations) != num_incl_conc)
-          return(paste("Include concentration value is not a subset of all concentrations for spot", i))
-      }
+       }
 
+      if(sum(incl_concentrations %in% concentrations) != num_incl_conc)
+        return(paste("Include concentration value is not a subset of all concentrations for spot", i))
 
 
       if (num_conc != num_conc_data)
