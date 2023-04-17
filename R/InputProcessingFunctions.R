@@ -46,7 +46,7 @@ process_sample_sheet <- function(sample_sheet){
 
   bad_rows <- which(check_row_number)
 
-  bad_rows <- stringr::_flatten(paste0(bad_rows, ","))
+  bad_rows <- stringr::str_flatten(paste0(bad_rows, ","))
 
   if (sum(check_row_number) > 0){
      stop(paste("The row position names in the sample sheet are incorrect in row(s):",
@@ -58,7 +58,7 @@ process_sample_sheet <- function(sample_sheet){
 
   bad_rows <- which(check_row_number)
 
-  bad_rows <- stringr::_flatten(paste0(bad_rows, ","))
+  bad_rows <- stringr::str_flatten(paste0(bad_rows, ","))
 
   if (sum(check_row_number) > 0){
     stop(paste("The row position names in the sample sheet are incorrect in row(s):",
@@ -70,7 +70,7 @@ process_sample_sheet <- function(sample_sheet){
                          is.na(RowExpansionTemplate$Column))
 
   bad_cols <- which(check_col_number)
-  bad_cols <- stringr::_flatten(paste0(bad_cols, ","))
+  bad_cols <- stringr::str_flatten(paste0(bad_cols, ","))
 
     if (sum(check_col_number) > 0){
     stop(paste("The column position names in the sample sheet are incorrect in row(s):",
@@ -82,7 +82,7 @@ process_sample_sheet <- function(sample_sheet){
                          !is.na(RowExpansionTemplate$EndColumn))
 
   bad_cols <- which(check_col_number)
-  bad_cols <- stringr::_flatten(paste0(bad_cols, ","))
+  bad_cols <- stringr::str_flatten(paste0(bad_cols, ","))
 
   if (sum(check_col_number) > 0){
     stop(paste("The column position names in the sample sheet are incorrect in row(s):",
