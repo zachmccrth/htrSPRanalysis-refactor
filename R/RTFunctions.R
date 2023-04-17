@@ -267,12 +267,12 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
   df %>% dplyr::filter((Time >= baseline + baseline_start + association - 10)
                 & (Time <= baseline + baseline_start + association - 5)) %>%
     dplyr::group_by(Concentration) %>%
-    dplyr::summarise(AverageRU = mean(RU, na.rm = TRUE)) -> df_RC
+    dplyr::summarise(`Dose Response` = mean(RU, na.rm = TRUE)) -> df_RC
   df_RC %>% dplyr::mutate(Included =
                      forcats::as_factor(ifelse(Concentration %in% incl_conc_values,
                                       "Yes", "No"))) -> df_RC
   ggplot2::ggplot(df_RC, ggplot2::aes(x = Concentration,
-                    y = AverageRU)) +
+                    y = `Dose Response`)) +
     ggplot2::geom_point(ggplot2::aes(color = Included)) +
     ggplot2::geom_line() +
     ggplot2::scale_x_log10() +
@@ -317,7 +317,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   df %>% dplyr::filter((Time >= baseline + baseline_start + association - 10)
                 & (Time <= baseline + baseline_start + association - 5)) %>%
     dplyr::group_by(Concentration) %>%
-    dplyr::summarise(AverageRU = mean(RU, na.rm = TRUE)) -> df_RC
+    dplyr::summarise(`Dose Response` = mean(RU, na.rm = TRUE)) -> df_RC
 
   # check to see if any results for df_RC
 
@@ -327,7 +327,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   # record the differences between consecutive responses
   sum_diff <- NULL
   for (i in 1:(num_conc - 1)){
-    sum_diff <- suppressMessages(dplyr::bind_cols(sum_diff, df_RC[i+1,]$AverageRU - df_RC[i,]$AverageRU))
+    sum_diff <- suppressMessages(dplyr::bind_cols(sum_diff, df_RC[i+1,]$`Dose Response` - df_RC[i,]$`Dose Response`))
   }
   # add sums for each 5 cycle window.
   cum_sum <- zoo::rollapply(purrr::as_vector(purrr::flatten(sum_diff)), 4, FUN = sum)
@@ -991,6 +991,33 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   par_names <- par_err_table$Names
 
   par_err_table %>%
+    dplyr::filter(Names == "ka") %>%
+    dplyr::select(Estimate) %>%
+    as.numeric() -> ka
+  par_err_table %>%
+    dplyr::filter(Names == "ka") %>%
+    dplyr::select(`Std. Error`) %>%
+    as.numeric() -> ka_se
+  par_err_table %>%
+    dplyr::filter(Names == "kd") %>%
+    dplyr::select(Estimate) %>%
+    as.numeric() -> kd
+  par_err_table %>%
+    dplyr::filter(Names == "kd") %>%
+    dplyr::select(`Std. Error`) %>%
+    as.numeric() -> kd_se
+
+  KD <- kd/ka
+  KD_se <- KD * ((ka_se/ka)^2 + (kd_se/kd)^2)^(1/2)
+
+  if (kd == 10^(-5)){
+    kd_se <- NA
+    KD_se <- NA
+    idx <- which(par_err_table$Names == "kd")
+    par_err_table$`Std. Error`[idx] <- NA
+  }
+
+  par_err_table %>%
     dplyr::filter(Names == "ka" | Names == "kd") %>%
     dplyr::select(Estimate, `Std. Error`)  %>%
     dplyr::mutate(Estimate = format(signif(Estimate, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) %>%
@@ -1002,8 +1029,19 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
     dplyr::mutate(Estimate = format(round(Estimate,2),big.mark=",",decimal.mark=".", scientific = FALSE))  %>%
     dplyr::mutate(`Std. Error` = format(round(`Std. Error`, 2),big.mark=",",decimal.mark=".", scientific = FALSE)) -> rest_out
 
+
+  KD_tbl <- tibble::tibble(Estimate = KD, `Std. Error` = KD_se)
+
+  KD_tbl %>%
+    dplyr::select(Estimate, `Std. Error`)  %>%
+    dplyr::mutate(Estimate = format(signif(Estimate, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) %>%
+    dplyr::mutate(`Std. Error` = format(signif(`Std. Error`, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) -> KD_tbl
+
+  par_names <- c(par_names, "KD")
   dplyr::bind_rows(rest_out, kakd_out) %>%
-    gridExtra::tableGrob(rows = par_names, theme = gridExtra::ttheme_minimal()) -> tb1
+    dplyr::bind_rows(KD_tbl) %>%
+    gridExtra::tableGrob(rows = par_names,
+                         theme = gridExtra::ttheme_minimal(core=list(fg_params=list(hjust=1, x=0.9)))) -> tb1
 
   stats::residuals(fits_list[[well_idx]]$result$FitResult) -> RU_resid
   fits_list[[well_idx]]$result$FitOutcomes$Time -> Time_resid
@@ -1080,7 +1118,7 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
   df %>% dplyr::filter((Time >= baseline + baseline_start + association - 10)
                 & (Time <= baseline + baseline_start + association - 5)) %>%
     dplyr::group_by(Concentration) %>%
-    dplyr::summarise(AverageRU = mean(RU, na.rm = TRUE)) -> df_RC
+    dplyr::summarise(`Dose Response` = mean(RU, na.rm = TRUE)) -> df_RC
 
   df_RC %>% dplyr::mutate(Included =
                      forcats::as_factor(ifelse(Concentration %in% numerical_concentration_incl,
@@ -1088,7 +1126,7 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
 
 
   ggplot2::ggplot(df_RC, ggplot2::aes(x = Concentration,
-                    y = AverageRU)) +
+                    y = `Dose Response`)) +
     ggplot2::geom_point(ggplot2::aes(color = Included)) +
     ggplot2::geom_line() +
     ggplot2::scale_x_log10() +
@@ -1152,6 +1190,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
     Rmax <- par_err_table[1,]$Estimate
     Rmax_se <- par_err_table[1,]$`Std. Error`
     curr_idx <- 2
+
   } else {
        Rmax[1:num_conc] <- par_err_table[1:num_conc,]$Estimate
        Rmax_se[1:num_conc] <- par_err_table[1:num_conc,]$`Std. Error`
@@ -1161,21 +1200,29 @@ get_csv <- function(well_idx, fits_list, sample_info){
 
   ka <- par_err_table[curr_idx,]$Estimate
   ka_se <- par_err_table[curr_idx,]$`Std. Error`
-  curr_idx <- curr_idx + 2
+  curr_idx <- curr_idx + 1
 
   if (!regenerated_surface){
     R0[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$Estimate
     R0_se[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$`Std. Error`
-    curr_idx <- curr_idx + 2*num_conc
+    curr_idx <- curr_idx + num_conc
   }
 
   kd <- par_err_table[curr_idx,]$Estimate
   kd_se <- par_err_table[curr_idx,]$`Std. Error`
-  curr_idx <- curr_idx + 2
+  curr_idx <- curr_idx + 1
 
   if (bulkshift){
     Bulkshift[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$Estimate
     Bulkshift_se[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$`Std. Error`
+  }
+
+  KD <- kd/ka
+  KD_se <- KD * ((ka_se/ka)^2 + (kd_se/kd)^2)^(1/2)
+
+  if (kd == 10^(-5)){
+     kd_se <- NA
+     KD_se <- NA
   }
 
 
@@ -1185,6 +1232,8 @@ get_csv <- function(well_idx, fits_list, sample_info){
     ka_se = round(ka_se, 2),
     kd = round(kd,2),
     kd_se = round(kd_se, 2),
+    KD = round(KD,2),
+    KD_se = round(KD_se,2),
     Bulkshift = round(Bulkshift, 2),
     Bulkshift_se = round(Bulkshift_se, 2),
     R0 = round(R0, 2),

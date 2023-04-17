@@ -67,10 +67,39 @@ process_input <- function(files_directory = NULL,
   # check if this is new or old file format
   titration_data <- openxlsx::read.xlsx(data_file_path, colNames = TRUE, sheet = 1, startRow = 1, check.names = TRUE)
 
-  if (titration_data[1,1] == "X")
+  ligand_and_ROI <- NULL
+
+  if (titration_data[1,1] == "X"){
     # file may be in new format. We should skip first line
-    titration_data <- openxlsx::read.xlsx(data_file_path, colNames = TRUE, sheet = 1, startRow = 2, check.names = TRUE) else
-    titration_data <- openxlsx::read.xlsx(data_file_path, colNames = TRUE, sheet = 1, startRow = 1, check.names = TRUE)
+    titration_data <- openxlsx::read.xlsx(data_file_path,
+                                          colNames = TRUE,
+                                          sheet = 1,
+                                          startRow = 2,
+                                          check.names = TRUE)
+    ligand_and_ROI <- openxlsx::read.xlsx(data_file_path,
+                                          colNames = FALSE,
+                                          sheet = 1,
+                                          rows = 1,
+                                          startRow = 1,
+                                          check.names = TRUE)
+    ligand_and_ROI <- tibble::tibble(ligand_and_ROI)
+
+    ligand_and_ROI %>% tidyr::pivot_longer(cols = everything(), values_to = "ROI") %>%
+      tidyr::separate("ROI", into = c("Name", "ROI"), sep = " \\(") %>%
+      tidyr::separate("ROI", into = c("ROI", "Rest"), sep = "\\)") %>%
+        dplyr::mutate(ROI = as.numeric(ROI)) %>%
+        tidyr::separate(col = "Name", into = c("bracket", "Name")) %>%
+        tidyr::separate(col = "Rest", into = c("Dash1","Dash2", "Analyte", "Conc String", "Conc"), sep = " ") %>%
+        tidyr::separate("Conc", into = c("Conc.", "Cycle"), sep = "\\(") %>%
+        dplyr::select(Name, ROI, Analyte, Conc., Cycle) %>%
+        dplyr::mutate(Conc. = as.numeric(Conc.)) %>%
+        dplyr::mutate(Cycle = as.numeric(Cycle)) -> ligand_and_ROI
+  } else
+      titration_data <- openxlsx::read.xlsx(data_file_path,
+                                          colNames = TRUE,
+                                          sheet = 1,
+                                          startRow = 1,
+                                          check.names = TRUE)
 
   titration_data <- tibble::tibble(titration_data)
 
@@ -81,6 +110,12 @@ process_input <- function(files_directory = NULL,
     usr_msg <- "Error in titration data file. See Error_note_titration_data.csv for detailed description, then select corrected file"
     stop(usr_msg)
   }
+
+
+  usr_msg <- check_sample_and_data_match(sample_sheet, titration_data, ligand_and_ROI)
+
+  if (!is.null(usr_msg))
+    stop(usr_msg)
 
   ################################ Set fitting options - not allowing user to change ptol or ftol at the moment ###############################
 

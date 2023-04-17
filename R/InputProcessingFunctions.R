@@ -42,6 +42,53 @@ process_sample_sheet <- function(sample_sheet){
     dplyr::mutate(Column = as.integer(Column)) %>%
     dplyr::mutate(EndColumn = as.integer(EndColumn)) -> RowExpansionTemplate)
 
+  check_row_number <- !(RowExpansionTemplate$Row %in% c("A", "B", "C", "D","E", "F","G","H"))
+
+  bad_rows <- which(check_row_number)
+
+  bad_rows <- str_flatten(paste0(bad_rows, ","))
+
+  if (sum(check_row_number) > 0){
+     stop(paste("The row position names in the sample sheet are incorrect in row(s):",
+                bad_rows))
+  }
+
+  check_row_number <- !(RowExpansionTemplate$EndRow %in% c("A", "B", "C", "D","E", "F","G","H")) &
+    !is.na(RowExpansionTemplate$EndRow)
+
+  bad_rows <- which(check_row_number)
+
+  bad_rows <- str_flatten(paste0(bad_rows, ","))
+
+  if (sum(check_row_number) > 0){
+    stop(paste("The row position names in the sample sheet are incorrect in row(s):",
+               bad_rows))
+  }
+
+  check_col_number <- (RowExpansionTemplate$Column < 0 |
+                         RowExpansionTemplate$Column > 12 |
+                         is.na(RowExpansionTemplate$Column))
+
+  bad_cols <- which(check_col_number)
+  bad_cols <- str_flatten(paste0(bad_cols, ","))
+
+    if (sum(check_col_number) > 0){
+    stop(paste("The column position names in the sample sheet are incorrect in row(s):",
+               bad_cols))
+  }
+
+  check_col_number <- ((RowExpansionTemplate$EndColumn < 1 |
+                         RowExpansionTemplate$EndColumn > 12) &
+                         !is.na(RowExpansionTemplate$EndColumn))
+
+  bad_cols <- which(check_col_number)
+  bad_cols <- str_flatten(paste0(bad_cols, ","))
+
+  if (sum(check_col_number) > 0){
+    stop(paste("The column position names in the sample sheet are incorrect in row(s):",
+               bad_cols))
+  }
+
   length_ss <- dim(RowExpansionTemplate)[1]
   ss_exp <- NULL
 
@@ -113,6 +160,11 @@ process_sample_sheet <- function(sample_sheet){
     num_blocks <- stringr::str_count(ss_exp[i,]$`Block/Chip/Tray`, ",") + 1
 
     blocks <- as.numeric(purrr::flatten(stringr::str_split(ss_exp[i,]$`Block/Chip/Tray`, ",")))
+
+    bad_blocks <- ifelse(blocks %in% 1:4,0,1)
+    if (sum(bad_blocks) > 0){
+      stop(paste("There is an invalid block number in rows ", i))
+    }
 
     # create an expanded sample sheet with one row for each block
 
@@ -331,7 +383,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
 
     # the following keeps all of the concentrations for each of the wells selected to include, but
     # excludes the wells not selected
-    if (num_incl > 3){
+    if (num_incl >= 1){
 
       incl_concentrations_ligand <- c(incl_concentrations_ligand, num_incl)
       incl_concentrations_values <- c(incl_concentrations_values, incl_concentrations)
@@ -599,4 +651,48 @@ check_titration_data <- function(titration_data, files_directory) {
     flagspresent <- FALSE
   }
   flagspresent
+}
+check_sample_and_data_match <- function(sample_sheet, titration_data, ligand_and_ROI){
+# At this point, the sample sheet is expanded, so it has 384 rows
+# Also, the ith row corresponds to the ith ROI
+
+  nrows <- dim(sample_sheet)[1]
+
+  for (i in 1:nrows){
+      num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
+
+      ligand_and_ROI %>%
+        dplyr::filter(ROI == i) -> rows_for_this_spot
+
+      num_conc_data <- dim(rows_for_this_spot)[1]
+
+      concentrations <-
+        as.numeric(purrr::flatten(stringr::str_split(sample_info$`All Concentrations`[i], ",")))
+
+      if (sum(is.na(concentrations)) > 0)
+        return(paste("Invalid concentration value for spot", i))
+
+      if (sample_info$`All Concentrations`[i] != "ALL" |
+          sample_info$`All Concentrations`[i] != "All"){
+        incl_concentrations <-
+          as.numeric(purrr::flatten(stringr::str_split(sample_info$`All Concentrations`[i], ",")))
+        num_incl_conc <- length(incl_concentrations)
+
+        if(sum(is.na(incl_concentrations)) > 0)
+          return(paste("Invalid include concentration value for spot", i))
+
+        if(sum(incl_concentrations %in% concentrations) != num_incl_conc)
+          return(paste("Include concentration value is not a subset of all concentrations for spot", i))
+      }
+
+
+
+      if (num_conc != num_conc_data)
+        return(paste("The number of columns in the titration data for spot ",
+                     i,
+                     "does not match the number of concentrations in the sample sheet"))
+  }
+
+  return(NULL)
+
 }
