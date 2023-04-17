@@ -652,11 +652,11 @@ check_titration_data <- function(titration_data, files_directory) {
   }
   flagspresent
 }
-check_sample_and_data_match <- function(sample_sheet, titration_data, ligand_and_ROI){
+check_sample_and_data_match <- function(sample_info, titration_data, ligand_and_ROI){
 # At this point, the sample sheet is expanded, so it has 384 rows
 # Also, the ith row corresponds to the ith ROI
 
-  nrows <- dim(sample_sheet)[1]
+  nrows <- dim(sample_info)[1]
 
   for (i in 1:nrows){
       num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
