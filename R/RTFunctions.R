@@ -421,9 +421,8 @@ plot_sensorgrams <- function(well_idx,
 
   df$Concentration <- forcats::as_factor(formatC(df$Concentration, format = "e",digits = 2))
 
-
-  sub_title <- paste("Block", sample_info[well_idx,]$Block, "Row", sample_info[well_idx,]$Row,
-                     "Column", sample_info[well_idx,]$Column,
+  spot <- paste0(sample_info[well_idx,]$Block, sample_info[well_idx,]$Column)
+  sub_title <- paste("Block", sample_info[well_idx,]$Block, "Spot", spot,
                      "ROI", sample_info[well_idx,]$ROI)
 
   ggplot2::ggplot(df, ggplot2::aes(x = Time, y = RU, color = Concentration)) + ggplot2::geom_point(size = 0.5) +
@@ -501,9 +500,9 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
   df$Concentration <- forcats::as_factor(formatC(df$Concentration, format = "e",digits = 2))
 
-  sub_title <- paste("Block", sample_info[well_idx,]$Block, "Row",
-                     sample_info[well_idx,]$Row,
-                     "Column", sample_info[well_idx,]$Column,
+  spot <- paste0(sample_info[well_idx,]$Row, sample_info[well_idx,]$Column)
+
+  sub_title <- paste("Block", sample_info[well_idx,]$Block, "Spot", spot,
                      "ROI", sample_info[well_idx,]$ROI)
 
 
@@ -1071,7 +1070,7 @@ print_output <- function(well_idx, pages_list, plot_list_out, sample_info){
   err_msg <- paste0(err_msg, sample_info$Column)
 
   if (is.null(plot_list_out[[well_idx]]))
-     return(p1 = gridExtra::arrangeGrob(grid::textGrob(err_msg), plot_list[[well_idx]]))
+     return(p1 = gridExtra::arrangeGrob(grid::textGrob(err_msg)))
   else
      return(p1 = gridExtra::arrangeGrob(grid::textGrob(err_msg), plot_list_out[[well_idx]]))
 
