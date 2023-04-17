@@ -423,7 +423,8 @@ plot_sensorgrams <- function(well_idx,
 
 
   sub_title <- paste("Block", sample_info[well_idx,]$Block, "Row", sample_info[well_idx,]$Row,
-                     "Column", sample_info[well_idx,]$Column)
+                     "Column", sample_info[well_idx,]$Column,
+                     "ROI", sample_info[well_idx,]$ROI)
 
   ggplot2::ggplot(df, ggplot2::aes(x = Time, y = RU, color = Concentration)) + ggplot2::geom_point(size = 0.5) +
     ggplot2::ggtitle(ligand_desc, subtitle = sub_title)
@@ -502,7 +503,8 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
   sub_title <- paste("Block", sample_info[well_idx,]$Block, "Row",
                      sample_info[well_idx,]$Row,
-                     "Column", sample_info[well_idx,]$Column)
+                     "Column", sample_info[well_idx,]$Column,
+                     "ROI", sample_info[well_idx,]$ROI)
 
 
   ggplot2::ggplot(df, ggplot2::aes(x = Time, y = RU)) + ggplot2::geom_point(size = 0.09, ggplot2::aes(color = Concentration)) +
@@ -1062,7 +1064,10 @@ print_output <- function(well_idx, pages_list, plot_list_out, sample_info){
     return(gridExtra::arrangeGrob(pages_list[[well_idx]]$result))
 
   err_msg <- paste("The following well has an unrecoverable error:",
-                     well_idx, "Block ", sample_info$Block, "Row", sample_info$Row)
+                     well_idx,
+                   "Block ", sample_info[well_idx,]$Block,
+                   "Row", sample_info[well_idx,]$Row,
+                   "ROI", sample_info[well_idx,]$ROI)
   err_msg <- paste0(err_msg, sample_info$Column)
 
   if (is.null(plot_list_out[[well_idx]]))
@@ -1226,7 +1231,8 @@ get_csv <- function(well_idx, fits_list, sample_info){
   }
 
 
-  c(Rmax = round(Rmax, 2),
+  c(ROI = sample_info[well_idx,]$ROI,
+    Rmax = round(Rmax, 2),
     Rmax_se = round(Rmax_se, 2),
     ka = round(ka,2),
     ka_se = round(ka_se, 2),

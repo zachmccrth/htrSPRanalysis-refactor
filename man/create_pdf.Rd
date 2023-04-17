@@ -4,7 +4,7 @@
 \alias{create_pdf}
 \title{Create pdf file with sensorgrams with fitted curves, residuals, table of fit parameters, and response curves.}
 \usage{
-create_pdf(processed_input, fits_list, rc_list, plot_list)
+create_pdf(processed_input, fits_list, rc_list, plot_list, ...)
 }
 \arguments{
 \item{fits_list}{List of fits as returned by `get_fits`}

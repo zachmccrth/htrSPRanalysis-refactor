@@ -175,10 +175,14 @@ process_input <- function(files_directory = NULL,
   # that are chosen by the user as not to be included.
   # For some analyses, we will restrict to the chosen concentrations.
 
+  # keep track of ROI
+
+  sample_info$ROI <- 1:384
+
   #remove wells from ligand each time series.
 
   selected_samples <- select_samples(sample_info, titration_data)
-  selected_samples
+  #selected_samples
 
   expanded_sample_sheet <- sample_info
   sample_info <- selected_samples$sample_info
