@@ -441,6 +441,21 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
   error_pdf <- processed_input$error_pdf
   error_idx_concentrations <- processed_input$error_idx_concentrations
 
+  num_cores <- processed_input$num_cores
+  #nwells <- processed_input$nwells
+
+  # cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
+  # parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
+  #
+  # pages_list <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = purrr::safely(combine_output),
+  #                                    fits_list,
+  #                                    plot_list,
+  #                                    sample_info_fits,
+  #                                    rc_list,
+  #                                    sample_info)
+  # parallel::stopCluster(cl)
+  #
+
   pages_list <-lapply(1:n_fit_wells, purrr::safely(combine_output),
                       fits_list, plot_list, rc_list, sample_info_fits)
 

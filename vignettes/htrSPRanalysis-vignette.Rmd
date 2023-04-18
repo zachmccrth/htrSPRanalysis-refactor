@@ -20,7 +20,7 @@ This R package consists of a library of functions for processing and analyzing d
 
 ```{r eval=FALSE}
 
-devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis")
+#devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis")
 
 ```
 

@@ -654,6 +654,9 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
 # At this point, the sample sheet is expanded, so it has 384 rows
 # Also, the ith row corresponds to the ith ROI
 
+  if (is.null(ligand_and_ROI))
+    return(NULL)
+
   nrows <- dim(sample_info)[1]
 
   for (i in 1:nrows){
