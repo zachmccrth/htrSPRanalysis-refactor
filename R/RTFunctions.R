@@ -798,8 +798,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   dissoc_start <- assoc_end
   dissoc_end <- assoc_end + dissociation
 
-  if (sample_info[well_idx,]$`Automate Dissoc. Window` == "Y" &
-      (is.finite(sample_info[well_idx, ]$DissocEnd))
+  if (sample_info[well_idx,]$`Automate Dissoc. Window` == "Y" &(is.finite(sample_info[well_idx, ]$DissocEnd)))
     dissoc_end <- sample_info[well_idx,]$DissocEnd
 
   n_vals <- dim(x_vals)[2]
