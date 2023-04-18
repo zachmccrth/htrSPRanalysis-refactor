@@ -488,10 +488,7 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
   colnames(df) <- c("Time", "RU", "Concentration")
 
-  if (sample_info[well_idx, ]$DissocEnd == -Inf)
-    sample_info[well_idx, ]$DissocEnd <- NA
-
-  end_time <- ifelse(is.na(sample_info[well_idx, ]$DissocEnd), baseline + baseline_start + association + dissociation, sample_info[well_idx, ]$DissocEnd)
+  end_time <- ifelse(!is.finite(sample_info[well_idx, ]$DissocEnd), baseline + baseline_start + association + dissociation, sample_info[well_idx, ]$DissocEnd)
 
   df %>% dplyr::filter(Time > baseline + baseline_start & Time < end_time) -> df
 
@@ -801,7 +798,8 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   dissoc_start <- assoc_end
   dissoc_end <- assoc_end + dissociation
 
-  if (sample_info[well_idx,]$`Automate Dissoc. Window` == "Y" & !(is.na(sample_info[well_idx, ]$DissocEnd)))
+  if (sample_info[well_idx,]$`Automate Dissoc. Window` == "Y" &
+      (is.finite(sample_info[well_idx, ]$DissocEnd))
     dissoc_end <- sample_info[well_idx,]$DissocEnd
 
   n_vals <- dim(x_vals)[2]
