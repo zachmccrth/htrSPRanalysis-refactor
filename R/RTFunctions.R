@@ -395,7 +395,8 @@ plot_sensorgrams <- function(well_idx,
 
   incl_conc_values <- incl_conc_values[start_idx:end_idx]
 
-  ligand_desc <- sample_info[well_idx,]$Ligand
+  ligand_desc <- paste("Ligand:", sample_info[well_idx,]$Ligand)
+  analyte_desc <- paste("Analyte:", sample_info[well_idx,]$Analyte
 
   n_vals <- dim(x_vals)[2]
   names(x_vals) <- as.character(1:n_vals)
@@ -426,7 +427,7 @@ plot_sensorgrams <- function(well_idx,
                      "ROI", sample_info[well_idx,]$ROI)
 
   ggplot2::ggplot(df, ggplot2::aes(x = Time, y = RU, color = Concentration)) + ggplot2::geom_point(size = 0.5) +
-    ggplot2::ggtitle(ligand_desc, subtitle = sub_title)
+    ggplot2::ggtitle(paste(analyte_desc, ligand_desc), subtitle = sub_title)
 }
 
 #' Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, use plot_sensorgrams_with_fits
@@ -453,13 +454,16 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
   num_conc <- sample_info[well_idx,]$NumInclConc
   end_idx <- start_idx + num_conc - 1
 
-  ligand_desc <- sample_info[well_idx,]$Ligand
   baseline <- sample_info[well_idx,]$Baseline
   baseline_start <- sample_info[well_idx,]$`Bsl Start`
   association <- sample_info[well_idx,]$Association
   dissociation <- sample_info[well_idx,]$Dissociation
 
   assoc_start <- baseline + baseline_start
+
+  ligand_desc <- paste("Ligand:", sample_info[well_idx,]$Ligand)
+  analyte_desc <- paste("Analyte:", sample_info[well_idx,]$Analyte
+
 
   fit_RU <- fits[[well_idx]]$result$FitOutcomes$RU
 
@@ -509,7 +513,7 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
 
   ggplot2::ggplot(df, ggplot2::aes(x = Time, y = RU)) + ggplot2::geom_point(size = 0.09, ggplot2::aes(color = Concentration)) +
-    ggplot2::ggtitle(ligand_desc, subtitle = sub_title) +
+    ggplot2::ggtitle(paste(analyte_desc, ligand_desc), subtitle = sub_title) +
     ggplot2::geom_line(ggplot2::aes(x = Time, y = FittedRU, group = Concentration), color = "black")
 }
 
