@@ -382,7 +382,7 @@ get_fitted_plots <- function(processed_input, fits_list){
   cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
   parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
-  plot_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = safely(plot_sensorgrams_with_fits),
+  plot_result <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = plot_sensorgrams_with_fits,
            sample_info_fits, fits_list,
            Time[, keep_concentrations], RU[, keep_concentrations],
            incl_concentrations_values,
