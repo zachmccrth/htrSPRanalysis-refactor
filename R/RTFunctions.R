@@ -396,7 +396,7 @@ plot_sensorgrams <- function(well_idx,
   incl_conc_values <- incl_conc_values[start_idx:end_idx]
 
   ligand_desc <- paste("Ligand:", sample_info[well_idx,]$Ligand)
-  analyte_desc <- paste("Analyte:", sample_info[well_idx,]$Analyte
+  analyte_desc <- paste("Analyte:", sample_info[well_idx,]$Analyte)
 
   n_vals <- dim(x_vals)[2]
   names(x_vals) <- as.character(1:n_vals)
@@ -802,7 +802,8 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   dissoc_start <- assoc_end
   dissoc_end <- assoc_end + dissociation
 
-  if (sample_info[well_idx,]$`Automate Dissoc. Window` == "Y" &(is.finite(sample_info[well_idx, ]$DissocEnd)))
+  if (sample_info[well_idx,]$`Automate Dissoc. Window` == "Y" &
+      (is.finite(sample_info[well_idx, ]$DissocEnd)))
     dissoc_end <- sample_info[well_idx,]$DissocEnd
 
   n_vals <- dim(x_vals)[2]
