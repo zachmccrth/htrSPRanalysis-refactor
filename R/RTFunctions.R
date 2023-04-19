@@ -462,7 +462,7 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
   assoc_start <- baseline + baseline_start
 
   ligand_desc <- paste("Ligand:", sample_info[well_idx,]$Ligand)
-  analyte_desc <- paste("Analyte:", sample_info[well_idx,]$Analyte
+  analyte_desc <- paste("Analyte:", sample_info[well_idx,]$Analyte)
 
 
   fit_RU <- fits[[well_idx]]$result$FitOutcomes$RU
