@@ -112,7 +112,7 @@ process_input <- function(files_directory = NULL,
   }
 
 
-  usr_msg <- check_sample_and_data_match(sample_sheet, ligand_and_ROI)
+  usr_msg <- check_sample_and_data_match(sample_info, ligand_and_ROI)
 
   if (!is.null(usr_msg))
     stop(usr_msg)
