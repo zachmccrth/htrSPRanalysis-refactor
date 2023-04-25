@@ -662,7 +662,7 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
   for (i in 1:nrows){
 
       if (sample_info$Incl.[i] == "N")
-        return(NULL)
+         next()
 
       num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
 
@@ -670,6 +670,12 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
         dplyr::filter(ROI == i) -> rows_for_this_spot
 
       num_conc_data <- dim(rows_for_this_spot)[1]
+
+      if (num_conc != num_conc_data)
+        return(paste("The number of columns in the titration data for spot ",
+                     i,
+                     "does not match the number of concentrations in the sample sheet"))
+
 
       concentrations <-
         as.numeric(purrr::flatten(stringr::str_split(sample_info$`All Concentrations`[i], ",")))
@@ -692,10 +698,6 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
         return(paste("Include concentration value is not a subset of all concentrations for spot", i))
 
 
-      if (num_conc != num_conc_data)
-        return(paste("The number of columns in the titration data for spot ",
-                     i,
-                     "does not match the number of concentrations in the sample sheet"))
   }
 
   return(NULL)
