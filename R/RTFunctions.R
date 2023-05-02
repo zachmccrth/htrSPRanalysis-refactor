@@ -1238,16 +1238,16 @@ get_csv <- function(well_idx, fits_list, sample_info){
 
 
   c(ROI = sample_info[well_idx,]$ROI,
-    Rmax = round(Rmax, 2),
-    Rmax_se = round(Rmax_se, 2),
-    ka = round(ka,2),
-    ka_se = round(ka_se, 2),
-    kd = format(signif(kd, 3),big.mark=",",decimal.mark=".", scientific = TRUE),
-    kd_se = format(signif(kd_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE),
-    KD = format(signif(KD, 3),big.mark=",",decimal.mark=".", scientific = TRUE),
-    KD_se = format(signif(KD_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE),
-    Bulkshift = round(Bulkshift, 2),
-    Bulkshift_se = round(Bulkshift_se, 2),
-    R0 = round(R0, 2),
-    R0_se = round(R0_se, 2))
+    Rmax = as.numeric(round(Rmax, 2)),
+    Rmax_se = as.numeric(round(Rmax_se, 2)),
+    ka = as.numeric(round(ka,2)),
+    ka_se = as.numeric(round(ka_se, 2)),
+    kd = as.numeric(format(signif(kd, 3),big.mark=",",decimal.mark=".", scientific = TRUE)),
+    kd_se = as.numeric(format(signif(kd_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE)),
+    KD = as.numeric(format(signif(KD, 3),big.mark=",",decimal.mark=".", scientific = TRUE)),
+    KD_se = as.numeric(format(signif(KD_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE)),
+    Bulkshift = as.numeric(round(Bulkshift, 2)),
+    Bulkshift_se = as.numeric(round(Bulkshift_se, 2)),
+    R0 = as.numeric(round(R0, 2)),
+    R0_se = as.numeric(round(R0_se, 2)))
 }
