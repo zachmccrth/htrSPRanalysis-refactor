@@ -169,7 +169,7 @@ create_pdf(processed_input, fits_list, rc_list, plot_list)
 ### Create a .csv file with all model parameters and standard errors.
 
 ```{r}
-create_csv(processed_input, fits_list)
+fit_table <- create_csv(processed_input, fits_list)
 ```
 
 
