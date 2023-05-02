@@ -58,6 +58,9 @@ process_input <- function(files_directory = NULL,
      stop(usr_msg)
   }
 
+  # Keep track of the original ordering. Sample sheet will be re-ordered to be in order of ROI for processing
+
+  sample_sheet$OriginalIdx <- 1:dim(sample_sheet)[1]
   #formatting sample_sheet data
   sample_info <- process_sample_sheet(sample_sheet)
 
@@ -456,7 +459,16 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
   # parallel::stopCluster(cl)
   #
 
-  pages_list <-lapply(1:n_fit_wells, purrr::safely(combine_output),
+  # sort in order original to sample sheet
+
+  sample_info_fits %>%
+    dplyr::select(OriginalIdx, WellIdx) %>%
+    dplyr::arrange(OriginalIdx) %>%
+    dplyr::select(WellIdx) %>%
+    purrr::as_vector() -> sort_idx
+
+
+  pages_list <-lapply(sort_idx, purrr::safely(combine_output),
                       fits_list, plot_list, rc_list, sample_info_fits)
 
   pdf(file = output_pdf, ...)
