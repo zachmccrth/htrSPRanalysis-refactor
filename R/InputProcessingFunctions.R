@@ -686,7 +686,8 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
       if (sample_info$`All Concentrations`[i] != "ALL" |
           sample_info$`All Concentrations`[i] != "All"){
         incl_concentrations <-
-          as.numeric(purrr::flatten(stringr::str_split(sample_info$`All Concentrations`[i], ",")))
+          as.numeric(purrr::flatten(stringr::str_split(sample_info$`Incl. Conc.`[i], ",")))
+
         num_incl_conc <- length(incl_concentrations)
 
         if(sum(is.na(incl_concentrations)) > 0)
