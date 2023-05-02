@@ -512,4 +512,5 @@ create_csv <- function(processed_input, fits_list){
 
   readr::write_csv(csv_data, file = output_csv)
 
+  csv_data
 }

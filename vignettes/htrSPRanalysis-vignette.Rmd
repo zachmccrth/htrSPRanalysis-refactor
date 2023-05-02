@@ -212,7 +212,7 @@ create_pdf(processed_input = bulkshift_example,
            fits_list = bulkshift_fits,
            rc_list = bulkshift_rc)
 
-create_csv(processed_input = bulkshift_example, 
+fit_table <- create_csv(processed_input = bulkshift_example, 
            fits_list = bulkshift_fits)
 ```
 
