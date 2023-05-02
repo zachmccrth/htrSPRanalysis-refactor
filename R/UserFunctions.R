@@ -468,11 +468,11 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
     purrr::as_vector() -> sort_idx
 
 
-  pages_list <-lapply(sort_idx, purrr::safely(combine_output),
+  pages_list <-lapply(1:n_fit_wells, purrr::safely(combine_output),
                       fits_list, plot_list, rc_list, sample_info_fits)
 
   pdf(file = output_pdf, ...)
-  for (well_idx in 1:n_fit_wells){
+  for (well_idx in sort_idx){
     if (!is.null(pages_list[[well_idx]]$result)){
       gridExtra::grid.arrange(pages_list[[well_idx]]$result)
 
