@@ -1079,7 +1079,10 @@ print_output <- function(well_idx, pages_list, plot_list_out, sample_info){
   if (is.null(plot_list_out[[well_idx]]))
      return(p1 = gridExtra::arrangeGrob(grid::textGrob(err_msg)))
   else
-     return(p1 = gridExtra::arrangeGrob(get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
+     return(p1 = gridExtra::arrangeGrob(grid::textGrob(err_msg), plot_list_out[[well_idx]]))
+
+}
+get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
                                all_concentrations_values,
                                incl_concentrations_values,
                                n_time_points){
@@ -1239,7 +1242,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
     Rmax_se = round(Rmax_se, 2),
     ka = round(ka,2),
     ka_se = round(ka_se, 2),
-    kd = format(signif(ks, 3),big.mark=",",decimal.mark=".", scientific = TRUE),
+    kd = format(signif(kd, 3),big.mark=",",decimal.mark=".", scientific = TRUE),
     kd_se = format(signif(kd_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE),
     KD = format(signif(KD, 3),big.mark=",",decimal.mark=".", scientific = TRUE),
     KD_se = format(signif(KD_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE),
