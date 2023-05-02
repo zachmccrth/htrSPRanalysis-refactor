@@ -683,7 +683,7 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
       if (sum(is.na(concentrations)) > 0)
         return(paste("Invalid concentration value for spot", i))
 
-      if (sample_info$`All Concentrations`[i] != "ALL" |
+      if (sample_info$`All Concentrations`[i] != "ALL" &
           sample_info$`All Concentrations`[i] != "All"){
         incl_concentrations <-
           as.numeric(purrr::flatten(stringr::str_split(sample_info$`Incl. Conc.`[i], ",")))
