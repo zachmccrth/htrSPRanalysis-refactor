@@ -94,9 +94,9 @@ process_input <- function(files_directory = NULL,
         tidyr::separate(col = "Name", into = c("bracket", "Name")) %>%
         tidyr::separate(col = "Rest", into = c("Dash1","Dash2", "Analyte", "Conc String", "Conc"), sep = " ") %>%
         tidyr::separate("Conc", into = c("Conc.", "Cycle"), sep = "\\(") %>%
-        dplyr::select(Name, ROI, Analyte, Conc., Cycle) %>%
-        dplyr::mutate(Conc. = as.numeric(Conc.)) %>%
-        dplyr::mutate(Cycle = as.numeric(Cycle)) -> ligand_and_ROI
+        dplyr::select("Name", "ROI", "Analyte", "Conc.", "Cycle") %>%
+        dplyr::mutate(Conc. = as.numeric(.data$Conc.)) %>%
+        dplyr::mutate(Cycle = as.numeric(.data$Cycle)) -> ligand_and_ROI
   } else
       titration_data <- openxlsx::read.xlsx(data_file_path,
                                           colNames = TRUE,
@@ -107,7 +107,7 @@ process_input <- function(files_directory = NULL,
   titration_data <- tibble::tibble(titration_data)
 
   #identify if any flags present in the sample sheet
-  flagspresent <- check_titration_data(titration_data, files_directory)
+  flagspresent <- check_titration_data(titration_data, files_directory, data_file_path)
 
   if (flagspresent){
     usr_msg <- "Error in titration data file. See Error_note_titration_data.csv for detailed description, then select corrected file"
@@ -198,9 +198,12 @@ process_input <- function(files_directory = NULL,
   nwells <- dim(sample_info)[1]
   # get index of first concentration (selected for analysis) for each well
 
-
-  first_conc_idx_list <- purrr::map(.x = 1:nwells, .f = first_conc_indices,
-                             sample_info$NumConc)
+  if (is.null(ligand_and_ROI))
+     first_conc_idx_list <- purrr::map(.x = 1:nwells, .f = first_conc_indices,
+                             sample_info$NumConc) else
+    first_conc_idx_list <- purrr::map(.x = 1:nwells,
+                                      .f = first_conc_indices_from_titration_data,
+                                      ligand_and_ROI)
 
   sample_info$FirstConcIdx <- purrr::as_vector(purrr::flatten(first_conc_idx_list))
 
@@ -462,9 +465,9 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
   # sort in order original to sample sheet
 
   sample_info_fits %>%
-    dplyr::select(OriginalIdx, WellIdx) %>%
-    dplyr::arrange(OriginalIdx) %>%
-    dplyr::select(WellIdx) %>%
+    dplyr::select("OriginalIdx", "WellIdx") %>%
+    dplyr::arrange(.data$OriginalIdx) %>%
+    dplyr::select("WellIdx") %>%
     purrr::as_vector() -> sort_idx
 
 
@@ -479,7 +482,12 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
     } else {
       error_msg <- paste("An error occurred when producing final output", well_idx,
                          "\n\n The sample info is: \n")
-      sample_info_fits[well_idx,] %>% dplyr::select(Block, Row, Column, Ligand, Analyte) -> sample_info_error
+      sample_info_fits[well_idx,] %>%
+        dplyr::select("Block",
+                      "Row",
+                      "Column",
+                      "Ligand",
+                      "Analyte") -> sample_info_error
       gridExtra::grid.arrange(grid::textGrob(error_msg), gridExtra::tableGrob(sample_info_error))
     }
   }
@@ -490,7 +498,12 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
     if (well_idx %in% error_idx_concentrations){
       error_msg <- paste("Too few concentrations selected/found for well", well_idx,
                          "\n\n This could be addressed by explicitly choosing concentrations to analyze. \n The sample info is: \n")
-      sample_info[well_idx,] %>% dplyr::select(Block, Row, Column, Ligand, Analyte) -> sample_info_error
+      sample_info[well_idx,] %>%
+        dplyr::select("Block",
+                      "Row",
+                      "Column",
+                      "Ligand",
+                      "Analyte") -> sample_info_error
       gridExtra::grid.arrange(grid::textGrob(error_msg), gridExtra::tableGrob(sample_info_error))
     }
   }

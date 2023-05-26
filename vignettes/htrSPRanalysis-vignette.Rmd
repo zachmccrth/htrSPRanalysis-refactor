@@ -22,7 +22,6 @@ This R package consists of a library of functions for processing and analyzing d
 
 devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis")
 
-
 ```
 
 Then load the library using:
@@ -107,7 +106,8 @@ data_file_path <- system.file("extdata", "titration_data.xlsx", package="htrSPRa
 # process the input
 processed_input <- process_input(files_directory = files_directory,
                                  sample_sheet_path = sample_sheet_path,
-                                 data_file_path = data_file_path)
+                                 data_file_path = data_file_path,
+                                 num_cores = 2)
 
 
 ```
@@ -169,7 +169,7 @@ create_pdf(processed_input, fits_list, rc_list, plot_list)
 ### Create a .csv file with all model parameters and standard errors.
 
 ```{r}
-fit_table <- create_csv(processed_input, fits_list)
+create_csv(processed_input, fits_list)
 ```
 
 
@@ -212,7 +212,7 @@ create_pdf(processed_input = bulkshift_example,
            fits_list = bulkshift_fits,
            rc_list = bulkshift_rc)
 
-fit_table <- create_csv(processed_input = bulkshift_example, 
+create_csv(processed_input = bulkshift_example, 
            fits_list = bulkshift_fits)
 ```
 

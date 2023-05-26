@@ -35,7 +35,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
     RU <- y_vals[, i]
     df <- suppressMessages(dplyr::bind_cols(Time, RU))
     names(df) <- c("Time", "RU")
-    df %>% dplyr::filter(Time > (start_time - 50)) -> df
+    df %>% dplyr::filter(.data$Time > (start_time - 50)) -> df
 
     # Do not base on low information concentrations
     if (mean(df$RU, na.rm = TRUE) < min_RU_tol | mean(df$RU, na.rm = TRUE) > max_RU_tol)
@@ -49,7 +49,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
           if (all(is.na(x_df$RU)| is.nan(x_df$RU)))
             return(c(NA,NA))
           else
-            return(stats::coef(stats::lm(RU ~ Time, singular.ok = TRUE,
+            return(stats::coef(stats::lm(RU ~ .data$Time, singular.ok = TRUE,
                            data = x_df)))}, by.column = FALSE,
 
         width = 100)) -> df_out
@@ -98,6 +98,18 @@ first_conc_indices <- function(well_idx, num_conc_ligand){
   first_conc_idx
 }
 
+first_conc_indices_from_titration_data <- function(well_idx, ligand_and_ROI){
+
+  # If we have ROI information in the titration data, we can use this to match cols in data
+  # to rows in the sample_info
+
+  col_idx <- which(ligand_and_ROI$ROI == well_idx)
+  if (sum(is.null(col_idx)) > 0 | sum(is.na(col_idx)) > 0)
+    stop(paste("Could not identify starting index for titration data for spot", i))
+
+  col_idx[1]
+}
+
 #' Determine the index of the baseline concentration
 #'
 #' @param well_idx The corresponding well in the extended sample sheet
@@ -126,7 +138,7 @@ get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
       RU <- y_vals[, i]
       df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU))
       colnames(df) <- c("Time", "RU")
-      df %>% dplyr::filter(Time > baseline_start & Time < baseline+ baseline_start)  %>% .$RU -> base_meas
+      df %>% dplyr::filter(.data$Time > baseline_start & .data$Time < baseline+ baseline_start)  %>% .$RU -> base_meas
       baseline_avg <- mean(base_meas, na.rm = TRUE)
       baseline_avg_list <- c(baseline_avg_list, baseline_avg)
   }
@@ -151,7 +163,7 @@ create_dataframe_with_conc <- function(begin_conc_idx, end_conc_idx, x_vals, y_v
 
     Time <- x_vals[, begin_conc_idx:end_conc_idx] %>%
       tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
-      dplyr::select(value)
+      dplyr::select("value")
     RU <- y_vals[, begin_conc_idx:end_conc_idx] %>%
       tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
       dplyr::select("value")
@@ -219,9 +231,13 @@ baseline_correction <- function(well_idx, x_vals, y_vals, sample_info){
       df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU))
       colnames(df) <- c("Time", "RU")
 
-      df %>% dplyr::filter(Time > baseline_start & Time < baseline + baseline_start) %>% .$RU -> base_meas # select for defined baseline time period
+      df %>%
+        dplyr::filter(.data$Time > baseline_start &
+                        .data$Time < baseline + baseline_start) %>%
+        dplyr::select("RU") -> base_meas # select for defined baseline time period
+
       # This command is split up because mean(.$RU) would not parse properly
-      base_corr <- mean(base_meas, na.rm = TRUE)
+      base_corr <- mean(base_meas$RU, na.rm = TRUE)
       y_vals[, start_idx + (i-1)] <- y_vals[, start_idx + (i-1)] - base_corr
     }
   }
@@ -267,7 +283,7 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
   df %>% dplyr::filter((Time >= baseline + baseline_start + association - 10)
                 & (Time <= baseline + baseline_start + association - 5)) %>%
     dplyr::group_by(Concentration) %>%
-    dplyr::summarise(`Dose Response` = mean(RU, na.rm = TRUE)) -> df_RC
+    dplyr::summarise(`Dose Response` = mean(.data$RU, na.rm = TRUE)) -> df_RC
   df_RC %>% dplyr::mutate(Included =
                      forcats::as_factor(ifelse(Concentration %in% incl_conc_values,
                                       "Yes", "No"))) -> df_RC
@@ -317,7 +333,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   df %>% dplyr::filter((Time >= baseline + baseline_start + association - 10)
                 & (Time <= baseline + baseline_start + association - 5)) %>%
     dplyr::group_by(Concentration) %>%
-    dplyr::summarise(`Dose Response` = mean(RU, na.rm = TRUE)) -> df_RC
+    dplyr::summarise(`Dose Response` = mean(.data$RU, na.rm = TRUE)) -> df_RC
 
   # check to see if any results for df_RC
 
@@ -405,7 +421,7 @@ plot_sensorgrams <- function(well_idx,
 
   Time <- x_vals[, start_idx:end_idx] %>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
-    dplyr::select(value)
+    dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
     dplyr::select("value")
@@ -475,7 +491,7 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
   Time <- x_vals[, start_idx:end_idx] %>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>%
     dplyr::arrange(as.numeric(name)) %>%
-    dplyr::select(value)
+    dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>%
     dplyr::arrange(as.numeric(name)) %>%
@@ -580,7 +596,7 @@ fit_kd <- function(pars, df, incl_concentrations, num_conc, kd, t0 = t0){
     Time <- df_i$Time
     Concentration <- df_i$Concentration
 
-    df_i %>% dplyr::filter(DissocIndicator == 1) -> df_dissoc
+    df_i %>% dplyr::filter(.data$DissocIndicator == 1) -> df_dissoc
 
     dissoc_formula <- R0[i]*exp(-kd*(df_dissoc$Time - t0))
 
@@ -743,7 +759,7 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
 
   }
   # return fitted values
-  full_output_RU %>% dplyr::select(Time, RU, Concentration)
+  full_output_RU %>% dplyr::select("Time", "RU", "Concentration")
 }
 
 #' Fit sensorgrams for a given well.
@@ -812,7 +828,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
 
   Time <- x_vals[, start_idx:end_idx] %>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
-    dplyr::select(value)
+    dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
     dplyr::select("value")
@@ -822,20 +838,22 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
 
   purrr::map_dfr(.x = tibble::tibble(incl_concentrations),
           .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
-    dplyr::arrange(incl_concentrations) -> incl_concentrations_rep
+    dplyr::arrange(.data$incl_concentrations) -> incl_concentrations_rep
 
-  df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = incl_concentrations_rep))
+  df <- suppressMessages(dplyr::bind_cols("Time" = Time,
+                                          "RU" = RU,
+                                          "Concentration" = incl_concentrations_rep))
   colnames(df) <- c("Time", "RU", "Concentration") #force correct names - dplyr is doing weird things
 
 
   #do both dissociation and association
   df %>% dplyr::mutate(AssocIndicator =
-                  ifelse((Time >= assoc_start & Time < assoc_end), 1, 0),
+                  ifelse((.data$Time >= assoc_start & .data$Time < assoc_end), 1, 0),
                          DissocIndicator = ifelse(Time > dissoc_start & Time < dissoc_end, 1, 0)) -> df
-  df %>% dplyr::filter((AssocIndicator == 1 | DissocIndicator == 1)) -> df
+  df %>% dplyr::filter((.data$AssocIndicator == 1 | .data$DissocIndicator == 1)) -> df
 
-  df %>% dplyr::group_by(Concentration) %>% dplyr::summarise(max = max(RU, na.rm = TRUE)) -> Rmax_start_df
-  df %>% dplyr::group_by(Concentration) %>% dplyr::summarise(min = min(RU, na.rm = TRUE)) -> R0_start
+  df %>% dplyr::group_by(.data$Concentration) %>% dplyr::summarise(max = max(.data$RU, na.rm = TRUE)) -> Rmax_start_df
+  df %>% dplyr::group_by(.data$Concentration) %>% dplyr::summarise(min = min(.data$RU, na.rm = TRUE)) -> R0_start
   t0_start <- rep(0, num_conc)
 
   if (global_rmax){
@@ -885,7 +903,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
                                    jac = NULL,
                                    upper = param_upper_bounds)
 
-  pars <- minpack.lm:::coef.nls.lm(fit_result)
+  pars <- unlist(fit_result$par)
 
   # initialize t0. If the surface is regenerated, we need to pass something to get_fit_outcomes
   t0 <- rep(0, num_conc)
@@ -973,7 +991,7 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   bulkshift_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("Bulkshift", x))
 
 
-  pars <- minpack.lm:::coef.nls.lm(fits_list[[well_idx]]$result$FitResult)
+  pars <- unlist(fits_list[[well_idx]]$result$FitResult$par)
 
   if (bulkshift)
     par_names <- purrr::as_vector(purrr::flatten(c(Rmax_label, "ka", R0_label, "kd", bulkshift_label))) else
@@ -992,27 +1010,29 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   colnames(par_err_table) <- summary_names
   par_err_table <- suppressMessages(dplyr::bind_cols(Names = par_names, par_err_table))
 
-  par_err_table %>% dplyr::filter(!stringr::str_detect(Names,"R_0")) -> par_err_table
-  par_err_table %>% dplyr::filter(!stringr::str_detect(Names,"Bulkshift")) -> par_err_table
+  par_err_table %>%
+    dplyr::filter(!stringr::str_detect(.data$Names,"R_0")) -> par_err_table
+  par_err_table %>%
+    dplyr::filter(!stringr::str_detect(.data$Names,"Bulkshift")) -> par_err_table
 
 
   par_names <- par_err_table$Names
 
   par_err_table %>%
-    dplyr::filter(Names == "ka") %>%
-    dplyr::select(Estimate) %>%
+    dplyr::filter(.data$Names == "ka") %>%
+    dplyr::select("Estimate") %>%
     as.numeric() -> ka
   par_err_table %>%
-    dplyr::filter(Names == "ka") %>%
-    dplyr::select(`Std. Error`) %>%
+    dplyr::filter(.data$Names == "ka") %>%
+    dplyr::select("Std. Error") %>%
     as.numeric() -> ka_se
   par_err_table %>%
-    dplyr::filter(Names == "kd") %>%
-    dplyr::select(Estimate) %>%
+    dplyr::filter(.data$Names == "kd") %>%
+    dplyr::select("Estimate") %>%
     as.numeric() -> kd
   par_err_table %>%
-    dplyr::filter(Names == "kd") %>%
-    dplyr::select(`Std. Error`) %>%
+    dplyr::filter(.data$Names == "kd") %>%
+    dplyr::select("Std. Error") %>%
     as.numeric() -> kd_se
 
   KD <- kd/ka
@@ -1026,24 +1046,24 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   }
 
   par_err_table %>%
-    dplyr::filter(Names == "ka" | Names == "kd") %>%
-    dplyr::select(Estimate, `Std. Error`)  %>%
-    dplyr::mutate(Estimate = format(signif(Estimate, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) %>%
-    dplyr::mutate(`Std. Error` = format(signif(`Std. Error`, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) -> kakd_out
+    dplyr::filter(.data$Names == "ka" | .data$Names == "kd") %>%
+    dplyr::select("Estimate", "Std. Error")  %>%
+    dplyr::mutate(Estimate = format(signif(.data$Estimate, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) %>%
+    dplyr::mutate(`Std. Error` = format(signif(.data$`Std. Error`, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) -> kakd_out
 
   par_err_table %>%
-    dplyr::filter(!(Names == "ka" | Names == "kd")) %>%
-    dplyr::select(Estimate, `Std. Error`)  %>%
-    dplyr::mutate(Estimate = format(round(Estimate,2),big.mark=",",decimal.mark=".", scientific = FALSE))  %>%
-    dplyr::mutate(`Std. Error` = format(round(`Std. Error`, 2),big.mark=",",decimal.mark=".", scientific = FALSE)) -> rest_out
+    dplyr::filter(!(.data$Names == "ka" | .data$Names == "kd")) %>%
+    dplyr::select("Estimate", "Std. Error")  %>%
+    dplyr::mutate(Estimate = format(round(.data$Estimate,2),big.mark=",",decimal.mark=".", scientific = FALSE))  %>%
+    dplyr::mutate(`Std. Error` = format(round(.data$`Std. Error`, 2),big.mark=",",decimal.mark=".", scientific = FALSE)) -> rest_out
 
 
   KD_tbl <- tibble::tibble(Estimate = KD, `Std. Error` = KD_se)
 
   KD_tbl %>%
-    dplyr::select(Estimate, `Std. Error`)  %>%
-    dplyr::mutate(Estimate = format(signif(Estimate, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) %>%
-    dplyr::mutate(`Std. Error` = format(signif(`Std. Error`, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) -> KD_tbl
+    dplyr::select("Estimate", "Std. Error")  %>%
+    dplyr::mutate(Estimate = format(signif(.data$Estimate, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) %>%
+    dplyr::mutate(`Std. Error` = format(signif(.data$`Std. Error`, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) -> KD_tbl
 
   par_names <- c(par_names, "KD")
   dplyr::bind_rows(rest_out, kakd_out) %>%
@@ -1106,7 +1126,7 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
 
   Time <- x_vals[, start_idx:end_idx] %>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
-    dplyr::select(value)
+    dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
     dplyr::select("value")
@@ -1184,7 +1204,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
 
   }
 
-  pars <- minpack.lm:::coef.nls.lm(fits_list[[well_idx]]$result$FitResult)
+  pars <- unlist(fits_list[[well_idx]]$result$FitResult$par)
 
 
 
@@ -1193,7 +1213,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
   # first column of summary is the estimate. Second is standard error
 
   summary_names <- colnames(result_summary)
-  result_summary %>% tibble::as_tibble() %>% dplyr::select(Estimate, `Std. Error`) -> par_err_table
+  result_summary %>% tibble::as_tibble() %>% dplyr::select("Estimate", "Std. Error") -> par_err_table
 
   colnames(par_err_table) <- summary_names[1:2]
 

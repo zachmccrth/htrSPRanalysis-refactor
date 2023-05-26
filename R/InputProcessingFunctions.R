@@ -39,8 +39,8 @@ process_sample_sheet <- function(sample_sheet){
     tidyr::separate(`Position/Channel/Sensor`, into = c("BeginPosition", "EndPosition", sep = "-")) %>%
     tidyr::separate(BeginPosition, into = c("Row", "Column"), sep = 1) %>%
     tidyr::separate(EndPosition, into = c("EndRow", "EndColumn"), sep = 1) %>%
-    dplyr::mutate(Column = as.integer(Column)) %>%
-    dplyr::mutate(EndColumn = as.integer(EndColumn)) -> RowExpansionTemplate)
+    dplyr::mutate(Column = as.integer(.data$Column)) %>%
+    dplyr::mutate(EndColumn = as.integer(.data$EndColumn)) -> RowExpansionTemplate)
 
   check_row_number <- !(RowExpansionTemplate$Row %in% c("A", "B", "C", "D","E", "F","G","H"))
 
@@ -147,7 +147,7 @@ process_sample_sheet <- function(sample_sheet){
       ss_exp <- rbind(ss_exp, RowExpansionTemplate[i,])
   }
 
-  ss_exp %>% dplyr::select(-EndRow, -EndColumn, -"-") -> ss_exp
+  ss_exp %>% dplyr::select(-"EndRow", -"EndColumn", -"-") -> ss_exp
 
   # Now expand blocks
   current_idx <- 0
@@ -176,10 +176,12 @@ process_sample_sheet <- function(sample_sheet){
   }
   # Rows are sorted A,E,B,F,C,G,D,H
 
-  sample_info_expanded %>% dplyr::mutate(RowSort = translate_rows_for_sort(Row)) ->
+  sample_info_expanded %>%
+    dplyr::mutate(RowSort = translate_rows_for_sort(.data$Row)) ->
     sample_info_expanded
 
-  sample_info_expanded %>% dplyr::arrange(RowSort, Column, Block) -> sample_info_expanded
+  sample_info_expanded %>%
+    dplyr::arrange(.data$RowSort, .data$Column, .data$Block) -> sample_info_expanded
 
   sample_info_expanded
 }
@@ -303,12 +305,12 @@ get_averages <- function(conc_idx, Time, RU, end_assoc_frame, begin_dissoc_frame
    names(df) <- c("Time", "RU")
 
   df %>%
-    dplyr::filter(Time >= end_assoc_frame & Time <= (end_assoc_frame + 20)) %>%
-    dplyr::select(RU) -> RU_assoc
+    dplyr::filter(.data$Time >= end_assoc_frame & .data$Time <= (end_assoc_frame + 20)) %>%
+    dplyr::select("RU") -> RU_assoc
 
   df %>%
-    dplyr::filter(Time >= end_assoc_frame + 20 & Time <= begin_dissoc_frame) %>%
-    dplyr::select(RU) -> RU_dissoc
+    dplyr::filter(.data$Time >= end_assoc_frame + 20 & .data$Time <= begin_dissoc_frame) %>%
+    dplyr::select("RU") -> RU_dissoc
 
   avg_assoc <- mean(RU_assoc$RU, na.rm = TRUE)
   avg_dissoc <- mean(RU_dissoc$RU, na.rm = TRUE)
@@ -348,16 +350,14 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
   error_idx <- NULL
 
   for(i in 1:nsamples){
-###    num_conc <- str_count(sample_info$`All Concentrations`[i], ",") + 1
-### The Tomaras lab has sometimes placed the wrong number of concentrations in this field. It causes havoc,
-### because the sample sheet and Carterra output are out of sync. Need to add code to check dimensions
 
+    start_idx <- sample_info$FirstConcIdx[i]
     num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
 
-    if (sample_info$Incl.[i] == "N"){
-      displacement_in_titration_data <- num_conc + displacement_in_titration_data
-      next
-    }
+    # if (sample_info$Incl.[i] == "N"){
+    #   displacement_in_titration_data <- num_conc + displacement_in_titration_data
+    #   next
+    # }
 
     concentrations <-
       as.numeric(purrr::flatten(stringr::str_split(sample_info$`All Concentrations`[i], ",")))
@@ -374,7 +374,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
       incl_concentrations <-
         get_best_window(i, sample_info, x_vals, y_vals,
                         num_incl, incl_concentrations,
-                        displacement_in_titration_data + 1, n_time_points)
+                        start_idx, n_time_points)
       num_incl <- length(incl_concentrations)
     }
 
@@ -619,7 +619,8 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path, files_directory)
 }
 
 #check titration data
-check_titration_data <- function(titration_data, files_directory) {
+check_titration_data <- function(titration_data, files_directory, data_file_path) {
+
   if (dim(titration_data)[1] == 0) {
     check2 <- "empty data set :"
     flagspresent <- TRUE
@@ -667,7 +668,7 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
       num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
 
       ligand_and_ROI %>%
-        dplyr::filter(ROI == i) -> rows_for_this_spot
+        dplyr::filter(.data$ROI == i) -> rows_for_this_spot
 
       num_conc_data <- dim(rows_for_this_spot)[1]
 
