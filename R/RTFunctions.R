@@ -553,8 +553,8 @@ summary_fit_with_constraints <- function(fit_object){
   n <- nrow(hessian)
   test_zeroes <- apply(hessian, 1 , function(x) sum(x==0))
   nonsingular_rows <- which(test_zeroes != n)
-  if (length(nonsingular_rows) == n & info != 5)
-    return(summary(fit_object)$coefficients)
+ # if (length(nonsingular_rows) == n & info != 5)
+#    return(summary(fit_object)$coefficients)
   hessian <- hessian[nonsingular_rows, nonsingular_rows]
 
   std_err_full <- rep(NA, n)
@@ -1071,12 +1071,14 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
     gridExtra::tableGrob(rows = par_names,
                          theme = gridExtra::ttheme_minimal(core=list(fg_params=list(hjust=1, x=0.9)))) -> tb1
 
-  stats::residuals(fits_list[[well_idx]]$result$FitResult) -> RU_resid
+  RU_resid <- fits_list[[well_idx]]$result$FitResult$fvec
   fits_list[[well_idx]]$result$FitOutcomes$Time -> Time_resid
   fits_list[[well_idx]]$result$FitOutcomes$Concentration -> Concentration_resid
 
 
-  resid_plot <- ggplot2::ggplot(data = tibble::tibble(Residuals = RU_resid, Time = Time_resid, Concentration = forcats::as_factor(Concentration_resid)),
+  resid_plot <- ggplot2::ggplot(data = tibble::tibble(Residuals = RU_resid,
+                                                      Time = Time_resid,
+                                                      Concentration = forcats::as_factor(Concentration_resid)),
                        ggplot2::aes(x = Time, y = Residuals, color = Concentration)) + ggplot2::geom_point(size = 0.01) +
                           ggplot2::ggtitle(label = "Residuals")
 
