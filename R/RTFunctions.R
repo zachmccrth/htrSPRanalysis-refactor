@@ -137,15 +137,16 @@ create_dataframe_with_conc <- function(begin_conc_idx, end_conc_idx, x_vals, y_v
 
     Time <- x_vals[, begin_conc_idx:end_conc_idx] %>%
       tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-      dplyr::arrange(as.numeric("name")) %>%
+      dplyr::arrange(as.numeric(.data$name)) %>%
       dplyr::select("value")
     RU <- y_vals[, begin_conc_idx:end_conc_idx] %>%
       tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-      dplyr::arrange(as.numeric("name")) %>%
+      dplyr::arrange(as.numeric(.data$name)) %>%
       dplyr::select("value")
 
-    purrr::map_dfr(.x = tibble::tibble(numerical_concentrations), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
-      dplyr::arrange(numerical_concentrations) -> numerical_concentrations
+    purrr::map_dfr(.x = tibble::tibble(numerical_concentrations),
+                   .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+      dplyr::arrange(.data$numerical_concentrations) -> numerical_concentrations
     Concentrations <- numerical_concentrations
     df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
     colnames(df) <- c("Time", "RU", "Concentration")
@@ -332,16 +333,18 @@ plot_sensorgrams <- function(well_idx,
 
   Time <- x_vals[, start_idx:end_idx] %>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-    dplyr::arrange(as.numeric("name")) %>%
+    dplyr::arrange(as.numeric(.data$name)) %>%
     dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-    dplyr::arrange(as.numeric("name")) %>%
+    dplyr::arrange(as.numeric(.data$name)) %>%
     dplyr::select("value")
 
 
-  purrr::map_dfr(.x = tibble::tibble(incl_conc_values), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
-    dplyr::arrange(incl_conc_values) -> incl_conc_values
+  purrr::map_dfr(.x = tibble::tibble(incl_conc_values),
+                 .f = function(x, n_time_points)
+                   rep(x, n_time_points), n_time_points) %>%
+    dplyr::arrange(.data$incl_conc_values) -> incl_conc_values
 
    Concentrations <- incl_conc_values
 
@@ -393,17 +396,19 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
   Time <- x_vals[, start_idx:end_idx] %>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-    dplyr::arrange(as.numeric(name)) %>%
+    dplyr::arrange(as.numeric(.data$name)) %>%
     dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-    dplyr::arrange(as.numeric(name)) %>%
+    dplyr::arrange(as.numeric(.data$name)) %>%
     dplyr::select("value")
 
   numerical_concentration <- incl_conc_values[start_idx:end_idx]
 
-  purrr::map_dfr(.x = tibble::tibble(numerical_concentration), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
-    dplyr::arrange(numerical_concentration) -> numerical_concentration
+  purrr::map_dfr(.x = tibble::tibble(numerical_concentration),
+                 .f = function(x, n_time_points)
+                   rep(x, n_time_points), n_time_points) %>%
+    dplyr::arrange(.data$numerical_concentration) -> numerical_concentration
 
   Concentrations <- numerical_concentration
 
@@ -717,11 +722,11 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
 
   Time <- x_vals[, start_idx:end_idx] %>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-    dplyr::arrange(as.numeric("name")) %>%
+    dplyr::arrange(as.numeric(.data$name)) %>%
     dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-    dplyr::arrange(as.numeric("name")) %>%
+    dplyr::arrange(as.numeric(.data$name)) %>%
     dplyr::select("value")
 
   incl_concentrations <-
@@ -1019,11 +1024,11 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
 
   Time <- x_vals[, start_idx:end_idx] %>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-    dplyr::arrange(as.numeric("name")) %>%
+    dplyr::arrange(as.numeric(.data$name)) %>%
     dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
     tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-    dplyr::arrange(as.numeric("name")) %>%
+    dplyr::arrange(as.numeric(.data$name)) %>%
     dplyr::select("value")
 
 
@@ -1031,8 +1036,10 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
   numerical_concentration_incl <-
     incl_concentrations_values[start_incl_idx:end_incl_idx]
 
-  purrr::map_dfr(.x = tibble::tibble(numerical_concentration), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
-    dplyr::arrange(numerical_concentration) -> numerical_concentration
+  purrr::map_dfr(.x = tibble::tibble(numerical_concentration),
+                 .f = function(x, n_time_points)
+                   rep(x, n_time_points), n_time_points) %>%
+    dplyr::arrange(.data$numerical_concentration) -> numerical_concentration
 
   Concentrations <- numerical_concentration
 
