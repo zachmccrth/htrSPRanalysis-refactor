@@ -5,6 +5,8 @@
 #' returns a list object with the titration time series, processed sample information, all user inputs directing
 #' file outputs and fitting options
 #'
+#' @importFrom rlang .data
+
 #'
 #' @param files_directory The directory that contains the input files.
 #' @param sample_sheet_path The full path to the sample information file.
@@ -31,7 +33,7 @@
 #' data_file_path <- system.file("extdata", "titration_data.xlsx", package="htrSPRanalysis")
 #'
 #' # process the input
-#' processed_input <- process_input(files_directory = files_directory, sample_sheet_path = sample_sheet_path, data_file_path = data_file_path)
+#' processed_input <- process_input(files_directory = files_directory, sample_sheet_path = sample_sheet_path, data_file_path = data_file_path, num_cores = 2)
 #' @export process_input
 
 process_input <- function(files_directory = NULL,
@@ -87,10 +89,10 @@ process_input <- function(files_directory = NULL,
                                           check.names = TRUE)
     ligand_and_ROI <- tibble::tibble(ligand_and_ROI)
 
-    ligand_and_ROI %>% tidyr::pivot_longer(cols = everything(), values_to = "ROI") %>%
+    ligand_and_ROI %>% tidyr::pivot_longer(cols = tidyselect::everything(), values_to = "ROI") %>%
       tidyr::separate("ROI", into = c("Name", "ROI"), sep = " \\(") %>%
       tidyr::separate("ROI", into = c("ROI", "Rest"), sep = "\\)") %>%
-        dplyr::mutate(ROI = as.numeric(ROI)) %>%
+        dplyr::mutate(ROI = as.numeric(.data$ROI)) %>%
         tidyr::separate(col = "Name", into = c("bracket", "Name")) %>%
         tidyr::separate(col = "Rest", into = c("Dash1","Dash2", "Analyte", "Conc String", "Conc"), sep = " ") %>%
         tidyr::separate("Conc", into = c("Conc.", "Cycle"), sep = "\\(") %>%
@@ -430,7 +432,7 @@ get_rc_plots <- function(processed_input){
 
 #' Create pdf file with sensorgrams with fitted curves, residuals, table of fit parameters, and response curves.
 #'
-#' @param processed_input#' Processed_input as returned by `process_input`
+#' @param processed_input Processed_input as returned by `process_input`
 #' @param fits_list List of fits as returned by `get_fits`
 #' @param rc_list List of response curves as returned by `get_rc_plots`
 #' @param plot_list List of plots as returned by `get_fitted_plots`
@@ -474,7 +476,7 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
   pages_list <-lapply(1:n_fit_wells, purrr::safely(combine_output),
                       fits_list, plot_list, rc_list, sample_info_fits)
 
-  pdf(file = output_pdf, ...)
+  grDevices::pdf(file = output_pdf, ...)
   for (well_idx in sort_idx){
     if (!is.null(pages_list[[well_idx]]$result)){
       gridExtra::grid.arrange(pages_list[[well_idx]]$result)
@@ -491,7 +493,7 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
       gridExtra::grid.arrange(grid::textGrob(error_msg), gridExtra::tableGrob(sample_info_error))
     }
   }
-  dev.off()
+  grDevices::dev.off()
 
   pdf(file = error_pdf)
   for (well_idx in 1:nwells){
@@ -513,7 +515,7 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
 
 #' Create csv file with all fit parameters.
 #'
-#' @param processed_input#' Processed_input as returned by `process_input`
+#' @param processed_input Processed_input as returned by `process_input`
 #' @param fits_list List of fits as returned by `get_fits`
 #' @return `NULL` A csv file is created using the path name supplied to `process_input`
 
@@ -533,7 +535,11 @@ create_csv <- function(processed_input, fits_list){
   csv_data$Row <- sample_info_fits$Row
   csv_data$Column <- sample_info_fits$Column
 
-  csv_data %>% dplyr::relocate(Ligand, Analyte, Block, Row, Column) -> csv_data
+  csv_data %>% dplyr::relocate(.data$Ligand,
+                               .data$Analyte,
+                               .data$Block,
+                               .data$Row,
+                               .data$Column) -> csv_data
 
   readr::write_csv(csv_data, file = output_csv)
 

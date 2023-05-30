@@ -22,6 +22,7 @@ Imports:
   grid,
   parallel,
   readr,
+  rlang,
   dplyr,
   stringr,
   tidyselect,

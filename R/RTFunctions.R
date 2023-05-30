@@ -1,15 +1,6 @@
-#' Automatically determine dissociation window
-#'
-#' @param well_idx The corresponding well in the extended sample sheet
-#' @param sample_info A tibble. The expanded sample sheet
-#' @param x_vals A tibble. Time columns from the carterra output for concentrations chosen for fitting
-#' @param y_vals A tibble RU values from the carterra output for concentrations chosen for fitting
-#' @param incl_concentrations_ligand A vector. The concentrations chosen for inclusion in fitting.
-#' @param max_RU_tol A number. The maximum RU value to be included for determining the dissociation window
-#' @param min_RU_tol A number. The minimum RU value to be included for determining the dissociation window
-#' @return A number. The end dissociation time required to capture the decay in all of the selected concentrations for the given well
-#'
-#' find_dissociation_window(well_idx, sample_info, x_vals, y_vals, incl_concentrations_ligand, max_RU_tol, min_RU_tol)
+#' @importFrom rlang .data
+#' @importFrom grDevices pdf dev.off
+#internal
 
 find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
                                      incl_concentrations_ligand, max_RU_tol, min_RU_tol){
@@ -77,14 +68,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
   return(max(as.numeric(end_dissoc_list), na.rm = TRUE))
 }
 
-#' Determine the first concentration index in the Carterra output for a sample in the extended sample sheet
-#'
-#' @param well_idx The corresponding well in the extended sample sheet
-#' @param num_conc_ligand A vector. For each ligand (well), the total number of analyte concentrations observed.
-#' @return A number. The first index in the Carterra ouput that corresponds to this ligand (well)
-#'
-#' first_conc_indices(well_idx, num_conc_ligand)
-
+#internal.
 
 first_conc_indices <- function(well_idx, num_conc_ligand){
 
@@ -105,25 +89,12 @@ first_conc_indices_from_titration_data <- function(well_idx, ligand_and_ROI){
 
   col_idx <- which(ligand_and_ROI$ROI == well_idx)
   if (sum(is.null(col_idx)) > 0 | sum(is.na(col_idx)) > 0)
-    stop(paste("Could not identify starting index for titration data for spot", i))
+    stop(paste("Could not identify starting index for titration data for spot", well_idx))
 
   col_idx[1]
 }
 
-#' Determine the index of the baseline concentration
-#'
-#' @param well_idx The corresponding well in the extended sample sheet
-#' @param sample_info A tibble. The expanded sample sheet
-#' @param x_vals A tibble. Time columns from the Carterra output for concentrations chosen for fitting
-#' @param y_vals A tibble RU values from the Carterra output for concentrations chosen for fitting
-#' @param sample_info A tibble. This is the sample sheet after it has been extended to include a row for each well
-#' @return A list.
-#' @param baseline_idx A number. The index of the minimum average baseline for this well.
-#' @param min_baseline A number. The average of the minimum baseline
-#' @param baseline_negative A logical. TRUE if the baseline for the highest concentrate has a negative average.
-#'
-#' get_baseline_indices(well_idx, sample_info, x_vals, y_vals)
-
+#internal. Find the carterra index for baseline adjustment
 get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
   start_idx <- sample_info[well_idx,]$FirstConcIdx
   num_conc <- sample_info[well_idx,]$NumConc
@@ -138,7 +109,10 @@ get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
       RU <- y_vals[, i]
       df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU))
       colnames(df) <- c("Time", "RU")
-      df %>% dplyr::filter(.data$Time > baseline_start & .data$Time < baseline+ baseline_start)  %>% .$RU -> base_meas
+      df %>% dplyr::filter(.data$Time > baseline_start &
+                             .data$Time < baseline+ baseline_start) %>%
+        dplyr::select("RU") -> base_meas
+      base_meas <- base_meas$RU
       baseline_avg <- mean(base_meas, na.rm = TRUE)
       baseline_avg_list <- c(baseline_avg_list, baseline_avg)
   }
@@ -153,7 +127,7 @@ get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
   list(baseline_idx = baseline_idx, min_baseline = min_baseline, baseline_negative = baseline_neg)
 }
 
-# internal function. Not documented
+# internal function.
 create_dataframe_with_conc <- function(begin_conc_idx, end_conc_idx, x_vals, y_vals,
                                  numerical_concentrations,
                                 n_time_points){
@@ -162,10 +136,12 @@ create_dataframe_with_conc <- function(begin_conc_idx, end_conc_idx, x_vals, y_v
     names(y_vals) <- as.character(1:n_vals)
 
     Time <- x_vals[, begin_conc_idx:end_conc_idx] %>%
-      tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
+      tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+      dplyr::arrange(as.numeric("name")) %>%
       dplyr::select("value")
     RU <- y_vals[, begin_conc_idx:end_conc_idx] %>%
-      tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
+      tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+      dplyr::arrange(as.numeric("name")) %>%
       dplyr::select("value")
 
     purrr::map_dfr(.x = tibble::tibble(numerical_concentrations), .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
@@ -176,29 +152,8 @@ create_dataframe_with_conc <- function(begin_conc_idx, end_conc_idx, x_vals, y_v
     df
 }
 
-#This function is under development
-bulkshift_correction <- function(well_idx, x_vals, y_vals, sample_info,
-                                 all_concentrations_ligand){
 
-  baseline <- sample_info[well_idx,]$Baseline
-  baseline_start <- sample_info[well_idx,]$`Bsl Start`
-  association <- sample_info[well_idx,]$Association
-  association <- sample_info[well_idx,]$Dissociation
-  start_idx <- sample_info[well_idx,]$FirstConcIdx
-  num_conc <- all_concentrations_ligand[well_idx]
-
-}
-
-#' Determine baseline correction
-#'
-#' @param well_idx The corresponding well in the extended sample sheet.
-#' @param x_vals A tibble. Time columns from the Carterra output for concentrations chosen for fitting.
-#' @param y_vals A tibble RU values from the Carterra output for concentrations chosen for fitting.
-#' @param sample_info A tibble. The expanded sample sheet.
-#' @return A tibble. The baseline-adjusted RU values.
-#'
-#' baseline_correction <- function(well_idx, x_vals, y_vals, sample_info)
-
+# internal. Baseline correction
 baseline_correction <- function(well_idx, x_vals, y_vals, sample_info){
 
   negative_baseline <- sample_info[well_idx, ]$BaselineNegative
@@ -245,19 +200,7 @@ baseline_correction <- function(well_idx, x_vals, y_vals, sample_info){
 
 }
 
-#' Obtain the response curve of log concentrations vs. RU averaged over 5 time points at the end of the association phase.
-#'
-#' @param well_idx The corresponding well in the extended sample sheet.
-#' @param sample_info A tibble. The expanded sample sheet.
-#' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
-#' @param y_vals A tibble RU values from the Carterra output for all concentrations.
-#' @param all_concentrations_values A vector. All concentrations measured.
-#' @param incl_concentrations_values A vector. Concentrations to include in fitting.
-#' @param n_time_points A number. The maximum number of time points collected in this experiment. It is the number of rows in the Time and RU tibbles.
-#' @return A ggplot2::ggplot object. The plot of the response curve.
-#'
-#' get_response_curve <- function(well_idx, sample_info, x_vals, y_vals, all_concentrations_values, incl_concentrations_values, n_time_points)
-
+# internal. Get response curve for a well.
 get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
                                all_concentrations_values,
                                incl_concentrations_values, n_time_points){
@@ -295,23 +238,7 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
     ggplot2::ggtitle(ligand_desc)
 }
 
-#' Determine the best range of concentrations for fitting. The algorithm will attempt to find 5 concentrations
-#' by computing a rolling slope of the response curve over
-#' 5 consecutive concentrations. The concentration that leads to the maximum cumulative sum of slopes is marked as
-#' the starting concentration. A concentration is removed from consideration if its slope (the window where it is the first concentration)
-#' is less than 20% of the average of all slopes. If none of the concentrations are removed, the algorithm returns
-#' the five concentrations. Otherwise, it removes the concentration with the smallest slope and returns 4 concentrations.
-#' @param well_idx The corresponding well in the extended sample sheet.
-#' @param sample_info A tibble. The expanded sample sheet.
-#' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
-#' @param y_vals A tibble RU values from the Carterra output for all concentrations.
-#' @param num_conc A number. The number of concentrations observed for this well.
-#' @param concentrations A vector. The concentrations observed for this well.
-#' @param start_idx A number. The start index for the columns in the titration data for the current well.
-#' @return A vector. The concentrations selected for fitting.
-#'
-#' get_best_window <- function(well_idx, sample_info, x_vals, y_vals, num_conc, concentrations, start_idx)
-
+# internal. Find best concentration window
 get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
                             num_conc, concentrations, start_idx, n_time_points){
 
@@ -330,9 +257,9 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
                                          n_time_points)
 
   #this has failed in some data sets where these observations are missing.
-  df %>% dplyr::filter((Time >= baseline + baseline_start + association - 10)
-                & (Time <= baseline + baseline_start + association - 5)) %>%
-    dplyr::group_by(Concentration) %>%
+  df %>% dplyr::filter((.data$Time >= baseline + baseline_start + association - 10)
+                & (.data$Time <= baseline + baseline_start + association - 5)) %>%
+    dplyr::group_by(.data$Concentration) %>%
     dplyr::summarise(`Dose Response` = mean(.data$RU, na.rm = TRUE)) -> df_RC
 
   # check to see if any results for df_RC
@@ -372,23 +299,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
 
 }
 
-#' Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, useplot_sensorgrams_with_fits
-#' @param well_idx The corresponding well in the extended sample sheet.
-#' @param sample_info A tibble. The expanded sample sheet.
-#' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
-#' @param y_vals A tibble RU values from the Carterra output for all concentrations.
-#' @param incl_conc_values A vector. The number of concentrations to be included in this plot.
-#' @param all_concentrations_values A vector. The concentrations observed for this well.
-#' @param n_time_points A number. The maximum number of time points observed in this experiment. It is
-#' the number of rows in the titration data tibble.
-#' @param all_concentrations A logical. Whether or not to include all observed concentrations in the plot.
-#' The default is FALSE. This will plot only concentrations included in the fit.
-#' @return A ggplot2::ggplot object. The plotted sensorgram.
-#'
-#' plot_sensorgrams <- function(well_idx, sample_info, x_vals, y_vals,
-#' incl_conc_values, all_concentrations_values, n_time_points,
-#' all_concentrations = FALSE)
-
+#internal. Plot all data for a well
 
 plot_sensorgrams <- function(well_idx,
                              sample_info,
@@ -420,10 +331,12 @@ plot_sensorgrams <- function(well_idx,
 
 
   Time <- x_vals[, start_idx:end_idx] %>%
-    tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
+    tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+    dplyr::arrange(as.numeric("name")) %>%
     dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
-    tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
+    tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+    dplyr::arrange(as.numeric("name")) %>%
     dplyr::select("value")
 
 
@@ -442,24 +355,14 @@ plot_sensorgrams <- function(well_idx,
   sub_title <- paste("Block", sample_info[well_idx,]$Block, "Spot", spot,
                      "ROI", sample_info[well_idx,]$ROI)
 
-  ggplot2::ggplot(df, ggplot2::aes(x = Time, y = RU, color = Concentration)) + ggplot2::geom_point(size = 0.5) +
+  ggplot2::ggplot(df, ggplot2::aes(x = .data$Time,
+                                   y = .data$RU,
+                                   color = .data$Concentration)) +
+    ggplot2::geom_point(size = 0.5) +
     ggplot2::ggtitle(paste(analyte_desc, ligand_desc), subtitle = sub_title)
 }
 
-#' Plot sensorgrams. This function will plot only the data. For plotting data with fitted curves, use plot_sensorgrams_with_fits
-#' @param well_idx The corresponding well in the extended sample sheet.
-#' @param sample_info A tibble. The expanded sample sheet.
-#' @param fits A kinetics fit object. This is returned from a 'safely' call to fit_association_dissociation.
-#' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
-#' @param y_vals A tibble RU values from the Carterra output for all concentrations.
-#' @param incl_conc_values A vector. The number of concentrations to be included in this plot.
-#' @param n_time_points A number. The maximum number of time points observed in this experiment. It is
-#' the number of rows in the titration data tibble.
-#' @return A ggplot2::ggplot object. The plotted sensorgram with fitted curves.
-#'
-#' plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_vals,
-#' incl_conc_values, n_time_points)
-
+# internal. Called by UserFunctions get_fitted_plots
 plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_vals,
                              incl_conc_values, n_time_points){
 
@@ -510,7 +413,8 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
   end_time <- ifelse(!is.finite(sample_info[well_idx, ]$DissocEnd), baseline + baseline_start + association + dissociation, sample_info[well_idx, ]$DissocEnd)
 
-  df %>% dplyr::filter(Time > baseline + baseline_start & Time < end_time) -> df
+  df %>% dplyr::filter(.data$Time > baseline + baseline_start &
+                         .data$Time < end_time) -> df
 
   suppressMessages(dplyr::bind_cols(df,FittedRU = fit_RU)) -> df
 
@@ -528,9 +432,10 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
                      "ROI", sample_info[well_idx,]$ROI)
 
 
-  ggplot2::ggplot(df, ggplot2::aes(x = Time, y = RU)) + ggplot2::geom_point(size = 0.09, ggplot2::aes(color = Concentration)) +
+  ggplot2::ggplot(df, ggplot2::aes(x = .data$Time, y = .data$RU)) +
+    ggplot2::geom_point(size = 0.09, ggplot2::aes(color = .data$Concentration)) +
     ggplot2::ggtitle(paste(analyte_desc, ligand_desc), subtitle = sub_title) +
-    ggplot2::geom_line(ggplot2::aes(x = Time, y = FittedRU, group = Concentration), color = "black")
+    ggplot2::geom_line(ggplot2::aes(x = .data$Time, y = .data$FittedRU, group = .data$Concentration), color = "black")
 }
 
 # This function is used internally. It is a replacement for summary.nlm that allows for a non-singular
@@ -663,11 +568,11 @@ fit_as_system <- function(pars, df, incl_concentrations,
 
   for (i in 1:num_conc){
 
-    df_i <- df %>% dplyr::filter(Concentration == incl_concentrations[i])
+    df_i <- df %>% dplyr::filter(.data$Concentration == incl_concentrations[i])
   #  RU <- df_i$RU
 
-    df_i %>% dplyr::filter(AssocIndicator == 1) -> df_assoc
-    df_i %>% dplyr::filter(DissocIndicator == 1) -> df_dissoc
+    df_i %>% dplyr::filter(.data$AssocIndicator == 1) -> df_assoc
+    df_i %>% dplyr::filter(.data$DissocIndicator == 1) -> df_dissoc
 
     if (global_rmax){
       assoc_formula_first_term <-
@@ -719,8 +624,8 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
     Time <- df_i$Time
     Concentration <- df_i$Concentration
 
-    df_i %>% dplyr::filter(AssocIndicator == 1) -> df_assoc
-    df_i %>% dplyr::filter(DissocIndicator == 1) -> df_dissoc
+    df_i %>% dplyr::filter(.data$AssocIndicator == 1) -> df_assoc
+    df_i %>% dplyr::filter(.data$DissocIndicator == 1) -> df_dissoc
 
     if (global_rmax){
       assoc_formula_first_term <-
@@ -762,23 +667,7 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
   full_output_RU %>% dplyr::select("Time", "RU", "Concentration")
 }
 
-#' Fit sensorgrams for a given well.
-#' @param well_idx The corresponding well in the extended sample sheet.
-#' @param sample_info A tibble. The expanded sample sheet.
-#' @param x_vals A tibble. Time columns from the Carterra output for all concentrations.
-#' @param y_vals A tibble RU values from the Carterra output for all concentrations.
-#' @param incl_conc_values A vector. The number of concentrations to be included in this plot.
-#' @param min_allowed_kd A number. The lowest kd value that can be reliably fit.
-#' The default is $10^{-5}$
-#' @param max_iterations A number. The maximum number of iterations to perform if the
-#' fit does not converge.
-#' @param ptol A number. The tolerance level to determine convergence of parameters.
-#' @param ftol A number. The tolerance level to determine convergence of the error function.
-#' @return A list.
-#'
-#' fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
-#' incl_concentrations_values, min_allowed_kd = 10^(-5),
-#' max_iterations = 500, ptol = 10^(-10), ftol = 10^(-10))
+# internal function. Fits sensorgrams for a given well
 
 fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
                             incl_concentrations_values, n_time_points,
@@ -827,10 +716,12 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   names(y_vals) <- as.character(1:n_vals)
 
   Time <- x_vals[, start_idx:end_idx] %>%
-    tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
+    tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+    dplyr::arrange(as.numeric("name")) %>%
     dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
-    tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
+    tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+    dplyr::arrange(as.numeric("name")) %>%
     dplyr::select("value")
 
   incl_concentrations <-
@@ -1079,7 +970,7 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
   resid_plot <- ggplot2::ggplot(data = tibble::tibble(Residuals = RU_resid,
                                                       Time = Time_resid,
                                                       Concentration = forcats::as_factor(Concentration_resid)),
-                       ggplot2::aes(x = Time, y = Residuals, color = Concentration)) + ggplot2::geom_point(size = 0.01) +
+                       ggplot2::aes(x = .data$Time, y = .data$Residuals, color = .data$Concentration)) + ggplot2::geom_point(size = 0.01) +
                           ggplot2::ggtitle(label = "Residuals")
 
   gridExtra::grid.arrange(plot_list_out[[well_idx]], tb1, resid_plot,
@@ -1127,10 +1018,12 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
 
 
   Time <- x_vals[, start_idx:end_idx] %>%
-    tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
+    tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+    dplyr::arrange(as.numeric("name")) %>%
     dplyr::select("value")
   RU <- y_vals[, start_idx:end_idx]%>%
-    tidyr::pivot_longer(cols = tidyselect::everything()) %>% dplyr::arrange(as.numeric(name)) %>%
+    tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+    dplyr::arrange(as.numeric("name")) %>%
     dplyr::select("value")
 
 
@@ -1148,9 +1041,9 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
   colnames(df) <- c("Time", "RU", "Concentration")
 
 
-  df %>% dplyr::filter((Time >= baseline + baseline_start + association - 10)
-                & (Time <= baseline + baseline_start + association - 5)) %>%
-    dplyr::group_by(Concentration) %>%
+  df %>% dplyr::filter((.data$Time >= baseline + baseline_start + association - 10)
+                & (.data$Time <= baseline + baseline_start + association - 5)) %>%
+    dplyr::group_by(.data$Concentration) %>%
     dplyr::summarise(`Dose Response` = mean(RU, na.rm = TRUE)) -> df_RC
 
   df_RC %>% dplyr::mutate(Included =
@@ -1158,9 +1051,9 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
                                       "Yes", "No"))) -> df_RC
 
 
-  ggplot2::ggplot(df_RC, ggplot2::aes(x = Concentration,
-                    y = `Dose Response`)) +
-    ggplot2::geom_point(ggplot2::aes(color = Included)) +
+  ggplot2::ggplot(df_RC, ggplot2::aes(x = .data$Concentration,
+                    y = .data$`Dose Response`)) +
+    ggplot2::geom_point(ggplot2::aes(color = .data$Included)) +
     ggplot2::geom_line() +
     ggplot2::scale_x_log10() +
     ggplot2::ggtitle(ligand_desc)

@@ -7,13 +7,13 @@
 create_pdf(processed_input, fits_list, rc_list, plot_list, ...)
 }
 \arguments{
+\item{processed_input}{Processed_input as returned by `process_input`}
+
 \item{fits_list}{List of fits as returned by `get_fits`}
 
 \item{rc_list}{List of response curves as returned by `get_rc_plots`}
 
 \item{plot_list}{List of plots as returned by `get_fitted_plots`}
-
-\item{processed_input#'}{Processed_input as returned by `process_input`}
 }
 \value{
 `NULL` A pdf file is created using the path name supplied to `process_input`

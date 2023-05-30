@@ -67,5 +67,5 @@ sample_sheet_path <- system.file("extdata", "sample_sheet.xlsx", package="htrSPR
 data_file_path <- system.file("extdata", "titration_data.xlsx", package="htrSPRanalysis")
 
 # process the input
-processed_input <- process_input(files_directory = files_directory, sample_sheet_path = sample_sheet_path, data_file_path = data_file_path)
+processed_input <- process_input(files_directory = files_directory, sample_sheet_path = sample_sheet_path, data_file_path = data_file_path, num_cores = 2)
 }

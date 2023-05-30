@@ -1,3 +1,6 @@
+#' @importFrom rlang .data
+
+
 #this is an internal function to help create mapping from LSA plate to ROI
 translate_rows_for_sort <- function(x){
   ifelse (x == "A", 1,
@@ -11,13 +14,7 @@ translate_rows_for_sort <- function(x){
 
 }
 
-#' Expand sample sheet so that replicates are each represented by one row
-#'
-#' @param sample_sheet A tibble. This is the sample sheet as read in by read_excel
-#' @return A tibble. The expanded sample information
-#'
-#'
-#' process_sample_sheet <- function(sample_sheet)
+# Expand sample sheet so that replicates are each represented by one row
 
 process_sample_sheet <- function(sample_sheet){
   # Process Sample Sheet
@@ -36,11 +33,11 @@ process_sample_sheet <- function(sample_sheet){
   }
 
   suppressWarnings(sample_sheet %>%
-    tidyr::separate(`Position/Channel/Sensor`, into = c("BeginPosition", "EndPosition", sep = "-")) %>%
-    tidyr::separate(BeginPosition, into = c("Row", "Column"), sep = 1) %>%
-    tidyr::separate(EndPosition, into = c("EndRow", "EndColumn"), sep = 1) %>%
-    dplyr::mutate(Column = as.integer(.data$Column)) %>%
-    dplyr::mutate(EndColumn = as.integer(.data$EndColumn)) -> RowExpansionTemplate)
+    tidyr::separate("Position/Channel/Sensor", into = c("BeginPosition", "EndPosition", sep = "-")) %>%
+    tidyr::separate("BeginPosition", into = c("Row", "Column"), sep = 1) %>%
+    tidyr::separate("EndPosition", into = c("EndRow", "EndColumn"), sep = 1) %>%
+    dplyr::mutate("Column" = as.integer(.data$Column)) %>%
+    dplyr::mutate("EndColumn" = as.integer(.data$EndColumn)) -> RowExpansionTemplate)
 
   check_row_number <- !(RowExpansionTemplate$Row %in% c("A", "B", "C", "D","E", "F","G","H"))
 
@@ -187,23 +184,6 @@ process_sample_sheet <- function(sample_sheet){
 }
 
 
-#' Remove samples not selected for analysis from the sample sheet. Also remove the corresponding columns in the titration data.
-#' Note: This function should be run *after* `process_sample_sheet`.
-#'
-#' @param sample_info A tibble. The expanded sample information
-#' @param titration_data_select A tibble. Contains the Carterra output as read by read_excel
-#' @return A list.
-#' @param Time A tibble. Columns correspond to the times collected for the selected samples (one column for each selected well and each concentration)
-#' @param RU A tibble. Columns correspond to the RU values collected for the selected samples (one column for each selected well and each concentration)
-#' @param sample_info A tibble. The expanded sample information with only the samples selected for analysis
-#' @param all_concentrations_values A vector. Concentration values corresponding to the columns in the Time and RU tibbles.
-#' @param n_time_points = A number. The maximum number of time points for any concentration. This is the number of rows in
-#' the Time and RU tibbles.
-#'
-#'
-#' select_samples <- function(sample_info, titration_select_data)
-
-
 select_samples <- function(sample_info, titration_data){
   remove_ligands <- which(sample_info$Incl. == "N")
   keep_ligands <- which(sample_info$Incl. == "Y")
@@ -318,22 +298,6 @@ get_averages <- function(conc_idx, Time, RU, end_assoc_frame, begin_dissoc_frame
   c(avg_assoc, avg_dissoc)
 
 }
-#' Select the concentrations to be used in model fitting. The concentrations may be selected by the user in the `Incl. Concentrations`
-#' column in the sample sheet, or the algorithm will determine the 'best' range from the linear part of the average RU vs log concentration plot.
-#'
-#' @param sample_info A tibble. The expanded sample information with only rows to be analyzed
-#' @param x_vals A tibble. The time points for the samples and concentrations chosen for analysis.
-#' @param y_vals A tibble. The RU values for the samples and concentrations chosen for analysis.
-#' @return A list.
-#' @param  keep_concentrations A vector. Contains the indicies of the Time and RU columns corresponding to the chosen concentrations.
-#' @param sample_info A tibble. The sample_info with a new column: `NumInclConc`. This is the number of concentrations to fit for
-#' each sample.
-#' @param incl_concentrations_values A vector. The value of the included concentrations.
-#' @param error_idx A vector. Indicies for wells that have encountered an error in the selection process.
-#'
-#'
-#' select_concentrations <- function(sample_info, x_vals, y_vals)
-
 
 select_concentrations <- function(sample_info, x_vals, y_vals){
   #after we select the wells, we select the concentrations out of the remaining time series

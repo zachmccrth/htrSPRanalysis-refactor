@@ -7,9 +7,9 @@
 create_csv(processed_input, fits_list)
 }
 \arguments{
-\item{fits_list}{List of fits as returned by `get_fits`}
+\item{processed_input}{Processed_input as returned by `process_input`}
 
-\item{processed_input#'}{Processed_input as returned by `process_input`}
+\item{fits_list}{List of fits as returned by `get_fits`}
 }
 \value{
 `NULL` A csv file is created using the path name supplied to `process_input`
