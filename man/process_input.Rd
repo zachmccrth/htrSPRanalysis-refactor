@@ -51,7 +51,29 @@ process_input(
 \item{max_RU_tol}{Maximum RU required for dissociation window detection.}
 }
 \value{
-A list.
+A list object containing the following
+\item{expanded_sample_sheet}{The sample sheet expanded to include all spots that are represented, expanding the short-hand entries for Position/Block/Channel}
+\item{sample_info}{The expanded sample sheet with only the rows that are to be fit}
+\item{sample_info_fits}{The sample_info without rows that have encountered errors in initial processing}
+\item{Time}{The dataframe whose columns are the Time values for the input titration data. This only includes columns selected for analysis.}
+\item{RU}{The dataframe whose columns are the RU values for the input titration data. Only the columns for the samples to be analyzed are included}
+\item{correctedRU}{The `RU` dataframe after baseline correction}
+\item{keep_concentrations}{A vector containing the indices of the columns from `Time` and `correctedRU` to be used in curve fitting}
+\item{all_concentrations_values}{A vector containing the concentration values corresponding to the columns of the `Time` and `RU` dataframes}
+\item{incl_concentrations_values}{A vector containing the concentration values corresponding to the `Time` and `correctedRU` columns chosen for curve fitting}
+\item{n_time_points}{The maximum length of titration time series}
+\item{max_RU_tol}{The maximum RU for dissociation window trimming to be automated}
+\item{min_RU_tol}{The minimum RU for dissociation window trimming to be automated}
+\item{min_RU_tol}{The minimum RU for dissociation window trimming to be automated}
+\item{nwells}{The number of rows in the `sample_info` dataframe}
+\item{n_fit_wells}{The number of rows in the `sample_info_fits` dataframe}
+\item{ftol}{The ftol parameter passed to the `nls.lm` function}
+\item{ptol}{The ptol parameter passed to the `nls.lm` function}
+\item{ptol}{The ptol parameter passed to the `nls.lm` function}
+\item{output_pdf}{The full pathname for the output pdf file}
+\item{output_csv}{The full pathname for the output csv file}
+\item{error_pdf}{The full pathname for the pdf error file. This is where errors in processing can be found.}
+\item{error_idx_concentrations}{If there is an issue in determining the concentration window for some spots, they will be logged here}
 }
 \description{
 Performs all functions selected in sample information, such as
@@ -62,10 +84,16 @@ file outputs and fitting options
 \examples{
 # set up file paths for example
 
-files_directory <- system.file("extdata", package="htrSPRanalysis")
-sample_sheet_path <- system.file("extdata", "sample_sheet.xlsx", package="htrSPRanalysis")
-data_file_path <- system.file("extdata", "titration_data.xlsx", package="htrSPRanalysis")
+files_directory <- system.file("extdata",
+ package="htrSPRanalysis")
+sample_sheet_path <- system.file("extdata",
+ "sample_sheet.xlsx", package="htrSPRanalysis")
+data_file_path <- system.file("extdata",
+ "titration_data.xlsx", package="htrSPRanalysis")
 
 # process the input
-processed_input <- process_input(files_directory = files_directory, sample_sheet_path = sample_sheet_path, data_file_path = data_file_path, num_cores = 2)
+processed_input <- process_input(files_directory = files_directory,
+ sample_sheet_path = sample_sheet_path,
+  data_file_path = data_file_path,
+   num_cores = 2)
 }

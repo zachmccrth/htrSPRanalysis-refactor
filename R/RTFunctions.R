@@ -1054,7 +1054,7 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
     dplyr::summarise(`Dose Response` = mean(RU, na.rm = TRUE)) -> df_RC
 
   df_RC %>% dplyr::mutate(Included =
-                     forcats::as_factor(ifelse(Concentration %in% numerical_concentration_incl,
+                     forcats::as_factor(ifelse(.data$Concentration %in% numerical_concentration_incl,
                                       "Yes", "No"))) -> df_RC
 
 

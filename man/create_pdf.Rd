@@ -14,6 +14,8 @@ create_pdf(processed_input, fits_list, rc_list, plot_list, ...)
 \item{rc_list}{List of response curves as returned by `get_rc_plots`}
 
 \item{plot_list}{List of plots as returned by `get_fitted_plots`}
+
+\item{...}{Arguments passed to the `pdf` function.}
 }
 \value{
 `NULL` A pdf file is created using the path name supplied to `process_input`
