@@ -1,3 +1,6 @@
-^.*\.Rproj$
-^\.Rproj\.user$
+^.*\.Rproj$/*
+^\.Rproj\.user$/*
 LICENSE.md
+.git
+.gitignore
+.Rhistory
