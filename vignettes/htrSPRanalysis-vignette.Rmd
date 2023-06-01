@@ -10,7 +10,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 10
 )
 ```
 
@@ -21,7 +22,7 @@ This R package consists of a library of functions for processing and analyzing d
 ```{r eval=FALSE}
 
 devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis",
-                      build_vignettes = TRUE)
+                      build_vignettes = TRUE, ref = "e7709231d43b79b868df08e4a7d6b10cf11f2bdc")
 
 ```
 

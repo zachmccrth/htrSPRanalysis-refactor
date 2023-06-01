@@ -354,7 +354,7 @@ plot_sensorgrams <- function(well_idx,
 
   df$Concentration <- forcats::as_factor(formatC(df$Concentration, format = "e",digits = 2))
 
-  spot <- paste0(sample_info[well_idx,]$Block, sample_info[well_idx,]$Column)
+  spot <- paste0(sample_info[well_idx,]$Row, sample_info[well_idx,]$Column)
   sub_title <- paste("Block", sample_info[well_idx,]$Block, "Spot", spot,
                      "ROI", sample_info[well_idx,]$ROI)
 
