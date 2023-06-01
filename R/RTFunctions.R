@@ -40,7 +40,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
           if (all(is.na(x_df$RU)| is.nan(x_df$RU)))
             return(c(NA,NA))
           else
-            return(stats::coef(stats::lm(RU ~ .data$Time, singular.ok = TRUE,
+            return(stats::coef(stats::lm(RU ~ Time, singular.ok = TRUE,
                            data = x_df)))}, by.column = FALSE,
 
         width = 100)) -> df_out
