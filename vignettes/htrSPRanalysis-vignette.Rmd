@@ -20,11 +20,13 @@ This R package consists of a library of functions for processing and analyzing d
 
 ```{r eval=FALSE}
 
-devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis", build_vignettes = TRUE )
+devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis",
+                      build_vignettes = TRUE)
 
 ```
 
 Then load the library using:
+
 
 ```{r}
 library(htrSPRanalysis)
@@ -163,13 +165,13 @@ rc_list[[1]]
 ### Create a pdf with fitted sensorgrams, curve parameters, standard errors, residual plot and response curve.
 
 ```{r}
-create_pdf(processed_input, fits_list, rc_list, plot_list)
+pdf_pages <- create_pdf(processed_input, fits_list, rc_list, plot_list)
 ```
 
 ### Create a .csv file with all model parameters and standard errors.
 
 ```{r}
-create_csv(processed_input, fits_list)
+parameter_table <- create_csv(processed_input, fits_list)
 ```
 
 
