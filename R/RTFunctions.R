@@ -363,7 +363,7 @@ plot_sensorgrams <- function(well_idx,
   ggplot2::ggplot(df, ggplot2::aes(x = .data$Time,
                                    y = .data$RU,
                                    color = .data$Concentration)) +
-    ggplot2::geom_point(size = 0.5) +
+    ggplot2::geom_point(size = 0.09) +
     ggplot2::ggtitle(paste(analyte_desc, ligand_desc), subtitle = sub_title)
 }
 
