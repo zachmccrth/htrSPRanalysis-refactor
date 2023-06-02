@@ -2,6 +2,8 @@
 #' @importFrom grDevices pdf dev.off
 #internal
 
+# maybe do this on the selected concentration? Then can go back to 10% of signal?
+
 find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
                                      incl_concentrations_ligand, max_RU_tol, min_RU_tol){
 
@@ -50,7 +52,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
     #  df_out %>% dplyr::mutate(x = rep(max_idx, n_vals)) -> df_out
     df_out %>% dplyr::mutate(RollIndex = 1:n_vals) -> df_out
     max_slope <- max(abs(df_out$Slope))
-    target_slope <- .01*max_slope
+    target_slope <- .05*max_slope
     window_idx <- which(abs(df_out$Slope) < target_slope)[1]
 
     if (is.na(window_idx)){
