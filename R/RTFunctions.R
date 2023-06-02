@@ -16,8 +16,8 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
 
   start_time <- baseline + baseline_start + association
   dissociation <- sample_info[well_idx,]$Dissociation
-  start_idx <- sample_info[well_idx,]$FirstConcIdx
-  num_conc <- sample_info[well_idx,]$NumConc
+  start_idx <- sample_info[well_idx,]$FirstInclConcIdx
+  num_conc <- sample_info[well_idx,]$NumInclConc
   end_idx <- start_idx + num_conc - 1
 
   end_dissoc_list <- NULL
@@ -52,7 +52,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
     #  df_out %>% dplyr::mutate(x = rep(max_idx, n_vals)) -> df_out
     df_out %>% dplyr::mutate(RollIndex = 1:n_vals) -> df_out
     max_slope <- max(abs(df_out$Slope))
-    target_slope <- .05*max_slope
+    target_slope <- .03*max_slope
     window_idx <- which(abs(df_out$Slope) < target_slope)[1]
 
     if (is.na(window_idx)){
