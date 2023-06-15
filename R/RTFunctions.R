@@ -84,12 +84,12 @@ first_conc_indices <- function(well_idx, num_conc_ligand){
   first_conc_idx
 }
 
-first_conc_indices_from_titration_data <- function(well_idx, ligand_and_ROI){
+first_conc_indices_from_titration_data <- function(well_idx, ROI, ligand_and_ROI){
 
   # If we have ROI information in the titration data, we can use this to match cols in data
   # to rows in the sample_info
 
-  col_idx <- which(ligand_and_ROI$ROI == well_idx)
+  col_idx <- which(ligand_and_ROI$ROI == ROI[well_idx])
   if (sum(is.null(col_idx)) > 0 | sum(is.na(col_idx)) > 0)
     stop(paste("Could not identify starting index for titration data for spot", well_idx))
 
@@ -119,7 +119,10 @@ get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
       baseline_avg_list <- c(baseline_avg_list, baseline_avg)
   }
   min_baseline <- min(baseline_avg_list)
-  baseline_idx <- start_idx + which(baseline_avg_list == min_baseline) - 1
+  try_baseline <- which(baseline_avg_list == min_baseline)
+  if (length(try_baseline) > 1)
+    try_baseline <- try_baseline[1]
+  baseline_idx <- start_idx + try_baseline - 1
 
   #is highest baseline negative?
   if (baseline_avg < 0)

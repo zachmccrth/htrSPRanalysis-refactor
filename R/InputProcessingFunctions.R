@@ -183,6 +183,55 @@ process_sample_sheet <- function(sample_sheet){
   sample_info_expanded
 }
 
+### keep_concentrations_all is wrong value. Fix to use ligand_ROI dataframe
+### ROI at this point is the row # in sample_info. Just filter out ROI's from titration_data
+
+select_samples_with_ROI <- function(sample_info, titration_data, ligand_and_ROI){
+
+  remove_ligands <- which(sample_info$Incl. == "N")
+  keep_ligands <- which(sample_info$Incl. == "Y") #gives ROI of samples to keep
+
+  titration_data %>% dplyr::select(tidyselect::everything(), -tidyselect::starts_with("Y")) -> x_vals
+  titration_data %>% dplyr::select(tidyselect::everything(), -tidyselect::starts_with("X")) -> y_vals
+
+  n_time_points <- dim(x_vals)[1]
+  nsamples <- dim(sample_info)[1]
+
+  keep_concentrations_all <- which(ligand_and_ROI$ROI %in% keep_ligands)
+  x_vals_select <- x_vals[ , keep_concentrations_all]
+  y_vals_select <- y_vals[ , keep_concentrations_all]
+
+
+  all_concentrations_ligand <- NULL
+  all_concentrations_values <- NULL
+
+  for(i in 1:nsamples){
+
+    num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
+
+    if (sample_info$Incl.[i] == "N")
+      next
+
+
+    concentrations <-
+      as.numeric(purrr::flatten(stringr::str_split(sample_info$`All Concentrations`[i], ",")))
+    all_concentrations_ligand <- c(all_concentrations_ligand, num_conc)
+    all_concentrations_values <- c(all_concentrations_values, concentrations)
+
+    #Use this to match to ligand_conc and to x_vals, y_vals
+  }
+
+  sample_info <- sample_info[keep_ligands, ]
+  sample_info$NumConc <- all_concentrations_ligand
+  ligand_and_ROI <- ligand_and_ROI[keep_concentrations_all, ]
+
+  list(Time = x_vals_select, RU = y_vals_select,
+       sample_info = sample_info,
+       ligand_and_ROI = ligand_and_ROI,
+       all_concentrations_values = all_concentrations_values,
+       n_time_points = n_time_points)
+}
+
 
 select_samples <- function(sample_info, titration_data){
   remove_ligands <- which(sample_info$Incl. == "N")

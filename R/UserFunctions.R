@@ -94,6 +94,10 @@ process_input <- function(files_directory = NULL,
   #formatting sample_sheet data
   sample_info <- process_sample_sheet(sample_sheet)
 
+  n_incl_samples <- sum(sample_info$Incl. == "Y")
+  if (n_incl_samples == 0)
+    stop("No samples chosen for analysis in sample sheet")
+
   #import filter
 
   # readxl is *horribly* slow right now. Switching to openxlsx for the moment, may switch if readxl gets fixed.
@@ -213,13 +217,18 @@ process_input <- function(files_directory = NULL,
   sample_info$ROI <- 1:n_ROI
 
   #remove wells from ligand each time series.
-
-  selected_samples <- select_samples(sample_info, titration_data)
+  if (!is.null(ligand_and_ROI)){
+    selected_samples <- select_samples_with_ROI(sample_info,
+                                                titration_data,
+                                                ligand_and_ROI)
+    ligand_and_ROI <- selected_samples$ligand_and_ROI
+  } else
+    selected_samples <- select_samples(sample_info, titration_data)
   #selected_samples
 
   expanded_sample_sheet <- sample_info
   sample_info <- selected_samples$sample_info
-  keep_concentrations <- selected_samples$keep_concentrations
+#  keep_concentrations <- selected_samples$keep_concentrations
   Time <- selected_samples$Time
   RU <- selected_samples$RU
   all_concentrations_values <- selected_samples$all_concentrations_values
@@ -230,10 +239,13 @@ process_input <- function(files_directory = NULL,
 
   if (is.null(ligand_and_ROI))
      first_conc_idx_list <- purrr::map(.x = 1:nwells, .f = first_conc_indices,
-                             sample_info$NumConc) else
-    first_conc_idx_list <- purrr::map(.x = 1:nwells,
-                                      .f = first_conc_indices_from_titration_data,
-                                      ligand_and_ROI)
+                             sample_info$NumConc) else {
+                               first_conc_idx_list <- purrr::map(.x = 1:nwells,
+                                                                 .f = first_conc_indices_from_titration_data,
+                                                                 sample_info$ROI,
+                                                                 ligand_and_ROI)
+                             }
+
 
   sample_info$FirstConcIdx <- purrr::as_vector(purrr::flatten(first_conc_idx_list))
 
