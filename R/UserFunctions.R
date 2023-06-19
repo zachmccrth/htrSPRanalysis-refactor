@@ -213,8 +213,8 @@ process_input <- function(files_directory = NULL,
   # For some analyses, we will restrict to the chosen concentrations.
 
   # keep track of ROI
-  n_ROI <- dim(sample_info)[1]
-  sample_info$ROI <- 1:n_ROI
+  #n_ROI <- dim(sample_info)[1]
+  #sample_info$ROI <- 1:n_ROI
 
   #remove wells from ligand each time series.
   if (!is.null(ligand_and_ROI)){

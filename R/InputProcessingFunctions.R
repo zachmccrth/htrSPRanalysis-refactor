@@ -14,6 +14,20 @@ translate_rows_for_sort <- function(x){
 
 }
 
+get_ROI <- function(sample_info){
+
+  row_column <- tibble::tibble(Sample = stringr::str_c(sample_info$Row, sample_info$Column),
+                               Block = sample_info$Block)
+
+  ROI_map_path <- system.file("extdata", "LSA_to_ROI.xlsx",
+                              package="htrSPRanalysis")
+  ROI_map <- readxl::read_xlsx(ROI_map_path)
+
+  ROI_df <- dplyr::left_join(row_column, ROI_map)
+
+  ROI_df$`ROI #`
+
+}
 # Expand sample sheet so that replicates are each represented by one row
 
 process_sample_sheet <- function(sample_sheet){
@@ -177,6 +191,12 @@ process_sample_sheet <- function(sample_sheet){
     dplyr::mutate(RowSort = translate_rows_for_sort(.data$Row)) ->
     sample_info_expanded
 
+  ROIs <- get_ROI(sample_info_expanded)
+
+  if (!is.null(ROIs) & sum(is.na(ROIs) == 0) & length(ROIs == dim(sample_info_expanded)[1]))
+     sample_info_expanded$ROI <- ROIs else
+    sample_info_expanded$ROI <- 1:dim(sample_info_expanded)[1]
+
   sample_info_expanded %>%
     dplyr::arrange(.data$RowSort, .data$Column, .data$Block) -> sample_info_expanded
 
@@ -189,7 +209,8 @@ process_sample_sheet <- function(sample_sheet){
 select_samples_with_ROI <- function(sample_info, titration_data, ligand_and_ROI){
 
   remove_ligands <- which(sample_info$Incl. == "N")
-  keep_ligands <- which(sample_info$Incl. == "Y") #gives ROI of samples to keep
+  keep_ligands <- which(sample_info$Incl. == "Y") # which samples to keep
+  keep_ROI <- sample_info[keep_ligands,]$ROI
 
   titration_data %>% dplyr::select(tidyselect::everything(), -tidyselect::starts_with("Y")) -> x_vals
   titration_data %>% dplyr::select(tidyselect::everything(), -tidyselect::starts_with("X")) -> y_vals
@@ -197,7 +218,7 @@ select_samples_with_ROI <- function(sample_info, titration_data, ligand_and_ROI)
   n_time_points <- dim(x_vals)[1]
   nsamples <- dim(sample_info)[1]
 
-  keep_concentrations_all <- which(ligand_and_ROI$ROI %in% keep_ligands)
+  keep_concentrations_all <- which(ligand_and_ROI$ROI %in% keep_ROI)
   x_vals_select <- x_vals[ , keep_concentrations_all]
   y_vals_select <- y_vals[ , keep_concentrations_all]
 
@@ -664,6 +685,7 @@ check_titration_data <- function(titration_data, files_directory, data_file_path
   }
   flagspresent
 }
+
 check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
 # At this point, the sample sheet is expanded, so it has 384 rows
 # Also, the ith row corresponds to the ith ROI
@@ -681,7 +703,7 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
       num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
 
       ligand_and_ROI %>%
-        dplyr::filter(.data$ROI == i) -> rows_for_this_spot
+        dplyr::filter(.data$ROI == sample_info$ROI[i]) -> rows_for_this_spot
 
       num_conc_data <- dim(rows_for_this_spot)[1]
 
@@ -695,7 +717,7 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
         as.numeric(purrr::flatten(stringr::str_split(sample_info$`All Concentrations`[i], ",")))
 
       if (sum(is.na(concentrations)) > 0)
-        return(paste("Invalid concentration value for spot", i))
+        return(paste("Invalid concentration value for spot", sample_info$ROI[i]))
 
       # initialize as all and change if this is false
       incl_concentrations <- concentrations

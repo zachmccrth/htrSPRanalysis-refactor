@@ -3,7 +3,7 @@ title: "Introduction to htrSPRanalysis"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Introduction to htSPRanalysis}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
 
