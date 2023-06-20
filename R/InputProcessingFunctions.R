@@ -642,9 +642,10 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path, files_directory)
   #change to txt
   if (any(check1$flag != "")) {
     flagspresent <- TRUE
-    readr::write_csv(check1,
-              paste(files_directory, "Error_note_sample_sheet.csv", sep = "/"))
-    print("Error in sample sheet file. See Error_note_sample_sheet.csv")
+    # readr::write_csv(check1,
+    #           paste(files_directory, "Error_note_sample_sheet.csv", sep = "/"))
+    # print("Error in sample sheet file. See Error_note_sample_sheet.csv")
+    stop(check1$flag)
   } else {
 
     flagspresent <- FALSE
@@ -657,9 +658,10 @@ check_titration_data <- function(titration_data, files_directory, data_file_path
 
   if (dim(titration_data)[1] == 0) {
     check2 <- "empty data set :"
-    flagspresent <- TRUE
-    print(paste(check2, data_file_path))
-    return(flagspresent)
+    stop(check2)
+    # flagspresent <- TRUE
+    # print(paste(check2, data_file_path))
+    # return(flagspresent)
   }
   columns_title <- names(titration_data)
   # this does not work for large number of columns (i.e. X1000 looks like an error)
@@ -676,10 +678,11 @@ check_titration_data <- function(titration_data, files_directory, data_file_path
 
   if (columns_note != "") {
     check2 <- data.frame(columns_note, data_file_path)
-    readr::write_csv(check2,
-              paste(files_directory, "Error_note_titration_data.csv", sep = "/"))
-    print("Error in titration data file. See Error_note_titration_data.csv")
-    flagspresent <- TRUE
+    stop(check2$columns_note)
+    # readr::write_csv(check2,
+    #           paste(files_directory, "Error_note_titration_data.csv", sep = "/"))
+    # print("Error in titration data file. See Error_note_titration_data.csv")
+    # flagspresent <- TRUE
   } else {
     flagspresent <- FALSE
   }

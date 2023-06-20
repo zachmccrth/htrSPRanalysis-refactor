@@ -536,21 +536,24 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
   }
   grDevices::dev.off()
 
-  pdf(file = error_pdf)
-  for (well_idx in 1:nwells){
-    if (well_idx %in% error_idx_concentrations){
-      error_msg <- paste("Too few concentrations selected/found for well", well_idx,
-                         "\n\n This could be addressed by explicitly choosing concentrations to analyze. \n The sample info is: \n")
-      sample_info[well_idx,] %>%
-        dplyr::select("Block",
-                      "Row",
-                      "Column",
-                      "Ligand",
-                      "Analyte") -> sample_info_error
-      gridExtra::grid.arrange(grid::textGrob(error_msg), gridExtra::tableGrob(sample_info_error))
+  if (!is.null(error_idx_concentrations)){
+    grDevices::pdf(file = error_pdf)
+    for (well_idx in 1:nwells){
+      if (well_idx %in% error_idx_concentrations){
+        error_msg <- paste("Too few concentrations selected/found for well", well_idx,
+                           "\n\n This could be addressed by explicitly choosing concentrations to analyze. \n The sample info is: \n")
+        sample_info[well_idx,] %>%
+          dplyr::select("Block",
+                        "Row",
+                        "Column",
+                        "Ligand",
+                        "Analyte") -> sample_info_error
+        gridExtra::grid.arrange(grid::textGrob(error_msg), gridExtra::tableGrob(sample_info_error))
+      }
     }
+    grDevices::dev.off()
+
   }
-  dev.off()
 
 }
 
@@ -558,7 +561,7 @@ create_pdf <- function(processed_input, fits_list, rc_list, plot_list, ...){
 #'
 #' @param processed_input Processed_input as returned by `process_input`
 #' @param fits_list List of fits as returned by `get_fits`
-#' @return `NULL` A csv file is created using the path name supplied to `process_input`
+#' @return a data frame with the fit parameters and errors.  A csv file is also created using the path name supplied to `process_input`
 
 
 #' @export create_csv
@@ -585,5 +588,4 @@ create_csv <- function(processed_input, fits_list){
   readr::write_csv(csv_data, file = output_csv)
 
   csv_data
-  ### adding comment to see if devtools will trigger update
 }
