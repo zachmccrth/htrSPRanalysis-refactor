@@ -21,7 +21,7 @@
 #' @param ptol Curve fitting parameter. If the proposed changes in parameters is smaller than this value, the optimization is considered converged. The default is 10^(-10)
 #' @param ftol Curve fitting parameter. If the squared error between observed and predicted values is smaller than ftol, the optimization is considered converged. The default is 10^(-10)
 #' @param min_RU_tol Minimum RU required for dissociation window detection
-#' @param max_RU_tol Maximum RU required for dissociation window detection.
+#' @param max_RU_tol Maximum RU required for dissociation window detection. Also used in curve fitting.
 #'
 #' @return A list object containing the following
 #' \item{expanded_sample_sheet}{The sample sheet expanded to include all spots that are represented, expanding the short-hand entries for Position/Block/Channel}
@@ -387,6 +387,7 @@ get_fits <- function(processed_input){
   incl_concentrations_values <- processed_input$incl_concentrations_values
   min_allowed_kd <- processed_input$min_allowed_kd
   max_iterations <- processed_input$max_iterations
+  max_RU <- max_RU_tol
   ptol <- processed_input$ptol
   ftol <- processed_input$ftol
 
@@ -402,7 +403,8 @@ get_fits <- function(processed_input){
            min_allowed_kd,
            max_iterations,
            ptol,
-           ftol)
+           ftol,
+           max_RU_tol)
 
   parallel::stopCluster(cl)
   fit_result

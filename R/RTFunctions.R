@@ -684,7 +684,8 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
                             min_allowed_kd = 10^(-5),
                             max_iterations = 500,
                             ptol = 10^(-10),
-                            ftol = 10^(-10)){
+                            ftol = 10^(-10),
+                            max_RU_tol = 300){
 
   # this function will fit all selected concentrations for one well
 
@@ -775,21 +776,21 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   if (bulkshift & !regenerated_surface){
     init_params <- c(Rmax_start, ka_start, t0_start, kd_start, shift)
     param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd, rep(-100, num_conc))
-    param_upper_bounds <- c(rep(400, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1, rep(100, num_conc))
+    param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1, rep(100, num_conc))
   } else { if (!bulkshift & !regenerated_surface){
               init_params <- c(Rmax_start, ka_start, t0_start, kd_start)
               param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd)
-              param_upper_bounds <- c(rep(400, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1)
+              param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1)
 
   } else { if (bulkshift & regenerated_surface){
               init_params <- c(Rmax_start, ka_start, kd_start, shift)
               param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, min_allowed_kd, rep(-100, num_conc))
-              param_upper_bounds <- c(rep(400, length(Rmax_start)), 10^7, 1, rep(100, num_conc))
+              param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, 1, rep(100, num_conc))
 
   } else { if(!bulkshift & regenerated_surface){
             init_params <- c(Rmax_start, ka_start, kd_start)
             param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, min_allowed_kd)
-            param_upper_bounds <- c(rep(400, length(Rmax_start)), 10^7, 1)
+            param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, 1)
   }}}}
 
   fit_result <- minpack.lm::nls.lm(init_params,fn = fit_as_system, df = df,
