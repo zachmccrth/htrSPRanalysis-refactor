@@ -387,7 +387,7 @@ get_fits <- function(processed_input){
   incl_concentrations_values <- processed_input$incl_concentrations_values
   min_allowed_kd <- processed_input$min_allowed_kd
   max_iterations <- processed_input$max_iterations
-  max_RU <- max_RU_tol
+  max_RU_tol <- processed_input$max_RU_tol
   ptol <- processed_input$ptol
   ftol <- processed_input$ftol
 
