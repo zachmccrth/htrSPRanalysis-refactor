@@ -170,8 +170,8 @@ process_input <- function(files_directory = NULL,
       stop(usr_msg)
   }
 
-  if (is.na(max_RU_tol) | max_RU_tol < 50 | max_RU_tol > 500){
-      usr_msg <- "Invalid max_RU_tol. Please use a number between 50 and 500"
+  if (is.na(max_RU_tol) | max_RU_tol < 50 | max_RU_tol > 1500){
+      usr_msg <- "Invalid max_RU_tol. Please use a number between 50 and 1500"
       stop(usr_msg)
   }
 
