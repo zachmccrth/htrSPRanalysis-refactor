@@ -275,16 +275,20 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
 
   # record the differences between consecutive responses
   sum_diff <- NULL
+  conc_diff <- NULL
   for (i in 1:(num_conc - 1)){
     sum_diff <- suppressMessages(dplyr::bind_cols(sum_diff, df_RC[i+1,]$`Dose Response` - df_RC[i,]$`Dose Response`))
+    conc_diff <- suppressMessages(dplyr::bind_cols(conc_diff, df_RC[i+1,]$Concentration - df_RC[i,]$Concentration))
+    slope_diff <- sum_diff/conc_diff
   }
+  slope_diff <- sum_diff/conc_diff
   # add sums for each 5 cycle window.
-  cum_sum <- zoo::rollapply(purrr::as_vector(purrr::flatten(sum_diff)), 4, FUN = sum)
+  cum_sum <- zoo::rollapply(purrr::as_vector(purrr::flatten(slope_diff)), 4, FUN = sum)
   start_conc_idx <- which(cum_sum == max(cum_sum))
 
   # check start and end slopes, may be better to fit 4 instead of five
 
-  slopes <- purrr::as_vector(sum_diff[start_conc_idx:(start_conc_idx+3)])
+  slopes <- purrr::as_vector(slope_diff[start_conc_idx:(start_conc_idx+3)])
 
   remove_concentration <- ifelse(slopes < 0.30*mean(slopes), 1, 0)
 
@@ -292,7 +296,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   if(sum(remove_concentration) == 0)
      return(concentrations[start_conc_idx:(start_conc_idx + 4)])
 
-  # if some slopes are less than 20% of the mean, remove one concentration
+  # if some slopes are less than 30% of the mean, remove one concentration
   # low end or high end, depending on which slope is smaller
 
   # remove_concentration has at least one '1' value
