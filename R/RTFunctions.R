@@ -286,7 +286,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
 
   slopes <- purrr::as_vector(sum_diff[start_conc_idx:(start_conc_idx+3)])
 
-  remove_concentration <- ifelse(slopes < 0.2*mean(slopes), 1, 0)
+  remove_concentration <- ifelse(slopes < 0.30*mean(slopes), 1, 0)
 
   # return 5 best consecutive concentrations
   if(sum(remove_concentration) == 0)
@@ -366,7 +366,7 @@ plot_sensorgrams <- function(well_idx,
   ggplot2::ggplot(df, ggplot2::aes(x = .data$Time,
                                    y = .data$RU,
                                    color = .data$Concentration)) +
-    ggplot2::geom_point(size = 0.09) +
+    ggplot2::geom_point(size = 0.01) +
     ggplot2::ggtitle(paste(analyte_desc, ligand_desc), subtitle = sub_title)
 }
 
@@ -755,8 +755,8 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   df %>% dplyr::filter((.data$AssocIndicator == 1 | .data$DissocIndicator == 1)) -> df
 
   df %>% dplyr::group_by(.data$Concentration) %>% dplyr::summarise(max = max(.data$RU, na.rm = TRUE)) -> Rmax_start_df
-  df %>% dplyr::group_by(.data$Concentration) %>% dplyr::summarise(min = min(.data$RU, na.rm = TRUE)) -> R0_start
-  t0_start <- rep(0, num_conc)
+
+    t0_start <- rep(0, num_conc)
 
   if (global_rmax){
     Rmax_start <- max(Rmax_start_df$max, na.rm = TRUE)

@@ -700,8 +700,8 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
 
   for (i in 1:nrows){
 
-      if (sample_info$Incl.[i] == "N")
-         next()
+   #   if (sample_info$Incl.[i] == "N")
+  #       next()
 
       num_conc <- stringr::str_count(sample_info$`All Concentrations`[i], ",") + 1
 
@@ -712,7 +712,7 @@ check_sample_and_data_match <- function(sample_info, ligand_and_ROI){
 
       if (num_conc != num_conc_data)
         return(paste("The number of columns in the titration data for spot ",
-                     i,
+                     sample_info$ROI[i],
                      "does not match the number of concentrations in the sample sheet"))
 
 

@@ -22,7 +22,7 @@ This R package consists of a library of functions for processing and analyzing d
 ```{r eval=FALSE}
 
 devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis",
-                      build_vignettes = TRUE, ref = "e7709231d43b79b868df08e4a7d6b10cf11f2bdc")
+                      build_vignettes = TRUE, ref = "b4ae3f5d911cb7e59d9ffd19d43d504d1ab5bb07")
 
 ```
 
@@ -110,7 +110,7 @@ data_file_path <- system.file("extdata", "titration_data.xlsx", package="htrSPRa
 processed_input <- process_input(files_directory,
                     sample_sheet_path,
                     data_file_path,
-                    num_cores = 2)
+                    num_cores = 40)
 
 
 ```
@@ -144,7 +144,7 @@ plot_list <- get_fitted_plots(processed_input, fits_list)
 Example plot:
 
 ```{r}
-plot_list[[1]]
+plot_list[[2]]
 ```
 
 ### Create the response curve plots
