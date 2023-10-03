@@ -22,7 +22,7 @@ This R package consists of a library of functions for processing and analyzing d
 ```{r eval=FALSE}
 
 devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis",
-                      build_vignettes = TRUE, ref = "b4ae3f5d911cb7e59d9ffd19d43d504d1ab5bb07")
+                     build_vignettes = FALSE)
 
 ```
 
@@ -159,7 +159,7 @@ rc_list <- get_rc_plots(processed_input)
 Example plot
 
 ```{r}
-rc_list[[1]]
+rc_list[[5]]
 ```
 
 
