@@ -48,7 +48,7 @@ process_input(
 
 \item{min_RU_tol}{Minimum RU required for dissociation window detection}
 
-\item{max_RU_tol}{Maximum RU required for dissociation window detection.}
+\item{max_RU_tol}{Maximum RU required for dissociation window detection. Also used in curve fitting.}
 }
 \value{
 A list object containing the following

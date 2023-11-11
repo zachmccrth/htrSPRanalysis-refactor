@@ -12,7 +12,7 @@ create_csv(processed_input, fits_list)
 \item{fits_list}{List of fits as returned by `get_fits`}
 }
 \value{
-`NULL` A csv file is created using the path name supplied to `process_input`
+a data frame with the fit parameters and errors.  A csv file is also created using the path name supplied to `process_input`
 }
 \description{
 Create csv file with all fit parameters.

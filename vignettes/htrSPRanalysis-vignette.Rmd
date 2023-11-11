@@ -21,7 +21,7 @@ This R package consists of a library of functions for processing and analyzing d
 
 ```{r eval=FALSE}
 
-devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis",
+devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis", ref = "ac750b62a2f320f6aaf62c25307529084e33bf2f",
                      build_vignettes = FALSE)
 
 ```
@@ -144,7 +144,7 @@ plot_list <- get_fitted_plots(processed_input, fits_list)
 Example plot:
 
 ```{r}
-plot_list[[2]]
+plot_list[[1]]
 ```
 
 ### Create the response curve plots

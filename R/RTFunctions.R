@@ -43,7 +43,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
             return(c(NA,NA))
           else
             return(stats::coef(stats::lm(RU ~ Time, singular.ok = TRUE,
-                           data = x_df)))}, by.column = FALSE,
+                                         data = x_df)))}, by.column = FALSE,
 
         width = 100)) -> df_out
     names(df_out) <- c("Intercept", "Slope")
@@ -60,7 +60,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
       end_dissoc_list <- c((df$Time)[length(df$Time)], end_dissoc_list)
       next
     } else
-         end_dissoc <- df$Time[window_idx]
+      end_dissoc <- df$Time[window_idx]
 
     end_dissoc_list <- c(end_dissoc, end_dissoc_list)
 
@@ -107,16 +107,16 @@ get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
   baseline_avg_list <- NULL
 
   for (i in start_idx:end_idx){
-      Time <- x_vals[, i]
-      RU <- y_vals[, i]
-      df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU))
-      colnames(df) <- c("Time", "RU")
-      df %>% dplyr::filter(.data$Time > baseline_start &
-                             .data$Time < baseline+ baseline_start) %>%
-        dplyr::select("RU") -> base_meas
-      base_meas <- base_meas$RU
-      baseline_avg <- mean(base_meas, na.rm = TRUE)
-      baseline_avg_list <- c(baseline_avg_list, baseline_avg)
+    Time <- x_vals[, i]
+    RU <- y_vals[, i]
+    df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU))
+    colnames(df) <- c("Time", "RU")
+    df %>% dplyr::filter(.data$Time > baseline_start &
+                           .data$Time < baseline+ baseline_start) %>%
+      dplyr::select("RU") -> base_meas
+    base_meas <- base_meas$RU
+    baseline_avg <- mean(base_meas, na.rm = TRUE)
+    baseline_avg_list <- c(baseline_avg_list, baseline_avg)
   }
   min_baseline <- min(baseline_avg_list)
   try_baseline <- which(baseline_avg_list == min_baseline)
@@ -127,35 +127,35 @@ get_baseline_indices <- function(well_idx, sample_info, x_vals, y_vals){
   #is highest baseline negative?
   if (baseline_avg < 0)
     baseline_neg <- TRUE else
-    baseline_neg <- FALSE
+      baseline_neg <- FALSE
 
   list(baseline_idx = baseline_idx, min_baseline = min_baseline, baseline_negative = baseline_neg)
 }
 
 # internal function.
 create_dataframe_with_conc <- function(begin_conc_idx, end_conc_idx, x_vals, y_vals,
-                                 numerical_concentrations,
-                                n_time_points){
-    n_vals <- dim(x_vals)[2]
-    names(x_vals) <- as.character(1:n_vals)
-    names(y_vals) <- as.character(1:n_vals)
+                                       numerical_concentrations,
+                                       n_time_points){
+  n_vals <- dim(x_vals)[2]
+  names(x_vals) <- as.character(1:n_vals)
+  names(y_vals) <- as.character(1:n_vals)
 
-    Time <- x_vals[, begin_conc_idx:end_conc_idx] %>%
-      tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-      dplyr::arrange(as.numeric(.data$name)) %>%
-      dplyr::select("value")
-    RU <- y_vals[, begin_conc_idx:end_conc_idx] %>%
-      tidyr::pivot_longer(cols = tidyselect::everything()) %>%
-      dplyr::arrange(as.numeric(.data$name)) %>%
-      dplyr::select("value")
+  Time <- x_vals[, begin_conc_idx:end_conc_idx] %>%
+    tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+    dplyr::arrange(as.numeric(.data$name)) %>%
+    dplyr::select("value")
+  RU <- y_vals[, begin_conc_idx:end_conc_idx] %>%
+    tidyr::pivot_longer(cols = tidyselect::everything()) %>%
+    dplyr::arrange(as.numeric(.data$name)) %>%
+    dplyr::select("value")
 
-    purrr::map_dfr(.x = tibble::tibble(numerical_concentrations),
-                   .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
-      dplyr::arrange(.data$numerical_concentrations) -> numerical_concentrations
-    Concentrations <- numerical_concentrations
-    df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
-    colnames(df) <- c("Time", "RU", "Concentration")
-    df
+  purrr::map_dfr(.x = tibble::tibble(numerical_concentrations),
+                 .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+    dplyr::arrange(.data$numerical_concentrations) -> numerical_concentrations
+  Concentrations <- numerical_concentrations
+  df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
+  colnames(df) <- c("Time", "RU", "Concentration")
+  df
 }
 
 
@@ -180,7 +180,7 @@ baseline_correction <- function(well_idx, x_vals, y_vals, sample_info){
     y_vals[, start_idx:end_idx] <-
       y_vals[, start_idx:end_idx] - baseline_average
   } else
-    {
+  {
     # correct all to mean of zero
     for (i in 1:num_conc){
       # compute baseline average for each concentration
@@ -226,18 +226,18 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
   association <- sample_info[well_idx,]$Association
 
   df <- create_dataframe_with_conc(start_idx, end_idx, x_vals, y_vals,
-                                         all_concentrations_values[start_idx:end_idx],
-                                         n_time_points)
+                                   all_concentrations_values[start_idx:end_idx],
+                                   n_time_points)
 
   df %>% dplyr::filter((Time >= baseline + baseline_start + association - 10)
-                & (Time <= baseline + baseline_start + association - 5)) %>%
+                       & (Time <= baseline + baseline_start + association - 5)) %>%
     dplyr::group_by(Concentration) %>%
     dplyr::summarise(`Dose Response` = mean(.data$RU, na.rm = TRUE)) -> df_RC
   df_RC %>% dplyr::mutate(Included =
-                     forcats::as_factor(ifelse(Concentration %in% incl_conc_values,
-                                      "Yes", "No"))) -> df_RC
+                            forcats::as_factor(ifelse(Concentration %in% incl_conc_values,
+                                                      "Yes", "No"))) -> df_RC
   ggplot2::ggplot(df_RC, ggplot2::aes(x = Concentration,
-                    y = `Dose Response`)) +
+                                      y = `Dose Response`)) +
     ggplot2::geom_point(ggplot2::aes(color = Included)) +
     ggplot2::geom_line() +
     ggplot2::scale_x_log10() +
@@ -259,27 +259,27 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   association_end <- baseline + baseline_start + association
 
   df <- create_dataframe_with_conc(start_idx, end_idx, x_vals, y_vals,
-                                         concentrations,
-                                         n_time_points)
+                                   concentrations,
+                                   n_time_points)
 
   #this has failed in some data sets where these observations are missing.
   df %>% dplyr::filter((.data$Time >= baseline + baseline_start + association - 10)
-                & (.data$Time <= baseline + baseline_start + association - 5)) %>%
+                       & (.data$Time <= baseline + baseline_start + association - 5)) %>%
     dplyr::group_by(.data$Concentration) %>%
     dplyr::summarise(`Dose Response` = mean(.data$RU, na.rm = TRUE)) -> df_RC
 
   # check to see if any results for df_RC
 
   if (dim(df_RC)[1] == 0)
-     return(NULL)
+    return(NULL)
 
   # record the differences between consecutive responses
   sum_diff <- NULL
   conc_diff <- NULL
   for (i in 1:(num_conc - 1)){
     sum_diff <- suppressMessages(dplyr::bind_cols(sum_diff, df_RC[i+1,]$`Dose Response` - df_RC[i,]$`Dose Response`))
-    conc_diff <- suppressMessages(dplyr::bind_cols(conc_diff, df_RC[i+1,]$Concentration - df_RC[i,]$Concentration))
-    slope_diff <- sum_diff/conc_diff
+    conc_diff <- suppressMessages(dplyr::bind_cols(conc_diff, log(df_RC[i+1,]$Concentration) - log(df_RC[i,]$Concentration)))
+    slope_diff <- abs(sum_diff/conc_diff)
   }
   slope_diff <- sum_diff/conc_diff
   # add sums for each 5 cycle window.
@@ -294,7 +294,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
 
   # return 5 best consecutive concentrations
   if(sum(remove_concentration) == 0)
-     return(concentrations[start_conc_idx:(start_conc_idx + 4)])
+    return(concentrations[start_conc_idx:(start_conc_idx + 4)])
 
   # if some slopes are less than 30% of the mean, remove one concentration
   # low end or high end, depending on which slope is smaller
@@ -303,9 +303,9 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   # if both first and last are tagged, we remove the smallest
   # if only one is tagged, it will still be the smallest
   if (slopes[1] < slopes[4])
-      return(concentrations[(start_conc_idx+1):(start_conc_idx + 4)])
+    return(concentrations[(start_conc_idx+1):(start_conc_idx + 4)])
   else
-      return(concentrations[(start_conc_idx):(start_conc_idx + 3)])
+    return(concentrations[(start_conc_idx):(start_conc_idx + 3)])
 
 }
 
@@ -355,7 +355,7 @@ plot_sensorgrams <- function(well_idx,
                    rep(x, n_time_points), n_time_points) %>%
     dplyr::arrange(.data$incl_conc_values) -> incl_conc_values
 
-   Concentrations <- incl_conc_values
+  Concentrations <- incl_conc_values
 
   df <- suppressMessages(dplyr::bind_cols("Time" = Time, "RU" = RU, "Concentration" = Concentrations))
 
@@ -376,7 +376,7 @@ plot_sensorgrams <- function(well_idx,
 
 # internal. Called by UserFunctions get_fitted_plots
 plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_vals,
-                             incl_conc_values, n_time_points){
+                                       incl_conc_values, n_time_points){
 
   if (!is.null(fits[[well_idx]]$error))
     return(NULL)
@@ -472,13 +472,13 @@ summary_fit_with_constraints <- function(fit_object){
   n <- nrow(hessian)
   test_zeroes <- apply(hessian, 1 , function(x) sum(x==0))
   nonsingular_rows <- which(test_zeroes != n)
- # if (length(nonsingular_rows) == n & info != 5)
-#    return(summary(fit_object)$coefficients)
+  # if (length(nonsingular_rows) == n & info != 5)
+  #    return(summary(fit_object)$coefficients)
   hessian <- hessian[nonsingular_rows, nonsingular_rows]
 
   std_err_full <- rep(NA, n)
 
-# get table directly. Code is pulled from summary.minpack.lm
+  # get table directly. Code is pulled from summary.minpack.lm
 
   if (info != 5) {            # when info is 5, that means the iterations maxed out and fit is not valid
     ibb <- chol(hessian)
@@ -583,7 +583,7 @@ fit_as_system <- function(pars, df, incl_concentrations,
   for (i in 1:num_conc){
 
     df_i <- df %>% dplyr::filter(.data$Concentration == incl_concentrations[i])
-  #  RU <- df_i$RU
+    #  RU <- df_i$RU
 
     df_i %>% dplyr::filter(.data$AssocIndicator == 1) -> df_assoc
     df_i %>% dplyr::filter(.data$DissocIndicator == 1) -> df_dissoc
@@ -598,7 +598,7 @@ fit_as_system <- function(pars, df, incl_concentrations,
 
     }
 
-   assoc_formula_second_term <-
+    assoc_formula_second_term <-
       (1 - exp(-((ka*incl_concentrations[i] + kd)*(df_assoc$Time + t0[i]))))
 
     assoc_formula_full <- assoc_formula_first_term * assoc_formula_second_term
@@ -634,7 +634,7 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
   for (i in 1:num_conc){
 
     df_i <- df %>% dplyr::filter(Concentration == incl_concentrations[i])
- #   RU <- df_i$RU
+    #   RU <- df_i$RU
     Time <- df_i$Time
     Concentration <- df_i$Concentration
 
@@ -656,7 +656,7 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
 
 
     }
-     assoc_formula_second_term <-
+    assoc_formula_second_term <-
       (1 - exp(-((ka*df_assoc$Concentration + kd)*(df_assoc$Time + t0[i]))))
 
     assoc_formula_full <- assoc_formula_first_term * assoc_formula_second_term
@@ -684,12 +684,12 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
 # internal function. Fits sensorgrams for a given well
 
 fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
-                            incl_concentrations_values, n_time_points,
-                            min_allowed_kd = 10^(-5),
-                            max_iterations = 500,
-                            ptol = 10^(-10),
-                            ftol = 10^(-10),
-                            max_RU_tol = 300){
+                                         incl_concentrations_values, n_time_points,
+                                         min_allowed_kd = 10^(-5),
+                                         max_iterations = 500,
+                                         ptol = 10^(-10),
+                                         ftol = 10^(-10),
+                                         max_RU_tol = 300){
 
   # this function will fit all selected concentrations for one well
 
@@ -698,7 +698,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
 
   if (sample_info[well_idx,]$Bulkshift == "Y")
     bulkshift <- TRUE else
-    bulkshift <- FALSE
+      bulkshift <- FALSE
 
   if (sample_info[well_idx,]$`Global Rmax` == "Y")
     global_rmax <- TRUE else
@@ -743,7 +743,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
     incl_concentrations_values[start_idx:end_idx]
 
   purrr::map_dfr(.x = tibble::tibble(incl_concentrations),
-          .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
+                 .f = function(x, n_time_points) rep(x, n_time_points), n_time_points) %>%
     dplyr::arrange(.data$incl_concentrations) -> incl_concentrations_rep
 
   df <- suppressMessages(dplyr::bind_cols("Time" = Time,
@@ -754,13 +754,13 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
 
   #do both dissociation and association
   df %>% dplyr::mutate(AssocIndicator =
-                  ifelse((.data$Time >= assoc_start & .data$Time < assoc_end), 1, 0),
-                         DissocIndicator = ifelse(Time > dissoc_start & Time < dissoc_end, 1, 0)) -> df
+                         ifelse((.data$Time >= assoc_start & .data$Time < assoc_end), 1, 0),
+                       DissocIndicator = ifelse(Time > dissoc_start & Time < dissoc_end, 1, 0)) -> df
   df %>% dplyr::filter((.data$AssocIndicator == 1 | .data$DissocIndicator == 1)) -> df
 
   df %>% dplyr::group_by(.data$Concentration) %>% dplyr::summarise(max = max(.data$RU, na.rm = TRUE)) -> Rmax_start_df
 
-    t0_start <- rep(0, num_conc)
+  t0_start <- rep(0, num_conc)
 
   if (global_rmax){
     Rmax_start <- max(Rmax_start_df$max, na.rm = TRUE)
@@ -782,19 +782,19 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
     param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd, rep(-100, num_conc))
     param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1, rep(100, num_conc))
   } else { if (!bulkshift & !regenerated_surface){
-              init_params <- c(Rmax_start, ka_start, t0_start, kd_start)
-              param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd)
-              param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1)
+    init_params <- c(Rmax_start, ka_start, t0_start, kd_start)
+    param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, rep(-Inf,num_conc), min_allowed_kd)
+    param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, rep(Inf,num_conc), 1)
 
   } else { if (bulkshift & regenerated_surface){
-              init_params <- c(Rmax_start, ka_start, kd_start, shift)
-              param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, min_allowed_kd, rep(-100, num_conc))
-              param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, 1, rep(100, num_conc))
+    init_params <- c(Rmax_start, ka_start, kd_start, shift)
+    param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, min_allowed_kd, rep(-100, num_conc))
+    param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, 1, rep(100, num_conc))
 
   } else { if(!bulkshift & regenerated_surface){
-            init_params <- c(Rmax_start, ka_start, kd_start)
-            param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, min_allowed_kd)
-            param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, 1)
+    init_params <- c(Rmax_start, ka_start, kd_start)
+    param_lower_bounds <- c(rep(0, length(Rmax_start)), 10, min_allowed_kd)
+    param_upper_bounds <- c(rep(max_RU_tol, length(Rmax_start)), 10^7, 1)
   }}}}
 
   fit_result <- minpack.lm::nls.lm(init_params,fn = fit_as_system, df = df,
@@ -822,10 +822,10 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
     ka <- pars[2]
 
     if (!regenerated_surface){
-       t0 <- pars[3:(2 + num_conc)]
-       kd <- pars[(3 + num_conc)]
+      t0 <- pars[3:(2 + num_conc)]
+      kd <- pars[(3 + num_conc)]
     } else {
-       kd <- pars[3]
+      kd <- pars[3]
     }
 
 
@@ -864,7 +864,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
                                    shift = shift,
                                    global_rmax = global_rmax)
 
-   list("FitResult" = fit_result, "FitOutcomes" = fit_outcomes)
+  list("FitResult" = fit_result, "FitOutcomes" = fit_outcomes)
 }
 
 
@@ -877,119 +877,119 @@ combine_output <- function(well_idx, fits_list, plot_list_out, rc_list, sample_i
     global_rmax <- TRUE else
       global_rmax <- FALSE
 
-  if (sample_info[well_idx,]$`Bulkshift` == "Y")
-    bulkshift <- TRUE else
-      bulkshift <- FALSE
+    if (sample_info[well_idx,]$`Bulkshift` == "Y")
+      bulkshift <- TRUE else
+        bulkshift <- FALSE
 
-  if (sample_info[well_idx,]$Regen. == "Y" | sample_info[well_idx, ]$BaselineNegative)
-      regenerated_surface <- TRUE else
-        regenerated_surface <- FALSE
+      if (sample_info[well_idx,]$Regen. == "Y" | sample_info[well_idx, ]$BaselineNegative)
+        regenerated_surface <- TRUE else
+          regenerated_surface <- FALSE
 
-  num_conc <- sample_info[well_idx,]$NumInclConc
+        num_conc <- sample_info[well_idx,]$NumInclConc
 
-  if (global_rmax)
-    Rmax_label <- "Rmax" else
-      Rmax_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("Rmax", x))
+        if (global_rmax)
+          Rmax_label <- "Rmax" else
+            Rmax_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("Rmax", x))
 
-  if (!regenerated_surface)
-     R0_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("R_0", x)) else
-       R0_label <- NULL
-  bulkshift_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("Bulkshift", x))
-
-
-  pars <- unlist(fits_list[[well_idx]]$result$FitResult$par)
-
-  if (bulkshift)
-    par_names <- purrr::as_vector(purrr::flatten(c(Rmax_label, "ka", R0_label, "kd", bulkshift_label))) else
-    par_names <- purrr::as_vector(purrr::flatten(c(Rmax_label, "ka", R0_label, "kd")))
-
-  # result_summary <- summary(fits_list[[well_idx]]$result$FitResult)
-  #R's built-in summary method doesn't play nicely when the some of the parameters hit their limiting values (the hessian is singular)
-  # I've adapted the function to return NA's for std error when the limits are reached.
-
-  result_summary <- summary_fit_with_constraints(fits_list[[well_idx]]$result$FitResult)
-  #summary_fit_with_constraints returns the coefficients table from summary.minpack.lm
-
-  summary_names <- colnames(result_summary)
-  result_summary %>% tibble::as_tibble() -> par_err_table
-
-  colnames(par_err_table) <- summary_names
-  par_err_table <- suppressMessages(dplyr::bind_cols(Names = par_names, par_err_table))
-
-  par_err_table %>%
-    dplyr::filter(!stringr::str_detect(.data$Names,"R_0")) -> par_err_table
-  par_err_table %>%
-    dplyr::filter(!stringr::str_detect(.data$Names,"Bulkshift")) -> par_err_table
+        if (!regenerated_surface)
+          R0_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("R_0", x)) else
+            R0_label <- NULL
+        bulkshift_label <- purrr::map_dfr(tibble::tibble(1:num_conc), function(x) paste("Bulkshift", x))
 
 
-  par_names <- par_err_table$Names
+        pars <- unlist(fits_list[[well_idx]]$result$FitResult$par)
 
-  par_err_table %>%
-    dplyr::filter(.data$Names == "ka") %>%
-    dplyr::select("Estimate") %>%
-    as.numeric() -> ka
-  par_err_table %>%
-    dplyr::filter(.data$Names == "ka") %>%
-    dplyr::select("Std. Error") %>%
-    as.numeric() -> ka_se
-  par_err_table %>%
-    dplyr::filter(.data$Names == "kd") %>%
-    dplyr::select("Estimate") %>%
-    as.numeric() -> kd
-  par_err_table %>%
-    dplyr::filter(.data$Names == "kd") %>%
-    dplyr::select("Std. Error") %>%
-    as.numeric() -> kd_se
+        if (bulkshift)
+          par_names <- purrr::as_vector(purrr::flatten(c(Rmax_label, "ka", R0_label, "kd", bulkshift_label))) else
+            par_names <- purrr::as_vector(purrr::flatten(c(Rmax_label, "ka", R0_label, "kd")))
 
-  KD <- kd/ka
-  KD_se <- KD * ((ka_se/ka)^2 + (kd_se/kd)^2)^(1/2)
+        # result_summary <- summary(fits_list[[well_idx]]$result$FitResult)
+        #R's built-in summary method doesn't play nicely when the some of the parameters hit their limiting values (the hessian is singular)
+        # I've adapted the function to return NA's for std error when the limits are reached.
 
-  if (kd == 10^(-5)){
-    kd_se <- NA
-    KD_se <- NA
-    idx <- which(par_err_table$Names == "kd")
-    par_err_table$`Std. Error`[idx] <- NA
-  }
+        result_summary <- summary_fit_with_constraints(fits_list[[well_idx]]$result$FitResult)
+        #summary_fit_with_constraints returns the coefficients table from summary.minpack.lm
 
-  par_err_table %>%
-    dplyr::filter(.data$Names == "ka" | .data$Names == "kd") %>%
-    dplyr::select("Estimate", "Std. Error")  %>%
-    dplyr::mutate(Estimate = format(signif(.data$Estimate, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) %>%
-    dplyr::mutate(`Std. Error` = format(signif(.data$`Std. Error`, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) -> kakd_out
+        summary_names <- colnames(result_summary)
+        result_summary %>% tibble::as_tibble() -> par_err_table
 
-  par_err_table %>%
-    dplyr::filter(!(.data$Names == "ka" | .data$Names == "kd")) %>%
-    dplyr::select("Estimate", "Std. Error")  %>%
-    dplyr::mutate(Estimate = format(round(.data$Estimate,2),big.mark=",",decimal.mark=".", scientific = FALSE))  %>%
-    dplyr::mutate(`Std. Error` = format(round(.data$`Std. Error`, 2),big.mark=",",decimal.mark=".", scientific = FALSE)) -> rest_out
+        colnames(par_err_table) <- summary_names
+        par_err_table <- suppressMessages(dplyr::bind_cols(Names = par_names, par_err_table))
+
+        par_err_table %>%
+          dplyr::filter(!stringr::str_detect(.data$Names,"R_0")) -> par_err_table
+        par_err_table %>%
+          dplyr::filter(!stringr::str_detect(.data$Names,"Bulkshift")) -> par_err_table
 
 
-  KD_tbl <- tibble::tibble(Estimate = KD, `Std. Error` = KD_se)
+        par_names <- par_err_table$Names
 
-  KD_tbl %>%
-    dplyr::select("Estimate", "Std. Error")  %>%
-    dplyr::mutate(Estimate = format(signif(.data$Estimate, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) %>%
-    dplyr::mutate(`Std. Error` = format(signif(.data$`Std. Error`, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) -> KD_tbl
+        par_err_table %>%
+          dplyr::filter(.data$Names == "ka") %>%
+          dplyr::select("Estimate") %>%
+          as.numeric() -> ka
+        par_err_table %>%
+          dplyr::filter(.data$Names == "ka") %>%
+          dplyr::select("Std. Error") %>%
+          as.numeric() -> ka_se
+        par_err_table %>%
+          dplyr::filter(.data$Names == "kd") %>%
+          dplyr::select("Estimate") %>%
+          as.numeric() -> kd
+        par_err_table %>%
+          dplyr::filter(.data$Names == "kd") %>%
+          dplyr::select("Std. Error") %>%
+          as.numeric() -> kd_se
 
-  par_names <- c(par_names, "KD")
-  dplyr::bind_rows(rest_out, kakd_out) %>%
-    dplyr::bind_rows(KD_tbl) %>%
-    gridExtra::tableGrob(rows = par_names,
-                         theme = gridExtra::ttheme_minimal(core=list(fg_params=list(hjust=1, x=0.9)))) -> tb1
+        KD <- kd/ka
+        KD_se <- KD * ((ka_se/ka)^2 + (kd_se/kd)^2)^(1/2)
 
-  RU_resid <- fits_list[[well_idx]]$result$FitResult$fvec
-  fits_list[[well_idx]]$result$FitOutcomes$Time -> Time_resid
-  fits_list[[well_idx]]$result$FitOutcomes$Concentration -> Concentration_resid
+        if (kd == 10^(-5)){
+          kd_se <- NA
+          KD_se <- NA
+          idx <- which(par_err_table$Names == "kd")
+          par_err_table$`Std. Error`[idx] <- NA
+        }
+
+        par_err_table %>%
+          dplyr::filter(.data$Names == "ka" | .data$Names == "kd") %>%
+          dplyr::select("Estimate", "Std. Error")  %>%
+          dplyr::mutate(Estimate = format(signif(.data$Estimate, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) %>%
+          dplyr::mutate(`Std. Error` = format(signif(.data$`Std. Error`, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) -> kakd_out
+
+        par_err_table %>%
+          dplyr::filter(!(.data$Names == "ka" | .data$Names == "kd")) %>%
+          dplyr::select("Estimate", "Std. Error")  %>%
+          dplyr::mutate(Estimate = format(round(.data$Estimate,2),big.mark=",",decimal.mark=".", scientific = FALSE))  %>%
+          dplyr::mutate(`Std. Error` = format(round(.data$`Std. Error`, 2),big.mark=",",decimal.mark=".", scientific = FALSE)) -> rest_out
 
 
-  resid_plot <- ggplot2::ggplot(data = tibble::tibble(Residuals = RU_resid,
-                                                      Time = Time_resid,
-                                                      Concentration = forcats::as_factor(Concentration_resid)),
-                       ggplot2::aes(x = .data$Time, y = .data$Residuals, color = .data$Concentration)) + ggplot2::geom_point(size = 0.01) +
-                          ggplot2::ggtitle(label = "Residuals")
+        KD_tbl <- tibble::tibble(Estimate = KD, `Std. Error` = KD_se)
 
-  gridExtra::grid.arrange(plot_list_out[[well_idx]], tb1, resid_plot,
-               rc_list[[well_idx]], ncol=2)
+        KD_tbl %>%
+          dplyr::select("Estimate", "Std. Error")  %>%
+          dplyr::mutate(Estimate = format(signif(.data$Estimate, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) %>%
+          dplyr::mutate(`Std. Error` = format(signif(.data$`Std. Error`, 3),big.mark=",",decimal.mark=".", scientific = TRUE)) -> KD_tbl
+
+        par_names <- c(par_names, "KD")
+        dplyr::bind_rows(rest_out, kakd_out) %>%
+          dplyr::bind_rows(KD_tbl) %>%
+          gridExtra::tableGrob(rows = par_names,
+                               theme = gridExtra::ttheme_minimal(core=list(fg_params=list(hjust=1, x=0.9)))) -> tb1
+
+        RU_resid <- fits_list[[well_idx]]$result$FitResult$fvec
+        fits_list[[well_idx]]$result$FitOutcomes$Time -> Time_resid
+        fits_list[[well_idx]]$result$FitOutcomes$Concentration -> Concentration_resid
+
+
+        resid_plot <- ggplot2::ggplot(data = tibble::tibble(Residuals = RU_resid,
+                                                            Time = Time_resid,
+                                                            Concentration = forcats::as_factor(Concentration_resid)),
+                                      ggplot2::aes(x = .data$Time, y = .data$Residuals, color = .data$Concentration)) + ggplot2::geom_point(size = 0.01) +
+          ggplot2::ggtitle(label = "Residuals")
+
+        gridExtra::grid.arrange(plot_list_out[[well_idx]], tb1, resid_plot,
+                                rc_list[[well_idx]], ncol=2)
 }
 
 print_output <- function(well_idx, pages_list, plot_list_out, sample_info){
@@ -998,16 +998,16 @@ print_output <- function(well_idx, pages_list, plot_list_out, sample_info){
     return(gridExtra::arrangeGrob(pages_list[[well_idx]]$result))
 
   err_msg <- paste("The following well has an unrecoverable error:",
-                     well_idx,
+                   well_idx,
                    "Block ", sample_info[well_idx,]$Block,
                    "Row", sample_info[well_idx,]$Row,
                    "ROI", sample_info[well_idx,]$ROI)
   err_msg <- paste0(err_msg, sample_info$Column)
 
   if (is.null(plot_list_out[[well_idx]]))
-     return(p1 = gridExtra::arrangeGrob(grid::textGrob(err_msg)))
+    return(p1 = gridExtra::arrangeGrob(grid::textGrob(err_msg)))
   else
-     return(p1 = gridExtra::arrangeGrob(grid::textGrob(err_msg), plot_list_out[[well_idx]]))
+    return(p1 = gridExtra::arrangeGrob(grid::textGrob(err_msg), plot_list_out[[well_idx]]))
 
 }
 get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
@@ -1059,17 +1059,17 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
 
 
   df %>% dplyr::filter((.data$Time >= baseline + baseline_start + association - 10)
-                & (.data$Time <= baseline + baseline_start + association - 5)) %>%
+                       & (.data$Time <= baseline + baseline_start + association - 5)) %>%
     dplyr::group_by(.data$Concentration) %>%
     dplyr::summarise(`Dose Response` = mean(RU, na.rm = TRUE)) -> df_RC
 
   df_RC %>% dplyr::mutate(Included =
-                     forcats::as_factor(ifelse(.data$Concentration %in% numerical_concentration_incl,
-                                      "Yes", "No"))) -> df_RC
+                            forcats::as_factor(ifelse(.data$Concentration %in% numerical_concentration_incl,
+                                                      "Yes", "No"))) -> df_RC
 
 
   ggplot2::ggplot(df_RC, ggplot2::aes(x = .data$Concentration,
-                    y = .data$`Dose Response`)) +
+                                      y = .data$`Dose Response`)) +
     ggplot2::geom_point(ggplot2::aes(color = .data$Included)) +
     ggplot2::geom_line() +
     ggplot2::scale_x_log10() +
@@ -1089,97 +1089,97 @@ get_csv <- function(well_idx, fits_list, sample_info){
       bulkshift <- TRUE else
         bulkshift <- FALSE
 
-    if (sample_info[well_idx, ]$`Regen.` == "Y" | sample_info[well_idx,]$BaselineNegative)
+      if (sample_info[well_idx, ]$`Regen.` == "Y" | sample_info[well_idx,]$BaselineNegative)
         regenerated_surface <- TRUE else
           regenerated_surface <- FALSE
 
 
-  if (!global_rmax){
-    Rmax <- rep(NA, 5)
-    Rmax_se <- rep(NA,5)
-  } else {
-    Rmax <- NA
-    Rmax_se <- NA
-  }
+        if (!global_rmax){
+          Rmax <- rep(NA, 5)
+          Rmax_se <- rep(NA,5)
+        } else {
+          Rmax <- NA
+          Rmax_se <- NA
+        }
 
 
 
-  Bulkshift <- rep(NA, 5)
-  Bulkshift_se <- rep(NA,5)
+        Bulkshift <- rep(NA, 5)
+        Bulkshift_se <- rep(NA,5)
 
-  R0 <- rep(NA,5)
-  R0_se <- rep(NA,5)
+        R0 <- rep(NA,5)
+        R0_se <- rep(NA,5)
 
-  if (is.null(fits_list[[well_idx]]$result$FitResult)){
-    return(c(Rmax = Rmax, Rmax_se = Rmax_se, ka = NA, ka_se = NA, kd = NA,
-             kd_se = NA, Bulkshift = Bulkshift, Bulkshift_se = Bulkshift_se, R0 = R0, R0_se = R0_se))
+        if (is.null(fits_list[[well_idx]]$result$FitResult)){
+          return(c(Rmax = Rmax, Rmax_se = Rmax_se, ka = NA, ka_se = NA, kd = NA,
+                   kd_se = NA, Bulkshift = Bulkshift, Bulkshift_se = Bulkshift_se, R0 = R0, R0_se = R0_se))
 
-  }
+        }
 
-  pars <- unlist(fits_list[[well_idx]]$result$FitResult$par)
-
-
-
-  result_summary <- summary_fit_with_constraints(fits_list[[well_idx]]$result$FitResult)
-
-  # first column of summary is the estimate. Second is standard error
-
-  summary_names <- colnames(result_summary)
-  result_summary %>% tibble::as_tibble() %>% dplyr::select("Estimate", "Std. Error") -> par_err_table
-
-  colnames(par_err_table) <- summary_names[1:2]
-
-  if (global_rmax){
-    Rmax <- par_err_table[1,]$Estimate
-    Rmax_se <- par_err_table[1,]$`Std. Error`
-    curr_idx <- 2
-
-  } else {
-       Rmax[1:num_conc] <- par_err_table[1:num_conc,]$Estimate
-       Rmax_se[1:num_conc] <- par_err_table[1:num_conc,]$`Std. Error`
-       curr_idx <- num_conc + 1
-
-  }
-
-  ka <- par_err_table[curr_idx,]$Estimate
-  ka_se <- par_err_table[curr_idx,]$`Std. Error`
-  curr_idx <- curr_idx + 1
-
-  if (!regenerated_surface){
-    R0[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$Estimate
-    R0_se[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$`Std. Error`
-    curr_idx <- curr_idx + num_conc
-  }
-
-  kd <- par_err_table[curr_idx,]$Estimate
-  kd_se <- par_err_table[curr_idx,]$`Std. Error`
-  curr_idx <- curr_idx + 1
-
-  if (bulkshift){
-    Bulkshift[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$Estimate
-    Bulkshift_se[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$`Std. Error`
-  }
-
-  KD <- kd/ka
-  KD_se <- KD * ((ka_se/ka)^2 + (kd_se/kd)^2)^(1/2)
-
-  if (kd == 10^(-5)){
-     kd_se <- NA
-     KD_se <- NA
-  }
+        pars <- unlist(fits_list[[well_idx]]$result$FitResult$par)
 
 
-  c(ROI = sample_info[well_idx,]$ROI,
-    Rmax = suppressWarnings(as.numeric(round(Rmax, 2))),
-    Rmax_se = suppressWarnings(as.numeric(round(Rmax_se, 2))),
-    ka = suppressWarnings(as.numeric(round(ka,2))),
-    ka_se = suppressWarnings(as.numeric(round(ka_se, 2))),
-    kd = suppressWarnings(as.numeric(format(signif(kd, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
-    kd_se = suppressWarnings(as.numeric(format(signif(kd_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
-    KD = suppressWarnings(as.numeric(format(signif(KD, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
-    KD_se = suppressWarnings(as.numeric(format(signif(KD_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
-    Bulkshift = suppressWarnings(as.numeric(round(Bulkshift, 2))),
-    Bulkshift_se = suppressWarnings(as.numeric(round(Bulkshift_se, 2))),
-    R0 = suppressWarnings(as.numeric(round(R0, 2))),
-    R0_se = suppressWarnings(as.numeric(round(R0_se, 2))))
+
+        result_summary <- summary_fit_with_constraints(fits_list[[well_idx]]$result$FitResult)
+
+        # first column of summary is the estimate. Second is standard error
+
+        summary_names <- colnames(result_summary)
+        result_summary %>% tibble::as_tibble() %>% dplyr::select("Estimate", "Std. Error") -> par_err_table
+
+        colnames(par_err_table) <- summary_names[1:2]
+
+        if (global_rmax){
+          Rmax <- par_err_table[1,]$Estimate
+          Rmax_se <- par_err_table[1,]$`Std. Error`
+          curr_idx <- 2
+
+        } else {
+          Rmax[1:num_conc] <- par_err_table[1:num_conc,]$Estimate
+          Rmax_se[1:num_conc] <- par_err_table[1:num_conc,]$`Std. Error`
+          curr_idx <- num_conc + 1
+
+        }
+
+        ka <- par_err_table[curr_idx,]$Estimate
+        ka_se <- par_err_table[curr_idx,]$`Std. Error`
+        curr_idx <- curr_idx + 1
+
+        if (!regenerated_surface){
+          R0[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$Estimate
+          R0_se[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$`Std. Error`
+          curr_idx <- curr_idx + num_conc
+        }
+
+        kd <- par_err_table[curr_idx,]$Estimate
+        kd_se <- par_err_table[curr_idx,]$`Std. Error`
+        curr_idx <- curr_idx + 1
+
+        if (bulkshift){
+          Bulkshift[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$Estimate
+          Bulkshift_se[1:num_conc] <- par_err_table[curr_idx:(curr_idx + num_conc - 1), ]$`Std. Error`
+        }
+
+        KD <- kd/ka
+        KD_se <- KD * ((ka_se/ka)^2 + (kd_se/kd)^2)^(1/2)
+
+        if (kd == 10^(-5)){
+          kd_se <- NA
+          KD_se <- NA
+        }
+
+
+        c(ROI = sample_info[well_idx,]$ROI,
+          Rmax = suppressWarnings(as.numeric(round(Rmax, 2))),
+          Rmax_se = suppressWarnings(as.numeric(round(Rmax_se, 2))),
+          ka = suppressWarnings(as.numeric(round(ka,2))),
+          ka_se = suppressWarnings(as.numeric(round(ka_se, 2))),
+          kd = suppressWarnings(as.numeric(format(signif(kd, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
+          kd_se = suppressWarnings(as.numeric(format(signif(kd_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
+          KD = suppressWarnings(as.numeric(format(signif(KD, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
+          KD_se = suppressWarnings(as.numeric(format(signif(KD_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
+          Bulkshift = suppressWarnings(as.numeric(round(Bulkshift, 2))),
+          Bulkshift_se = suppressWarnings(as.numeric(round(Bulkshift_se, 2))),
+          R0 = suppressWarnings(as.numeric(round(R0, 2))),
+          R0_se = suppressWarnings(as.numeric(round(R0_se, 2))))
 }
