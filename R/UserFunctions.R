@@ -311,7 +311,8 @@ process_input <- function(files_directory = NULL,
   cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
   parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
-  end_dissoc_list <- parallel::parLapply(cl, X = 1:n_fit_wells, fun = purrr::safely(find_dissociation_window),
+  end_dissoc_list <- parallel::parLapply(cl, X = 1:n_fit_wells,
+                                         fun = purrr::safely(find_dissociation_window),
                               sample_info_fits,
                               Time[, keep_concentrations],
                               corrected_RU[, keep_concentrations],
@@ -323,7 +324,9 @@ process_input <- function(files_directory = NULL,
   sample_info_fits$DissocEnd <- rep(NA, n_fit_wells)
 
   sample_info_fits$DissocEnd <- purrr::map_dbl(.x = end_dissoc_list,
-                                        .f = function(x){ifelse(is.null(x$error) & !is.null(x$result), x$result, NA)})
+                                        .f = function(x){
+                                          ifelse(is.null(x$error) & !is.null(x$result),
+                                                 x$result, NA)})
 
   list(expanded_sample_sheet = expanded_sample_sheet,
        sample_info = sample_info,

@@ -318,7 +318,7 @@ get_auto_bulkshift <- function(well_idx, sample_info, Time, RU){
   if (auto_bulkshift != "Y")
     return(bulkshift)
 
-  start_conc <- sample_info[well_idx, ]$FirstConcIdx
+  start_conc <- sample_info[well_idx, ]$FirstInclConcIdx
   end_conc <- start_conc + num_conc - 1
 
   Time <- Time[, start_conc:end_conc]
