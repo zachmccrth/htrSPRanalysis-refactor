@@ -342,6 +342,10 @@ get_auto_bulkshift <- function(well_idx, sample_info, Time, RU){
   sd_assoc <- as.vector(avgs[3,])
   sd_dissoc <- as.vector(avgs[4,])
 
+  print(sd_assoc)
+  print(sd_dissoc)
+  print("done")
+
   if (sum(ifelse(sd_assoc > 10, 1, 0)) > 0 |
       sum(ifelse(sd_dissoc > 10, 1, 0)) > 0){
     warning(paste("Too much noise to detect bulkshift for ROI",
@@ -351,7 +355,6 @@ get_auto_bulkshift <- function(well_idx, sample_info, Time, RU){
 
 
   test_bulkshift <- as.vector(abs(avg_assoc - avg_dissoc)/(avg_dissoc + avg_assoc))
-  test_noise <- as.vector(abs(avg_assoc - avg_dissoc)/(avg_dissoc + avg_assoc))
 
   # fit bulkshift if the difference in response is more than 10 % of the total response
 
