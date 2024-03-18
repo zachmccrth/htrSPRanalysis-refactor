@@ -36,7 +36,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
 
     #Smooth first because very noisy data will cause crash
     df$RU_before <- df$RU
-    df$RU <- loess(df$RU ~ df$Time, ) %>% predict()
+    df$RU <- stats::loess(df$RU ~ df$Time, ) %>% stats::predict()
 
     df_zoo <- zoo::as.zoo(df)
     #  max_idx <- max_idx + 1

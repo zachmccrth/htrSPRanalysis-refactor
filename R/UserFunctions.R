@@ -301,7 +301,6 @@ process_input <- function(files_directory = NULL,
 
   sample_info_fits$FirstInclConcIdx <- purrr::as_vector(purrr::flatten(first_incl_conc_idx_list))
 
-
   bulkshift <- purrr::map(.x = 1:n_fit_wells, .f = get_auto_bulkshift,
                               sample_info_fits,
                               Time[, keep_concentrations],

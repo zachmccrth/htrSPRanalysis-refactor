@@ -21,8 +21,7 @@ This R package consists of a library of functions for processing and analyzing d
 
 ```{r eval=FALSE}
 
-devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis", ref = "ac750b62a2f320f6aaf62c25307529084e33bf2f",
-                     build_vignettes = FALSE)
+#devtools::install_git("https://gitlab.oit.duke.edu/janice/htrSPRanalysis")
 
 ```
 
@@ -110,11 +109,10 @@ data_file_path <- system.file("extdata", "titration_data.xlsx", package="htrSPRa
 processed_input <- process_input(files_directory,
                     sample_sheet_path,
                     data_file_path,
-                    num_cores = 40)
+                    num_cores = 2)
 
 
 ```
-
  
 ### Obtain plots of raw data
 
