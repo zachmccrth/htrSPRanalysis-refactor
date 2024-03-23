@@ -31,8 +31,8 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
     df %>% dplyr::filter(.data$Time > (start_time - 50)) -> df
 
     # Do not base on low information concentrations
-    if (mean(df$RU, na.rm = TRUE) < min_RU_tol | mean(df$RU, na.rm = TRUE) > max_RU_tol)
-      next
+  #  if (mean(df$RU, na.rm = TRUE) < min_RU_tol | mean(df$RU, na.rm = TRUE) > max_RU_tol)
+  #    next
 
     #Smooth first because very noisy data will cause crash
     df$RU_before <- df$RU
@@ -50,7 +50,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
             return(stats::coef(stats::lm(RU ~ Time, singular.ok = TRUE,
                                          data = x_df)))}, by.column = FALSE,
 
-        width = 100)) -> df_out
+        width = 30)) -> df_out
     names(df_out) <- c("Intercept", "Slope")
     n_vals <- dim(df_out)[1]
 
@@ -58,7 +58,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
     df_out %>% dplyr::mutate(RollIndex = 1:n_vals) -> df_out
     max_slope <- max(abs(df_out$Slope))
     min_slope <- min(abs(df_out$Slope))
-    target_slope <- 0.25*max_slope
+    target_slope <- 0.40*max_slope
     window_idx <- which(abs(df_out$Slope) < target_slope)[1]
 
     if (is.na(window_idx)){
