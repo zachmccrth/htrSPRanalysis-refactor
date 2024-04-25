@@ -4,7 +4,112 @@
 
 # maybe do this on the selected concentration? Then can go back to 10% of signal?
 
-find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
+find_dissociation_window_biphasic <- function(well_idx, sample_info, x_vals, y_vals,
+                                     incl_concentrations_ligand, max_RU_tol, min_RU_tol){
+
+  if (sample_info[well_idx,]$`Automate Dissoc. Window` != "Y")
+    return(NULL)
+
+   # check for 2 phase decay
+
+  baseline <- sample_info[well_idx,]$Baseline
+  baseline_start <- sample_info[well_idx,]$`Bsl Start`
+  association <- sample_info[well_idx,]$Association
+
+  start_time <- baseline + baseline_start + association
+  dissociation <- sample_info[well_idx,]$Dissociation
+  start_idx <- sample_info[well_idx,]$FirstInclConcIdx
+  num_conc <- sample_info[well_idx,]$NumInclConc
+  end_idx <- start_idx + num_conc - 1
+
+  end_dissoc_list <- NULL
+  is_biphasic <- NULL
+  RU_cutoff <- NULL
+  max_idx <- 0
+  for (i in start_idx:end_idx){
+    Time <- x_vals[, i]
+    RU <- y_vals[, i]
+    df <- suppressMessages(dplyr::bind_cols(Time, RU))
+    names(df) <- c("Time", "RU")
+    df %>% dplyr::filter(.data$Time > start_time) -> df
+
+    # Do not base on low information concentrations
+  #  if (mean(df$RU, na.rm = TRUE) < min_RU_tol | mean(df$RU, na.rm = TRUE) > max_RU_tol)
+  #    next
+
+    #Smooth first because very noisy data will cause crash
+    df$RU_before <- df$RU
+
+    df$RU <- stats::loess(df$RU ~ df$Time, ) %>% stats::predict()
+    RU_0 <- max(df$RU, na.rm = TRUE)
+
+    single_exp_safe <- purrr::safely(.f = stats::nls)
+    single_exp_fit <- single_exp_safe(RU ~ I(a * exp(b * Time)),
+                                    df,
+                                    list(a = RU_0, b = 10^(-3)))
+
+    biphasic_exp_safe <- purrr::safely(.f = stats::nls)
+    biphasic_exp_fit <- biphasic_exp_safe(RU ~ I(a1 * exp(b1 * Time)
+                                                  + a2 * exp(b2 * Time)),
+                                           data = df,
+                                           start = list( a1 = .75 * RU_0,
+                                                                    a2 = .25 * RU_0,
+                                                                    b1 = 10^(-2),
+                                                                    b2 = 10^(-4)))
+
+    if (is.null(single_exp_fit$error)){
+      single_exp_summary <- summary(single_exp_fit$result)
+      single_sse <- sum(single_exp_summary$residuals^2)
+    } else
+      single_sse <- NA
+
+    if (is.null(biphasic_exp_fit$error)){
+       biphasic_exp_summary <- summary(biphasic_exp_fit$result)
+       biphasic_sse <- sum(biphasic_exp_summary$residuals^2)
+    } else {
+      is_biphasic <- c(is_biphasic, 0)
+      next
+    }
+
+    if (single_sse < biphasic_sse)
+      is_biphasic <- c(is_biphasic, 0)
+    else {
+      sse_diff <- (single_sse - biphasic_sse)/(biphasic_sse + single_sse)
+      if (sse_diff > .2 | is.na(sse_diff)){# single error is more than 1.5 times biphasic
+        is_biphasic <- c(is_biphasic, 1)
+        # find slow component
+        params <- stats::coef(biphasic_exp_fit)
+        if (abs(params[3] > abs(params[4]))){ #first param is fast rate
+           a_slow <- params[2]
+        } else {
+          a_slow <- params[1]
+        }
+        RU_cutoff <- c(RU_cutoff, a_slow)
+      }
+
+    }
+
+
+    # if (is.na(window_idx)){
+    #   # Once this happens, we are using the entire time series for all concentrations
+    #   end_dissoc_list <- c((df$Time)[length(df$Time)], end_dissoc_list)
+    #   next
+    # } else
+    #   end_dissoc <- df$Time[window_idx]
+    #
+    # end_dissoc_list <- c(end_dissoc, end_dissoc_list)
+
+  }
+  if (sum(is_biphasic) > 1){ # more than one concentration has biphasic behavior
+    RU_cutoff <- max(RU_cutoff, na.rm = TRUE)
+    window_idx <- which(df$RU > RU_cutoff)
+    if (!is.na(window_idx[1]))
+      return(df$Time[window_idx[1]])
+  }
+  return(NA) # not truncating for biphasic
+}
+
+find_dissociation_window_flat <- function(well_idx, sample_info, x_vals, y_vals,
                                      incl_concentrations_ligand, max_RU_tol, min_RU_tol){
 
   if (sample_info[well_idx,]$`Automate Dissoc. Window` != "Y")
@@ -28,11 +133,11 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
     RU <- y_vals[, i]
     df <- suppressMessages(dplyr::bind_cols(Time, RU))
     names(df) <- c("Time", "RU")
-    df %>% dplyr::filter(.data$Time > (start_time - 50)) -> df
+    df %>% dplyr::filter(.data$Time > (start_time - 5)) -> df
 
     # Do not base on low information concentrations
-  #  if (mean(df$RU, na.rm = TRUE) < min_RU_tol | mean(df$RU, na.rm = TRUE) > max_RU_tol)
-  #    next
+    #  if (mean(df$RU, na.rm = TRUE) < min_RU_tol | mean(df$RU, na.rm = TRUE) > max_RU_tol)
+    #    next
 
     #Smooth first because very noisy data will cause crash
     df$RU_before <- df$RU
@@ -50,7 +155,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
             return(stats::coef(stats::lm(RU ~ Time, singular.ok = TRUE,
                                          data = x_df)))}, by.column = FALSE,
 
-        width = 30)) -> df_out
+        width = 20)) -> df_out
     names(df_out) <- c("Intercept", "Slope")
     n_vals <- dim(df_out)[1]
 
@@ -62,8 +167,8 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
     window_idx <- which(abs(df_out$Slope) < target_slope)[1]
 
     if (is.na(window_idx)){
-      # Once this happens, we are using the entire time series for all concentrations
-      end_dissoc_list <- c((df$Time)[length(df$Time)], end_dissoc_list)
+      # Once this happens, we are using the entire entered dissociation duration for all concentrations
+      end_dissoc_list <- c(NA, end_dissoc_list)
       next
     } else
       end_dissoc <- df$Time[window_idx]
@@ -72,7 +177,7 @@ find_dissociation_window <- function(well_idx, sample_info, x_vals, y_vals,
 
   }
   # Now we have a candidate end of dissoc for each concentration. Thia should be done for selected concentrations
-  # Overall window is smallest window that accomodates all the concentrations
+  # Overall window is smallest window that accommodates all the concentrations
   return(max(as.numeric(end_dissoc_list), na.rm = TRUE))
 }
 
@@ -387,7 +492,8 @@ plot_sensorgrams <- function(well_idx,
 }
 
 # internal. Called by UserFunctions get_fitted_plots
-plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_vals,
+plot_sensorgrams_with_fits <- function(well_idx, sample_info,
+                                       fits, x_vals, y_vals,
                                        incl_conc_values, n_time_points){
 
   if (!is.null(fits[[well_idx]]$error))
@@ -408,7 +514,6 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
   analyte_desc <- paste("Analyte:", sample_info[well_idx,]$Analyte)
 
 
-  fit_RU <- fits[[well_idx]]$result$FitOutcomes$RU
 
   n_vals <- dim(x_vals)[2]
   names(x_vals) <- as.character(1:n_vals)
@@ -441,6 +546,10 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info, fits, x_vals, y_va
 
   df %>% dplyr::filter(.data$Time > baseline + baseline_start &
                          .data$Time < end_time) -> df
+
+  fits[[well_idx]]$result$FitOutcomes %>%
+    dplyr::filter(.data$Time < (end_time - assoc_start)) %>%
+    dplyr::pull(RU) -> fit_RU
 
   suppressMessages(dplyr::bind_cols(df,FittedRU = fit_RU)) -> df
 

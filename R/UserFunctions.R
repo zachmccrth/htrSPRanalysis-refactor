@@ -310,22 +310,37 @@ process_input <- function(files_directory = NULL,
   cl <- parallel::makeCluster(getOption("cl.cores", num_cores))
   parallel::clusterEvalQ(cl, library("htrSPRanalysis"))
 
-  end_dissoc_list <- parallel::parLapply(cl, X = 1:n_fit_wells,
-                                         fun = purrr::safely(find_dissociation_window),
+  end_dissoc_list_biphasic <- parallel::parLapply(cl, X = 1:n_fit_wells,
+                                   fun = purrr::safely(find_dissociation_window_biphasic),
                               sample_info_fits,
                               Time[, keep_concentrations],
                               corrected_RU[, keep_concentrations],
                               incl_concentrations_values,
                               max_RU_tol,
                               min_RU_tol)
+
+  end_dissoc_list_flat <- parallel::parLapply(cl, X = 1:n_fit_wells,
+                                         fun = purrr::safely(find_dissociation_window_flat),
+                                         sample_info_fits,
+                                         Time[, keep_concentrations],
+                                         corrected_RU[, keep_concentrations],
+                                         incl_concentrations_values,
+                                         max_RU_tol,
+                                         min_RU_tol)
   parallel::stopCluster(cl)
 
-  sample_info_fits$DissocEnd <- rep(NA, n_fit_wells)
-
-  sample_info_fits$DissocEnd <- purrr::map_dbl(.x = end_dissoc_list,
+  sample_info_fits$DissocEndBiphasic <- purrr::map_dbl(.x = end_dissoc_list_biphasic,
                                         .f = function(x){
                                           ifelse(is.null(x$error) & !is.null(x$result),
                                                  x$result, NA)})
+
+  sample_info_fits$DissocEndFlat <- purrr::map_dbl(.x = end_dissoc_list_flat,
+                                                       .f = function(x){
+                                                         ifelse(is.null(x$error) & !is.null(x$result),
+                                                                x$result, NA)})
+  sample_info_fits$DissocEnd <- pmin(sample_info_fits$DissocEndFlat,
+                                     sample_info_fits$DissocEndBiphasic,
+                                     na.rm = TRUE)
 
   list(expanded_sample_sheet = expanded_sample_sheet,
        sample_info = sample_info,
