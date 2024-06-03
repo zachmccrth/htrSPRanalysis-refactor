@@ -424,6 +424,12 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
                         num_incl, incl_concentrations,
                         start_idx, n_time_points)
       num_incl <- length(incl_concentrations)
+
+      if(is.null(num_incl) | num_incl == 0){
+         msg <- paste("Could not determine the optimal concentrations for ROI", sample_info$ROI[i],
+                      "\n Please check the sample information and the time series for issues or specify the concentrations to be fit explicitly in the sample information")
+         stop(msg)
+      }
     }
 
     #Use this to match to ligand_conc and to x_vals, y_vals

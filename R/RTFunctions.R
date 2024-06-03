@@ -374,7 +374,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
                                    n_time_points)
 
   #this has failed in some data sets where these observations are missing.
-  df %>% dplyr::filter((.data$Time >= baseline + baseline_start + association - 10)
+  df %>% dplyr::filter((.data$Time >= baseline + baseline_start + association - 15)
                        & (.data$Time <= baseline + baseline_start + association - 5)) %>%
     dplyr::group_by(.data$Concentration) %>%
     dplyr::summarise(`Dose Response` = mean(.data$RU, na.rm = TRUE)) -> df_RC
@@ -401,7 +401,7 @@ get_best_window <- function(well_idx, sample_info, x_vals, y_vals,
   cum_sum <- zoo::rollapply(
     purrr::as_vector(
       purrr::flatten(slope_diff)), 4, FUN = sum)
-  start_conc_idx <- which(cum_sum == max(cum_sum))
+  start_conc_idx <- which(cum_sum == max(cum_sum, na.rm = TRUE))
 
   # check start and end slopes, may be better to fit 4 instead of five
 
