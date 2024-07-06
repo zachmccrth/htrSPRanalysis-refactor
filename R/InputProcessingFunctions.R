@@ -376,8 +376,8 @@ get_averages <- function(conc_idx, Time, RU, end_assoc_frame, begin_dissoc_frame
   avg_assoc <- mean(RU_assoc$RU, na.rm = TRUE)
   avg_dissoc <- mean(RU_dissoc$RU, na.rm = TRUE)
 
-  sd_assoc <- sd(RU_assoc$RU, na.rm = TRUE)
-  sd_dissoc <- sd(RU_dissoc$RU, na.rm = TRUE)
+  sd_assoc <- stats::sd(RU_assoc$RU, na.rm = TRUE)
+  sd_dissoc <- stats::sd(RU_dissoc$RU, na.rm = TRUE)
 
   c(avg_assoc, avg_dissoc, sd_assoc, sd_dissoc)
 

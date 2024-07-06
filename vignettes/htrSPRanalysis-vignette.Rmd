@@ -98,7 +98,7 @@ As explained in the previous section, the standard pipeline outputs $3$ files, a
 
 
 
-### The Pipline
+### The Pipeline
 
 ```{r warning=FALSE, message=FALSE}
 files_directory <- system.file("extdata", package="htrSPRanalysis")
