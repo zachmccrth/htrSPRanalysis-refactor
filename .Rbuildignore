@@ -4,3 +4,4 @@ LICENSE.md
 .git
 .gitignore
 .Rhistory
+inst/extdata/titration_data.xlsx

@@ -5,7 +5,6 @@
 \title{Process user input files and obtain options for fitting.}
 \usage{
 process_input(
-  files_directory = NULL,
   sample_sheet_path = NULL,
   data_file_path = NULL,
   output_file_path = NULL,
@@ -22,8 +21,6 @@ process_input(
 )
 }
 \arguments{
-\item{files_directory}{The directory that contains the input files.}
-
 \item{sample_sheet_path}{The full path to the sample information file.}
 
 \item{data_file_path}{The full path to the titration data file.}
@@ -84,16 +81,19 @@ file outputs and fitting options
 \examples{
 # set up file paths for example
 
-files_directory <- system.file("extdata",
- package="htrSPRanalysis")
-sample_sheet_path <- system.file("extdata",
+\dontrun{ sample_sheet_path <- system.file("extdata",
  "sample_sheet.xlsx", package="htrSPRanalysis")
-data_file_path <- system.file("extdata",
- "titration_data.xlsx", package="htrSPRanalysis")
+
+fn <- "https://gitlab.oit.duke.edu/janice/htrspranalysis/-/raw/master/inst/extdata/titration_data.xlsx?ref_type=heads"
+
+download.file(fn,
+      destfile = "~/titration_data.xlsx",
+      mode = "wb")
+
+data_file_path <- "~/titration_data.xlsx"
 
 # process the input
-processed_input <- process_input(files_directory = files_directory,
- sample_sheet_path = sample_sheet_path,
+processed_input <- process_input(sample_sheet_path = sample_sheet_path,
   data_file_path = data_file_path,
-   num_cores = 2)
+   num_cores = 2)}
 }

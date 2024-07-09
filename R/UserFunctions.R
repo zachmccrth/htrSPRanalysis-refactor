@@ -8,7 +8,6 @@
 #' @importFrom rlang .data
 
 #'
-#' @param files_directory The directory that contains the input files.
 #' @param sample_sheet_path The full path to the sample information file.
 #' @param data_file_path The full path to the titration data file.
 #' @param output_file_path The full path where output should be stored. This directory needs to exist.
@@ -50,22 +49,24 @@
 #' @examples
 #' # set up file paths for example
 #'
-#' files_directory <- system.file("extdata",
-#'  package="htrSPRanalysis")
-#' sample_sheet_path <- system.file("extdata",
+#'\dontrun{ sample_sheet_path <- system.file("extdata",
 #'  "sample_sheet.xlsx", package="htrSPRanalysis")
-#' data_file_path <- system.file("extdata",
-#'  "titration_data.xlsx", package="htrSPRanalysis")
+#'
+#'fn <- "https://gitlab.oit.duke.edu/janice/htrspranalysis/-/raw/master/inst/extdata/titration_data.xlsx?ref_type=heads"
+#'
+#' download.file(fn,
+#'       destfile = "~/titration_data.xlsx",
+#'       mode = "wb")
+#'
+#' data_file_path <- "~/titration_data.xlsx"
 #'
 #' # process the input
-#' processed_input <- process_input(files_directory = files_directory,
-#'  sample_sheet_path = sample_sheet_path,
+#' processed_input <- process_input(sample_sheet_path = sample_sheet_path,
 #'   data_file_path = data_file_path,
-#'    num_cores = 2)
+#'    num_cores = 2)}
 #' @export process_input
 
-process_input <- function(files_directory = NULL,
-                          sample_sheet_path = NULL,
+process_input <- function(sample_sheet_path = NULL,
                           data_file_path = NULL,
                           output_file_path = NULL,
                           output_pdf = NULL,
@@ -81,7 +82,7 @@ process_input <- function(files_directory = NULL,
 
   sample_sheet <- readxl::read_excel(sample_sheet_path)
   #identify if any flags present in the sample sheet
-  flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path, files_directory)
+  flagspresent <- check_sample_sheet(sample_sheet, sample_sheet_path)
 
   if (flagspresent){
      usr_msg <- "Error in sample sheet file. See Error_note_sample_sheet.csv for detailed description, then select updated file"
@@ -141,7 +142,7 @@ process_input <- function(files_directory = NULL,
   titration_data <- tibble::tibble(titration_data)
 
   #identify if any flags present in the sample sheet
-  flagspresent <- check_titration_data(titration_data, files_directory, data_file_path)
+  flagspresent <- check_titration_data(titration_data, data_file_path)
 
   if (flagspresent){
     usr_msg <- "Error in titration data file. See Error_note_titration_data.csv for detailed description, then select corrected file"
@@ -189,22 +190,32 @@ process_input <- function(files_directory = NULL,
   }
 
   ########### Set output file names #######################################
-  output_file_path_default <- stringr::str_split(sample_sheet_path, "-", n = 2)[[1]][1]
-  output_pdf_default <- paste0(output_file_path, date(), " - output.pdf")
-  output_csv_default <- paste0(output_file_path, date()," - output.csv")
-  error_pdf_default <- paste0(output_file_path, date()," - error.pdf")
+  output_file_path_default <-
+    stringr::str_split(sample_sheet_path, "-", n = 2)[[1]][1]
 
   if (is.null(output_file_path))
     output_file_path <- output_file_path_default
 
+  date_time <- date()
+  date_time <- gsub(x = date_time, ":", "_")
+
+  output_pdf_default <- file.path(output_file_path, paste0(date_time, "_output.pdf"))
   if (is.null(output_pdf))
     output_pdf <- output_pdf_default
+  else
+    output_pdf <- file.path(output_file_path, output_pdf)
 
+  output_csv_default <- file.path(output_file_path, paste0(date_time,"_output.csv"))
   if (is.null(output_csv))
     output_csv <- output_csv_default
+  else
+    output_csv <- file.path(output_file_path, output_csv)
 
+  error_pdf_default <- file.path(output_file_path, paste0(date_time,"_error.pdf"))
   if (is.null(error_pdf))
     error_pdf <- error_pdf_default
+  else
+    error_pdf <- file.path(output_file_path, error_pdf)
 
   ####### Process sample sheet #############################################
   # There are different numbers of concentrations exported for each well.

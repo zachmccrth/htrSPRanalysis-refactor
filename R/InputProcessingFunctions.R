@@ -460,7 +460,7 @@ select_concentrations <- function(sample_info, x_vals, y_vals){
 }
 
 #check sample sheet
-check_sample_sheet <- function(sample_sheet, sample_sheet_path, files_directory) {
+check_sample_sheet <- function(sample_sheet, sample_sheet_path) {
 
     if (dim(sample_sheet)[1] == 0) {
       check1 <- "empty data set :"
@@ -662,9 +662,6 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path, files_directory)
   #change to txt
   if (any(check1$flag != "")) {
     flagspresent <- TRUE
-    # readr::write_csv(check1,
-    #           paste(files_directory, "Error_note_sample_sheet.csv", sep = "/"))
-    # print("Error in sample sheet file. See Error_note_sample_sheet.csv")
     stop(check1$flag)
   } else {
 
@@ -674,7 +671,7 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path, files_directory)
 }
 
 #check titration data
-check_titration_data <- function(titration_data, files_directory, data_file_path) {
+check_titration_data <- function(titration_data, data_file_path) {
 
   if (dim(titration_data)[1] == 0) {
     check2 <- "empty data set :"
@@ -699,10 +696,6 @@ check_titration_data <- function(titration_data, files_directory, data_file_path
   if (columns_note != "") {
     check2 <- data.frame(columns_note, data_file_path)
     stop(check2$columns_note)
-    # readr::write_csv(check2,
-    #           paste(files_directory, "Error_note_titration_data.csv", sep = "/"))
-    # print("Error in titration data file. See Error_note_titration_data.csv")
-    # flagspresent <- TRUE
   } else {
     flagspresent <- FALSE
   }
