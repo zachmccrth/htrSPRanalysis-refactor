@@ -49,10 +49,11 @@
 #' @examples
 #' # set up file paths for example
 #'
-#'\dontrun{ sample_sheet_path <- system.file("extdata",
+#'\donttest{ sample_sheet_path <- system.file("extdata",
 #'  "sample_sheet.xlsx", package="htrSPRanalysis")
 #'
-#'fn <- "https://gitlab.oit.duke.edu/janice/htrspranalysis/-/raw/master/inst/extdata/titration_data.xlsx?ref_type=heads"
+#'fn <- paste0("https://gitlab.oit.duke.edu/janice/htrspranalysis/",
+#'         "-/raw/master/inst/extdata/titration_data.xlsx?ref_type=heads")
 #'
 #' download.file(fn,
 #'       destfile = "~/titration_data.xlsx",
@@ -444,6 +445,7 @@ get_fits <- function(processed_input){
 #' Plot fitted sensorgras and raw data.
 #' @param processed_input processed_input as returned by `process_input`
 #' @param fits_list List of fits as returned by `get_fits`
+#' @return list of plots of sensorgrams and fits
 #' @export get_fitted_plots
 
 get_fitted_plots <- function(processed_input, fits_list){
@@ -472,6 +474,7 @@ get_fitted_plots <- function(processed_input, fits_list){
 
 #' Plot response curve. Average RU versus log10 of concentration. Color coded for concentrations selected for fitting.
 #' @param processed_input Processed input object as returned from `process_input` function.
+#' @return list of plots of response curves, indicating the concentrations chosen for fitting
 #' @export get_rc_plots
 
 get_rc_plots <- function(processed_input){

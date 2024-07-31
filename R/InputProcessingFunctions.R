@@ -465,7 +465,6 @@ check_sample_sheet <- function(sample_sheet, sample_sheet_path) {
     if (dim(sample_sheet)[1] == 0) {
       check1 <- "empty data set :"
       flagspresent <- TRUE
-      print(paste(check1, sample_sheet_path))
       return(flagspresent)
   }
   columns <- names(sample_sheet)

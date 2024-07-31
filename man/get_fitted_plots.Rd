@@ -11,6 +11,9 @@ get_fitted_plots(processed_input, fits_list)
 
 \item{fits_list}{List of fits as returned by `get_fits`}
 }
+\value{
+list of plots of sensorgrams and fits
+}
 \description{
 Plot fitted sensorgras and raw data.
 }

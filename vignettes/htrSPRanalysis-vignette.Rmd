@@ -95,19 +95,21 @@ As explained in the previous section, the standard pipeline outputs $3$ files, a
 #repository. The following will download necessary files from gitlab onto
 #your computer.
 
-# By default, the files will go to your home directory (indicated by "~"). 
+# By default, the files will go to the temp directory for this R session. 
 # To change this, change the filename in destfile 
 
+destfile <- file.path(tempdir(),"titration_data.xlsx")
+
 download.file("https://gitlab.oit.duke.edu/janice/htrspranalysis/-/raw/master/inst/extdata/titration_data.xlsx?ref_type=heads",
-              destfile = "~/titration_data.xlsx", mode = "wb")
+              destfile = destfile, mode = "wb")
 
 sample_sheet_path <- system.file("extdata",
                                  "sample_sheet.xlsx",
                                  package="htrSPRanalysis")
 
-data_file_path <- "~/titration_data.xlsx"
+data_file_path <- destfile
 
-output_file_path <- "~/"
+output_file_path <- tempdir()
 
 # process the input
 processed_input <- process_input(sample_sheet_path,
@@ -187,7 +189,7 @@ data_file_path <- system.file("extdata", "bulkshift_example_titration_data.xlsx"
 
 # process the input
 
-pdfpath <- "~/"
+pdfpath <- tempdir()
 
 
 bulkshift_example <- process_input(sample_sheet_path = sample_sheet_path,

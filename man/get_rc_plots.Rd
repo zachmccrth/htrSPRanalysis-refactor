@@ -9,6 +9,9 @@ get_rc_plots(processed_input)
 \arguments{
 \item{processed_input}{Processed input object as returned from `process_input` function.}
 }
+\value{
+list of plots of response curves, indicating the concentrations chosen for fitting
+}
 \description{
 Plot response curve. Average RU versus log10 of concentration. Color coded for concentrations selected for fitting.
 }

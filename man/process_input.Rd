@@ -81,10 +81,11 @@ file outputs and fitting options
 \examples{
 # set up file paths for example
 
-\dontrun{ sample_sheet_path <- system.file("extdata",
+\donttest{ sample_sheet_path <- system.file("extdata",
  "sample_sheet.xlsx", package="htrSPRanalysis")
 
-fn <- "https://gitlab.oit.duke.edu/janice/htrspranalysis/-/raw/master/inst/extdata/titration_data.xlsx?ref_type=heads"
+fn <- paste0("https://gitlab.oit.duke.edu/janice/htrspranalysis/",
+        "-/raw/master/inst/extdata/titration_data.xlsx?ref_type=heads")
 
 download.file(fn,
       destfile = "~/titration_data.xlsx",

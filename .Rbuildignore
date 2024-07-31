@@ -5,3 +5,4 @@ LICENSE.md
 .gitignore
 .Rhistory
 inst/extdata/titration_data.xlsx
+^LICENSE\.md$
