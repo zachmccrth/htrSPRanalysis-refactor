@@ -163,7 +163,7 @@ find_dissociation_window_flat <- function(well_idx, sample_info, x_vals, y_vals,
     df_out %>% dplyr::mutate(RollIndex = 1:n_vals) -> df_out
     max_slope <- max(abs(df_out$Slope))
     min_slope <- min(abs(df_out$Slope))
-    target_slope <- 0.40*max_slope
+    target_slope <- 0.30*max_slope
     window_idx <- which(abs(df_out$Slope) < target_slope)[1]
 
     if (is.na(window_idx)){

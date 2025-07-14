@@ -97,16 +97,38 @@ As explained in the previous section, the standard pipeline outputs $3$ files, a
 
 # By default, the files will go to the temp directory for this R session. 
 # To change this, change the filename in destfile 
+# Prepare destination path
+destfile <- file.path(tempdir(), "titration_data.xlsx")
 
-destfile <- file.path(tempdir(),"titration_data.xlsx")
+# Try downloading the file, handle errors gracefully
+download_success <- tryCatch({
+  download.file(
+    "https://gitlab.oit.duke.edu/janice/htrspranalysis/-/raw/master/inst/extdata/titration_data.xlsx?ref_type=heads",
+    destfile = destfile,
+    mode = "wb"
+  )
+  TRUE
+}, error = function(e) {
+  message("Failed to download titration_data.xlsx: ", conditionMessage(e))
+  FALSE
+}, warning = function(w) {
+  message("Warning during download: ", conditionMessage(w))
+  FALSE
+})
 
-download.file("https://gitlab.oit.duke.edu/janice/htrspranalysis/-/raw/master/inst/extdata/titration_data.xlsx?ref_type=heads",
-              destfile = destfile, mode = "wb")
+# Check if download was successful
+if (!download_success || !file.exists(destfile)) {
+  stop("Could not retrieve titration data. Please check your internet connection or the resource URL.")
+}
 
-sample_sheet_path <- system.file("extdata",
-                                 "sample_sheet.xlsx",
-                                 package="htrSPRanalysis")
+# Locate sample sheet from installed package
+sample_sheet_path <- system.file("extdata", "sample_sheet.xlsx", package = "htrSPRanalysis")
 
+if (sample_sheet_path == "") {
+  stop("Sample sheet not found in package 'htrSPRanalysis'. Is the package installed correctly?")
+}
+
+# Store path to downloaded data
 data_file_path <- destfile
 
 output_file_path <- tempdir()
