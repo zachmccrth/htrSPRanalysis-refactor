@@ -7,11 +7,11 @@
 get_fits(processed_input)
 }
 \arguments{
-\item{processed_input}{The processed_input object returned by the function `process_input`.}
+\item{processed_input}{The processed_input object returned by the function \code{process_input}.}
 }
 \value{
-A list of all fits. The fits are performed using the `safely` function, so that the list has a `$result` entry
-and a `$error` entry for each item. If `$error` is `NULL`, the sensorgram was fit succesfully.
+A list of all fits. The fits are performed using the \code{safely} function, so that the list has a \verb{$result} entry
+and a \verb{$error} entry for each item. If \verb{$error} is \code{NULL}, the sensorgram was fit succesfully.
 }
 \description{
 Get fits of all selected sensorgrams as indicated in the sample information.

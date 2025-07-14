@@ -7,18 +7,18 @@
 create_pdf(processed_input, fits_list, rc_list, plot_list, ...)
 }
 \arguments{
-\item{processed_input}{Processed_input as returned by `process_input`}
+\item{processed_input}{Processed_input as returned by \code{process_input}}
 
-\item{fits_list}{List of fits as returned by `get_fits`}
+\item{fits_list}{List of fits as returned by \code{get_fits}}
 
-\item{rc_list}{List of response curves as returned by `get_rc_plots`}
+\item{rc_list}{List of response curves as returned by \code{get_rc_plots}}
 
-\item{plot_list}{List of plots as returned by `get_fitted_plots`}
+\item{plot_list}{List of plots as returned by \code{get_fitted_plots}}
 
-\item{...}{Arguments passed to the `pdf` function.}
+\item{...}{Arguments passed to the \code{pdf} function.}
 }
 \value{
-`NULL` A pdf file is created using the path name supplied to `process_input`
+\code{NULL} A pdf file is created using the path name supplied to \code{process_input}
 }
 \description{
 Create pdf file with sensorgrams with fitted curves, residuals, table of fit parameters, and response curves.

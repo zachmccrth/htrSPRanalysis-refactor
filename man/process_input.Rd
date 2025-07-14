@@ -33,7 +33,7 @@ process_input(
 
 \item{error_pdf}{The name of the file for error output.}
 
-\item{num_cores}{The number of cores to use for parallel processing. The default is( the number of cores detected by `parallel::detectCores()`.}
+\item{num_cores}{The number of cores to use for parallel processing. The default is( the number of cores detected by \code{parallel::detectCores()}.}
 
 \item{min_allowed_kd}{The minimum value for the dissociation constant. The default is 10^(-5).}
 
@@ -54,19 +54,19 @@ A list object containing the following
 \item{sample_info_fits}{The sample_info without rows that have encountered errors in initial processing}
 \item{Time}{The dataframe whose columns are the Time values for the input titration data. This only includes columns selected for analysis.}
 \item{RU}{The dataframe whose columns are the RU values for the input titration data. Only the columns for the samples to be analyzed are included}
-\item{correctedRU}{The `RU` dataframe after baseline correction}
-\item{keep_concentrations}{A vector containing the indices of the columns from `Time` and `correctedRU` to be used in curve fitting}
-\item{all_concentrations_values}{A vector containing the concentration values corresponding to the columns of the `Time` and `RU` dataframes}
-\item{incl_concentrations_values}{A vector containing the concentration values corresponding to the `Time` and `correctedRU` columns chosen for curve fitting}
+\item{correctedRU}{The \code{RU} dataframe after baseline correction}
+\item{keep_concentrations}{A vector containing the indices of the columns from \code{Time} and \code{correctedRU} to be used in curve fitting}
+\item{all_concentrations_values}{A vector containing the concentration values corresponding to the columns of the \code{Time} and \code{RU} dataframes}
+\item{incl_concentrations_values}{A vector containing the concentration values corresponding to the \code{Time} and \code{correctedRU} columns chosen for curve fitting}
 \item{n_time_points}{The maximum length of titration time series}
 \item{max_RU_tol}{The maximum RU for dissociation window trimming to be automated}
 \item{min_RU_tol}{The minimum RU for dissociation window trimming to be automated}
 \item{min_RU_tol}{The minimum RU for dissociation window trimming to be automated}
-\item{nwells}{The number of rows in the `sample_info` dataframe}
-\item{n_fit_wells}{The number of rows in the `sample_info_fits` dataframe}
-\item{ftol}{The ftol parameter passed to the `nls.lm` function}
-\item{ptol}{The ptol parameter passed to the `nls.lm` function}
-\item{ptol}{The ptol parameter passed to the `nls.lm` function}
+\item{nwells}{The number of rows in the \code{sample_info} dataframe}
+\item{n_fit_wells}{The number of rows in the \code{sample_info_fits} dataframe}
+\item{ftol}{The ftol parameter passed to the \code{nls.lm} function}
+\item{ptol}{The ptol parameter passed to the \code{nls.lm} function}
+\item{ptol}{The ptol parameter passed to the \code{nls.lm} function}
 \item{output_pdf}{The full pathname for the output pdf file}
 \item{output_csv}{The full pathname for the output csv file}
 \item{error_pdf}{The full pathname for the pdf error file. This is where errors in processing can be found.}

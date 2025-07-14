@@ -7,9 +7,9 @@
 get_fitted_plots(processed_input, fits_list)
 }
 \arguments{
-\item{processed_input}{processed_input as returned by `process_input`}
+\item{processed_input}{processed_input as returned by \code{process_input}}
 
-\item{fits_list}{List of fits as returned by `get_fits`}
+\item{fits_list}{List of fits as returned by \code{get_fits}}
 }
 \value{
 list of plots of sensorgrams and fits

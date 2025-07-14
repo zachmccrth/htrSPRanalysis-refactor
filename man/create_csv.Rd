@@ -7,12 +7,12 @@
 create_csv(processed_input, fits_list)
 }
 \arguments{
-\item{processed_input}{Processed_input as returned by `process_input`}
+\item{processed_input}{Processed_input as returned by \code{process_input}}
 
-\item{fits_list}{List of fits as returned by `get_fits`}
+\item{fits_list}{List of fits as returned by \code{get_fits}}
 }
 \value{
-a data frame with the fit parameters and errors.  A csv file is also created using the path name supplied to `process_input`
+a data frame with the fit parameters and errors.  A csv file is also created using the path name supplied to \code{process_input}
 }
 \description{
 Create csv file with all fit parameters.
