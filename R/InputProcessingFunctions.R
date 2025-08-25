@@ -354,7 +354,7 @@ get_auto_bulkshift <- function(well_idx, sample_info, Time, RU){
 
   # fit bulkshift if the difference in response is more than 10 % of the total response
 
-  if (sum(ifelse(test_bulkshift > max(sd_assoc, sd_dissoc), 1, 0)) > 0)
+  if (sum(ifelse(test_bulkshift > max(1.1*sd_assoc, 1.1*sd_dissoc), 1, 0)) > 0)
     return("Y")
 
   return("N")
