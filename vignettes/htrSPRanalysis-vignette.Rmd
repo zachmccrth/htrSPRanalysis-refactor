@@ -61,7 +61,7 @@ The user must provide two input files
 
 ### Reading and processing input files, obtaining user supplied options
 
-The function `process_input` when executed in Rstudio will prompt the user for the sample information file and the titration data file. It will also prompt for settings such as the minimum and maximum RU to use for the dissocation window determination, the maximum iterations and the tolerances `ptol` and `ftol`to use for the non-linear least squares curve fit. It returns a `list` object with the sample information, the original time series, the baseline adjusted RUs and several other variables used internally. This is the object that will be passed to the functions for fitting and plotting.
+The function `process_input` when executed in Rstudio will prompt the user for the sample information file and the titration data file. It will also prompt for settings such as the minimum and maximum RU to use for the dissociation window determination, the maximum iterations and the tolerances `ptol` and `ftol`to use for the non-linear least squares curve fit. It returns a `list` object with the sample information, the original time series, the baseline adjusted RUs and several other variables used internally. This is the object that will be passed to the functions for fitting and plotting.
 
 As soon as these files are selected, the software will read in both files and check that the formats are correct. This may take some time, depending on the size of the titration data file.
 

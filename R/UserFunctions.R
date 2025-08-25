@@ -202,20 +202,17 @@ process_input <- function(sample_sheet_path = NULL,
 
   output_pdf_default <- file.path(output_file_path, paste0(date_time, "_output.pdf"))
   if (is.null(output_pdf))
-    output_pdf <- output_pdf_default
-  else
+    output_pdf <- output_pdf_default else
     output_pdf <- file.path(output_file_path, output_pdf)
 
   output_csv_default <- file.path(output_file_path, paste0(date_time,"_output.csv"))
   if (is.null(output_csv))
-    output_csv <- output_csv_default
-  else
+    output_csv <- output_csv_default else
     output_csv <- file.path(output_file_path, output_csv)
 
   error_pdf_default <- file.path(output_file_path, paste0(date_time,"_error.pdf"))
   if (is.null(error_pdf))
-    error_pdf <- error_pdf_default
-  else
+    error_pdf <- error_pdf_default else
     error_pdf <- file.path(output_file_path, error_pdf)
 
   ####### Process sample sheet #############################################
