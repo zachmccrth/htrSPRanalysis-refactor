@@ -1,6 +1,7 @@
 ---
 title: "Introduction to htrSPRanalysis"
-output: rmarkdown::html_vignette
+#output: rmarkdown::html_vignette
+output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Introduction to htSPRanalysis}
   %\VignetteEngine{knitr::knitr}

@@ -340,7 +340,7 @@ get_response_curve <- function(well_idx, sample_info, x_vals, y_vals,
                                    all_concentrations_values[start_idx:end_idx],
                                    n_time_points)
 
-  df %>% dplyr::filter((Time >= baseline + baseline_start + association - 10)
+  df %>% dplyr::filter((Time >= baseline + baseline_start + association - 15)
                        & (Time <= baseline + baseline_start + association - 5)) %>%
     dplyr::group_by(Concentration) %>%
     dplyr::summarise(`Dose Response` = mean(.data$RU, na.rm = TRUE)) -> df_RC
@@ -698,8 +698,7 @@ fit_as_system <- function(pars, df, incl_concentrations,
 
   }
 
-  err_assoc <- NULL
-  err_dissoc <- NULL
+  errs <- NULL
 
   for (i in 1:num_conc){
 
@@ -724,7 +723,7 @@ fit_as_system <- function(pars, df, incl_concentrations,
 
     assoc_formula_full <- assoc_formula_first_term * assoc_formula_second_term
 
-    err_assoc <- c(err_assoc, df_assoc$RU - assoc_formula_full)
+    err_assoc <- df_assoc$RU - assoc_formula_full
 
     end_of_association_RU <-  assoc_formula_first_term *
       (1 - exp(-((ka*incl_concentrations[i] + kd)*(association + t0[i]))))
@@ -736,10 +735,12 @@ fit_as_system <- function(pars, df, incl_concentrations,
 
     dissoc_formula_full <- end_of_association_RU * dissoc_decay
 
-    err_dissoc <-   c(err_dissoc, df_dissoc$RU - dissoc_formula_full)
+    err_dissoc <- df_dissoc$RU - dissoc_formula_full
+
+    errs <- c(errs, err_assoc, err_dissoc)
 
   }
-  c(err_assoc, err_dissoc)
+
 }
 
 # Internal. Called by fit_association_dissociation
@@ -877,6 +878,7 @@ fit_association_dissociation <- function(well_idx, sample_info, x_vals, y_vals,
   df %>% dplyr::mutate(AssocIndicator =
                          ifelse((.data$Time >= assoc_start & .data$Time < assoc_end), 1, 0),
                        DissocIndicator = ifelse(Time > dissoc_start & Time < dissoc_end, 1, 0)) -> df
+
   df %>% dplyr::filter((.data$AssocIndicator == 1 | .data$DissocIndicator == 1)) -> df
 
   df %>% dplyr::group_by(.data$Concentration) %>% dplyr::summarise(max = max(.data$RU, na.rm = TRUE)) -> Rmax_start_df
@@ -1289,10 +1291,9 @@ get_csv <- function(well_idx, fits_list, sample_info){
           KD_se <- NA
         }
 
-
         c(ROI = sample_info[well_idx,]$ROI,
           Rmax = suppressWarnings(as.numeric(round(Rmax, 2))),
-          Rmax_se = suppressWarnings(as.numeric(round(Rmax_se, 2))),
+          Rmax_se = suppressWarnings(as.numeric(format(signif(Rmax_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
           ka = suppressWarnings(as.numeric(round(ka,2))),
           ka_se = suppressWarnings(as.numeric(round(ka_se, 2))),
           kd = suppressWarnings(as.numeric(format(signif(kd, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),

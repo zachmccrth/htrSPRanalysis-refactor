@@ -142,6 +142,7 @@ process_input <- function(sample_sheet_path = NULL,
 
   titration_data <- tibble::tibble(titration_data)
 
+
   #identify if any flags present in the sample sheet
   flagspresent <- check_titration_data(titration_data, data_file_path)
 
@@ -172,8 +173,8 @@ process_input <- function(sample_sheet_path = NULL,
       stop(usr_msg)
   }
 
-  if (is.na(max_RU_tol) | max_RU_tol < 50 | max_RU_tol > 2000){
-      usr_msg <- "Invalid max_RU_tol. Please use a number between 50 and 2000"
+  if (is.na(max_RU_tol) | max_RU_tol < 50){
+      usr_msg <- "Invalid max_RU_tol. Please use a number greater than or equal to 50"
       stop(usr_msg)
   }
 

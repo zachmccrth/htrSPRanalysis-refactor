@@ -219,7 +219,7 @@ select_samples_with_ROI <- function(sample_info, titration_data, ligand_and_ROI)
   nsamples <- dim(sample_info)[1]
 
   keep_concentrations_all <- which(ligand_and_ROI$ROI %in% keep_ROI)
-  x_vals_select <- x_vals[ , keep_concentrations_all]
+  x_vals_select <- round(x_vals[ , keep_concentrations_all], digits = 1)
   y_vals_select <- y_vals[ , keep_concentrations_all]
 
 
@@ -295,7 +295,7 @@ select_samples <- function(sample_info, titration_data){
   }
 
   # time and ru values for selected wells
-  x_vals_select <- x_vals[ , keep_concentrations_all]
+  x_vals_select <- round(x_vals[ , keep_concentrations_all],digits = 1)
   y_vals_select <- y_vals[ , keep_concentrations_all]
 
   sample_info <- sample_info[keep_ligands, ]
@@ -328,11 +328,11 @@ get_auto_bulkshift <- function(well_idx, sample_info, Time, RU){
   baseline <- sample_info[well_idx, ]$Baseline
   baseline_start <- sample_info[well_idx, ]$`Bsl Start`
 
-  # get last ten seconds of assoc and first 10 of dissoc
+  # get last ten seconds of assoc and first 50 of dissoc
 
-  end_assoc_frame <- association + baseline + baseline_start - 20
+  end_assoc_frame <- association + baseline + baseline_start - 50
   # This means the end of the dissoc window to use
-  begin_dissoc_frame <- end_assoc_frame + 40
+  begin_dissoc_frame <- end_assoc_frame + 100
 
   avgs <- purrr::map_dfc(1:num_conc, .f = get_averages, Time, RU, end_assoc_frame, begin_dissoc_frame)
 
@@ -366,11 +366,11 @@ get_averages <- function(conc_idx, Time, RU, end_assoc_frame, begin_dissoc_frame
    names(df) <- c("Time", "RU")
 
   df %>%
-    dplyr::filter(.data$Time >= end_assoc_frame & .data$Time <= (end_assoc_frame + 20)) %>%
+    dplyr::filter(.data$Time >= end_assoc_frame & .data$Time <= (end_assoc_frame + 50)) %>%
     dplyr::select("RU") -> RU_assoc
 
-  df %>%
-    dplyr::filter(.data$Time >= end_assoc_frame + 20 & .data$Time <= begin_dissoc_frame) %>%
+    df %>%
+    dplyr::filter(.data$Time >= end_assoc_frame + 50 & .data$Time <= begin_dissoc_frame) %>%
     dplyr::select("RU") -> RU_dissoc
 
   avg_assoc <- mean(RU_assoc$RU, na.rm = TRUE)
