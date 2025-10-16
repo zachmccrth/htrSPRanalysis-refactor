@@ -647,6 +647,45 @@ fit_kd <- function(pars, df, incl_concentrations, num_conc, kd, t0 = t0){
 
 }
 
+association_system_function <- function(Rmax, concentration, ka, t0, kd, shift) {
+
+    # Where time is a vector of times? Others are scalars
+    function(time) {
+        association_initial_condition <- (Rmax * ka * concentration)/(ka*concentration + kd)
+        association_dynamics <- (1 - exp(-((ka*concentration + kd)*(time + t0[i]))))
+
+        association_initial_condition * association_dynamics
+
+    }
+
+}
+
+dissociation_system_function <- function(initialRU, kd) {
+    function(time) {
+        initialRU * exp(-kd*(time))
+    }
+}
+
+
+generate_system_function <- function(Rmax, concentration, ka, t0, kd, shift, time) {
+
+    # TODO add splitting for time between association, dissociation
+    association_function <- association_system_function(Rmax, concentration, ka, t0, kd, shift) 
+
+    err_assoc <- df_assoc$RU - association_function(time)
+
+    end_of_association_RU <-  association_function(association + t0)
+
+    if (bulkshift) {
+      end_of_association_RU <- end_of_association_RU + shift[i]
+    }
+
+    dissociation_function <- dissociation_system_function(end_of_association_RU, kd)
+
+    err_dissoc <- df_dissoc$RU - dissociation_function(time - association)
+
+}
+
 # Internal function that is passed to nlm. It computes the objective function for the fit.
 fit_as_system <- function(pars, df, incl_concentrations,
                           num_conc,
