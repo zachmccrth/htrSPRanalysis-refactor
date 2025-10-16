@@ -740,6 +740,7 @@ fit_as_system <- function(pars, df, incl_concentrations,
     errs <- c(errs, err_assoc, err_dissoc)
 
   }
+  errs
 
 }
 
