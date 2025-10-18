@@ -826,43 +826,13 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
     Time <- df_i$Time
     concentration <- incl_concentrations[i]
 
-    df_i %>% dplyr::filter(.data$AssocIndicator == 1) -> df_assoc
-    df_i %>% dplyr::filter(.data$DissocIndicator == 1) -> df_dissoc
+    system_function = generate_system_function(Rmax_i, concentration, ka, t0, kd, shift, association)
 
-    if (global_rmax){
-      assoc_formula_first_term <-
-        (Rmax * ka * concentration)/(ka*concentration + kd)
-      end_of_association_RU <-  (Rmax * ka * concentration)/(ka*concentration + kd) *
-        (1 - exp(-((ka*concentration + kd)*(association + t0[i]))))
+    fit_output = system_function(df_i)
 
+    fit_output$Concentration <- rep(concentration, length(df_i$Time))
 
-    } else{
-      assoc_formula_first_term <-
-        (Rmax[i] * ka * concentration)/(ka*concentration + kd)
-      end_of_association_RU <-  (Rmax[i] * ka * concentration)/(ka*concentration + kd) *
-        (1 - exp(-((ka*concentration + kd)*(association + t0[i]))))
-
-
-    }
-    assoc_formula_second_term <-
-      (1 - exp(-((ka*concentration + kd)*(df_assoc$Time + t0[i]))))
-
-    assoc_formula_full <- assoc_formula_first_term * assoc_formula_second_term
-
-    df_assoc$RU <- assoc_formula_full
-
-
-    dissoc_decay <- exp(-kd*(df_dissoc$Time - association))
-
-    # shift is zero if no bulkshift
-
-    end_of_association_RU <- end_of_association_RU + shift[i]
-
-    dissoc_formula_full <- end_of_association_RU * dissoc_decay
-
-    df_dissoc$RU <- dissoc_formula_full
-
-    full_output_RU <- dplyr::bind_rows(full_output_RU, df_assoc, df_dissoc)
+    full_output_RU <- dplyr::bind_rows(full_output_RU, fit_ouput)
 
   }
   # return fitted values
