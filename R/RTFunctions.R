@@ -682,7 +682,7 @@ generate_system_function <- function(Rmax, concentration, ka, t0, kd, shift, ass
 
         association_function <- association_system_function(Rmax, concentration, ka, t0, kd) 
 
-        association_values <-  association_function(df_assoc$Time)
+        association_values <-  association_function(df_assoc$Time + t0)
 
         computed_association_df <- data.frame(
             Time = df_assoc$Time,
@@ -690,8 +690,6 @@ generate_system_function <- function(Rmax, concentration, ka, t0, kd, shift, ass
             AssocIndicator = rep(1, length(df_assoc$Time)),
             DissocIndicator = rep(0, length(df_assoc$Time))
         )
-
-        plot(computed_association_df$Time, computed_association_df$RU)
 
         end_of_association_RU <-  association_function(association + t0)
 
@@ -792,8 +790,8 @@ fit_as_system <- function(pars, df, incl_concentrations,
 
     # Unpack parameters
     concentration <- incl_concentrations[i]
-    ka <- parameters$ka[i]
-    kd <- parameters$kd[i]
+    ka <- parameters$ka
+    kd <- parameters$kd
     t0 <- parameters$t0[i]
     shift <- parameters$shift[i]
 
