@@ -672,12 +672,10 @@ dissociation_system_function <- function(initialRU, kd) {
 }
 
 
-generate_system_function <- function(Rmax, concentration, ka, t0, kd, shift) {
+generate_system_function <- function(Rmax, concentration, ka, t0, kd, shift, association) {
 
     # TODO the generating function, may just be simpler to call all at once
     function(concentration_dataframe) {
-        
-        association = concentration_dataframe$Association[1]
 
         concentration_dataframe %>% dplyr::filter(.data$AssocIndicator == 1) -> df_assoc
         concentration_dataframe %>% dplyr::filter(.data$DissocIndicator == 1) -> df_dissoc
@@ -692,6 +690,8 @@ generate_system_function <- function(Rmax, concentration, ka, t0, kd, shift) {
             AssocIndicator = rep(1, length(df_assoc$Time)),
             DissocIndicator = rep(0, length(df_assoc$Time))
         )
+
+        plot(computed_association_df$Time, computed_association_df$RU)
 
         end_of_association_RU <-  association_function(association + t0)
 
@@ -708,7 +708,7 @@ generate_system_function <- function(Rmax, concentration, ka, t0, kd, shift) {
             DissocIndicator = rep(1, length(df_dissoc$Time))
         )
 
-        df_full <- bind_rows(computed_association_df, computed_dissociation_df)
+        df_full <- dplyr::bind_rows(computed_association_df, computed_dissociation_df)
 
     }
 
@@ -797,7 +797,7 @@ fit_as_system <- function(pars, df, incl_concentrations,
     t0 <- parameters$t0[i]
     shift <- parameters$shift[i]
 
-    system_function = generate_system_function(Rmax_i, concentration, ka, t0, kd, shift)
+    system_function = generate_system_function(Rmax_i, concentration, ka, t0, kd, shift, association)
 
     system_values = system_function(df_i)
 
