@@ -697,7 +697,7 @@ generate_system_function <- function(Rmax, concentration, ka, t0, kd) {
 
         dissociation_function <- dissociation_system_function(end_of_association_RU, kd)
 
-        dissociation_values <- dissociation_function(df_dissoc$Time)
+        dissociation_values <- dissociation_function(df_dissoc$Time - association)
 
         computed_dissociaton_df <- data.frame(
             Time <- df_dissoc$Time,
