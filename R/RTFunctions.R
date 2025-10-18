@@ -824,28 +824,28 @@ get_fit_outcomes <- function(Rmax, ka, t0, kd, df, num_conc,
     df_i <- df %>% dplyr::filter(Concentration == incl_concentrations[i])
     #   RU <- df_i$RU
     Time <- df_i$Time
-    Concentration <- df_i$Concentration
+    concentration <- incl_concentrations[i]
 
     df_i %>% dplyr::filter(.data$AssocIndicator == 1) -> df_assoc
     df_i %>% dplyr::filter(.data$DissocIndicator == 1) -> df_dissoc
 
     if (global_rmax){
       assoc_formula_first_term <-
-        (Rmax * ka * df_assoc$Concentration)/(ka*df_assoc$Concentration + kd)
-      end_of_association_RU <-  (Rmax * ka * df_dissoc$Concentration)/(ka*df_dissoc$Concentration + kd) *
-        (1 - exp(-((ka*df_dissoc$Concentration + kd)*(association + t0[i]))))
+        (Rmax * ka * concentration)/(ka*concentration + kd)
+      end_of_association_RU <-  (Rmax * ka * concentration)/(ka*concentration + kd) *
+        (1 - exp(-((ka*concentration + kd)*(association + t0[i]))))
 
 
     } else{
       assoc_formula_first_term <-
-        (Rmax[i] * ka * df_assoc$Concentration)/(ka*df_assoc$Concentration + kd)
-      end_of_association_RU <-  (Rmax[i] * ka * df_dissoc$Concentration)/(ka*df_dissoc$Concentration + kd) *
-        (1 - exp(-((ka*df_dissoc$Concentration + kd)*(association + t0[i]))))
+        (Rmax[i] * ka * concentration)/(ka*concentration + kd)
+      end_of_association_RU <-  (Rmax[i] * ka * concentration)/(ka*concentration + kd) *
+        (1 - exp(-((ka*concentration + kd)*(association + t0[i]))))
 
 
     }
     assoc_formula_second_term <-
-      (1 - exp(-((ka*df_assoc$Concentration + kd)*(df_assoc$Time + t0[i]))))
+      (1 - exp(-((ka*concentration + kd)*(df_assoc$Time + t0[i]))))
 
     assoc_formula_full <- assoc_formula_first_term * assoc_formula_second_term
 
