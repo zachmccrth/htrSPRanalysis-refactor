@@ -673,14 +673,21 @@ dissociation_system_function <- function(initialRU, kd) {
 
 
 generate_system_function <- function(Rmax, concentration, ka, t0, kd) {
-
+    # TODO the generating function, may just be simpler to call all at once
     function(concentration_dataframe) {
         concentration_dataframe %>% dplyr::filter(.data$AssocIndicator == 1) -> df_assoc
         concentration_dataframe %>% dplyr::filter(.data$DissocIndicator == 1) -> df_dissoc
 
         association_function <- association_system_function(Rmax, concentration, ka, t0, kd, shift) 
 
-        err_assoc <- df_assoc$RU - association_function(time)
+        association_values <-  association_function(df_assoc$Time)
+
+        computed_associaton_df <- data.frame(
+            Time <- df_assoc$Time,
+            RU <- association_values,
+            AssocIndicator <- rep(1, length(df_assoc$Time))
+            DissocIndicator <- rep(0, length(df_assoc$Time))
+        )
 
         end_of_association_RU <-  association_function(association + t0)
 
@@ -689,6 +696,17 @@ generate_system_function <- function(Rmax, concentration, ka, t0, kd) {
         }
 
         dissociation_function <- dissociation_system_function(end_of_association_RU, kd)
+
+        dissociation_values <- dissociation_function(df_dissoc$Time)
+
+        computed_dissociaton_df <- data.frame(
+            Time <- df_dissoc$Time,
+            RU <- dissociation_values,
+            AssocIndicator <- rep(0, length(df_assoc$Time))
+            DissocIndicator <- rep(1, length(df_assoc$Time))
+        )
+
+        df_full <- bind_rows(computed_association_df, computed_dissociation_df)
 
     }
 
@@ -755,7 +773,7 @@ fit_as_system <- function(pars, df, incl_concentrations,
 
   parameters = pack_parameters(pars, global_rmax, regenerated_surface, num_conc, bulkshift)
 
-  errs <- NULL
+  errors <- NULL
 
   for (i in 1:num_conc){
 
@@ -775,12 +793,15 @@ fit_as_system <- function(pars, df, incl_concentrations,
 
     system_function = generate_system_function(Rmax, concentration, ka, t0, kd)
 
-    system_errors = system_function
+    system_values = system_function(df_i)
 
-       errs <- c(errs, err_assoc, err_dissoc)
+    error = df_i$RU - system_values$RU
+
+    errors <- c(errors, error)
 
   }
-  errs
+
+  errors
 
 }
 
