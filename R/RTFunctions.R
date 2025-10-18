@@ -546,16 +546,21 @@ plot_sensorgrams_with_fits <- function(well_idx, sample_info,
 
   df %>% dplyr::filter(.data$Time > baseline + baseline_start &
                          .data$Time < end_time) -> df
-
+#
+#   fits[[well_idx]]$result$FitOutcomes %>%
+#     dplyr::filter(.data$Time < (end_time - assoc_start)) %>%
+#     dplyr::pull(RU) -> fit_RU
   fits[[well_idx]]$result$FitOutcomes %>%
-    dplyr::filter(.data$Time < (end_time - assoc_start)) %>%
-    dplyr::pull(RU) -> fit_RU
-
-  suppressMessages(dplyr::bind_cols(df,FittedRU = fit_RU)) -> df
+    dplyr::filter(.data$Time < (end_time - assoc_start)) -> fit_RU
 
   # Correct to zero time
 
   df$Time <- df$Time - assoc_start
+
+#  suppressMessages(dplyr::bind_cols(df,FittedRU = fit_RU)) -> df
+  suppressMessages(dplyr::full_join(df,fit_RU, by = c("Time", "Concentration"))) -> df
+
+
 
   colnames(df) <- c("Time", "RU", "Concentration", "FittedRU")
 
@@ -775,6 +780,7 @@ fit_as_system <- function(pars, df, incl_concentrations,
        errs <- c(errs, err_assoc, err_dissoc)
 
   }
+  errs
 
 }
 
@@ -1328,7 +1334,7 @@ get_csv <- function(well_idx, fits_list, sample_info){
 
         c(ROI = sample_info[well_idx,]$ROI,
           Rmax = suppressWarnings(as.numeric(round(Rmax, 2))),
-          Rmax_se = suppressWarnings(as.numeric(format(signif(Rmax_se, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
+          Rmax_se = suppressWarnings(as.numeric(format(signif(Rmax_se, 4),big.mark=",",decimal.mark=".", scientific = TRUE))),
           ka = suppressWarnings(as.numeric(round(ka,2))),
           ka_se = suppressWarnings(as.numeric(round(ka_se, 2))),
           kd = suppressWarnings(as.numeric(format(signif(kd, 3),big.mark=",",decimal.mark=".", scientific = TRUE))),
