@@ -652,6 +652,120 @@ fit_kd <- function(pars, df, incl_concentrations, num_conc, kd, t0 = t0){
 
 }
 
+association_system_function <- function(Rmax, concentration, ka, t0, kd) {
+    # Where time is a vector of times? Others are scalars
+    function(time) {
+        association_initial_condition <- (Rmax * ka * concentration)/(ka*concentration + kd)
+        association_dynamics <- (1 - exp(-((ka*concentration + kd)*(time + t0))))
+
+        association_initial_condition * association_dynamics
+
+    }
+
+}
+
+dissociation_system_function <- function(initialRU, kd) {
+    ### Note that this function takes relative time, that is at t=0 the function equals initialRU
+    function(time) {
+        initialRU * exp(-kd*(time))
+    }
+}
+
+
+generate_system_function <- function(Rmax, concentration, ka, t0, kd, shift, association) {
+
+    # TODO the generating function, may just be simpler to call all at once
+    function(concentration_dataframe) {
+
+        concentration_dataframe %>% dplyr::filter(.data$AssocIndicator == 1) -> df_assoc
+        concentration_dataframe %>% dplyr::filter(.data$DissocIndicator == 1) -> df_dissoc
+
+        association_function <- association_system_function(Rmax, concentration, ka, t0, kd) 
+
+        association_values <-  association_function(df_assoc$Time + t0)
+
+        computed_association_df <- data.frame(
+            Time = df_assoc$Time,
+            RU = association_values,
+            AssocIndicator = rep(1, length(df_assoc$Time)),
+            DissocIndicator = rep(0, length(df_assoc$Time))
+        )
+
+        end_of_association_RU <-  association_function(association + t0)
+
+        end_of_association_RU <- end_of_association_RU + shift
+
+        dissociation_function <- dissociation_system_function(end_of_association_RU, kd)
+
+        dissociation_values <- dissociation_function(df_dissoc$Time - association)
+
+        computed_dissociation_df <- data.frame(
+            Time = df_dissoc$Time,
+            RU = dissociation_values,
+            AssocIndicator = rep(0, length(df_dissoc$Time)),
+            DissocIndicator = rep(1, length(df_dissoc$Time))
+        )
+
+        df_full <- dplyr::bind_rows(computed_association_df, computed_dissociation_df)
+
+    }
+
+}
+
+pack_parameters <- function(pars, global_rmax, regenerated_surface, num_conc, bulkshift) {
+
+    t0 <- rep(0, num_conc)
+    shift <- rep(0, num_conc)
+
+    if(global_rmax){
+        #pars (global "Rmax","ka", "R0" one for each concentration, kd, shift one for each concentration)
+
+        Rmax <- pars[1]
+
+        ka <- pars[2]
+
+        if (!regenerated_surface) {
+          t0 <- pars[3:(2 + num_conc)]
+          kd <- pars[(3+num_conc)]
+        } else {
+            kd <- pars[3]
+        }
+
+        if (bulkshift & !regenerated_surface) {
+            shift <- pars[(4 + num_conc):(3 + 2*num_conc)]
+        }
+        else if (bulkshift) {
+                shift <- pars[4:(3 + num_conc)]
+        }
+    } else {
+        #pars ("Rmax" one for each concentration,"ka", "R0" one for each concentration, kd, shift one for each concentration)
+
+        Rmax <- pars[1:num_conc]
+
+        ka <- pars[num_conc+1]
+
+        if (!regenerated_surface){
+            t0 <- pars[(num_conc + 2):(2*num_conc + 1)]
+            kd <- pars[2*num_conc + 2]
+        } else {
+            kd <- pars[(num_conc + 2)]
+        }
+
+    if (bulkshift & !regenerated_surface)
+        shift <- pars[(2*num_conc + 3):(3*num_conc + 2)]
+    else if (bulkshift)
+        shift <- pars[(num_conc + 3):(2*num_conc + 2)]
+    }
+
+    list(
+        Rmax = Rmax,
+        ka = ka, 
+        kd = kd, 
+        t0 = t0,
+        shift = shift
+    )
+}
+
 # Internal function that is passed to nlm. It computes the objective function for the fit.
 fit_as_system <- function(pars, df, incl_concentrations,
                           num_conc,
@@ -660,92 +774,38 @@ fit_as_system <- function(pars, df, incl_concentrations,
                           global_rmax,
                           regenerated_surface){
 
-  t0 <- rep(0, num_conc)
-  if(global_rmax){
-    #pars (global "Rmax","ka", "R0" one for each concentration, kd, shift one for each concentration)
+  parameters = pack_parameters(pars, global_rmax, regenerated_surface, num_conc, bulkshift)
 
-    Rmax <- pars[1]
-
-    ka <- pars[2]
-
-    if (!regenerated_surface){
-      t0 <- pars[3:(2 + num_conc)]
-      kd <- pars[(3+num_conc)]
-    } else
-      kd <- pars[3]
-
-
-    if (bulkshift & !regenerated_surface)
-      shift <- pars[(4 + num_conc):(3 + 2*num_conc)]
-    else
-      if (bulkshift)
-        shift <- pars[4:(3 + num_conc)]
-
-  } else{
-    #pars ("Rmax" one for each concentration,"ka", "R0" one for each concentration, kd, shift one for each concentration)
-
-    Rmax <- pars[1:num_conc]
-
-    ka <- pars[num_conc+1]
-
-    if (!regenerated_surface){
-      t0 <- pars[(num_conc + 2):(2*num_conc + 1)]
-      kd <- pars[2*num_conc + 2]
-    } else
-      kd <- pars[(num_conc + 2)]
-
-
-    if (bulkshift & !regenerated_surface)
-      shift <- pars[(2*num_conc + 3):(3*num_conc + 2)]
-    else
-      if (bulkshift)
-        shift <- pars[(num_conc + 3):(2*num_conc + 2)]
-
-  }
-
-  errs <- NULL
+  errors <- NULL
 
   for (i in 1:num_conc){
 
     df_i <- df %>% dplyr::filter(.data$Concentration == incl_concentrations[i])
-    #  RU <- df_i$RU
 
-    df_i %>% dplyr::filter(.data$AssocIndicator == 1) -> df_assoc
-    df_i %>% dplyr::filter(.data$DissocIndicator == 1) -> df_dissoc
-
-    if (global_rmax){
-      assoc_formula_first_term <-
-        (Rmax * ka * incl_concentrations[i])/(ka*incl_concentrations[i] + kd)
-
+    if ( length(parameters$Rmax) == 1 ) {
+        Rmax_i <- parameters$Rmax
     } else {
-      assoc_formula_first_term <-
-        (Rmax[i] * ka * incl_concentrations[i])/(ka*incl_concentrations[i] + kd)
-
+        Rmax_i <- parameters$Rmax[i]
     }
 
-    assoc_formula_second_term <-
-      (1 - exp(-((ka*incl_concentrations[i] + kd)*(df_assoc$Time + t0[i]))))
+    # Unpack parameters
+    concentration <- incl_concentrations[i]
+    ka <- parameters$ka
+    kd <- parameters$kd
+    t0 <- parameters$t0[i]
+    shift <- parameters$shift[i]
 
-    assoc_formula_full <- assoc_formula_first_term * assoc_formula_second_term
+    system_function = generate_system_function(Rmax_i, concentration, ka, t0, kd, shift, association)
 
-    err_assoc <- df_assoc$RU - assoc_formula_full
+    system_values = system_function(df_i)
 
-    end_of_association_RU <-  assoc_formula_first_term *
-      (1 - exp(-((ka*incl_concentrations[i] + kd)*(association + t0[i]))))
+    error = df_i$RU - system_values$RU
 
-    dissoc_decay <- exp(-kd*(df_dissoc$Time - association))
-
-    if (bulkshift)
-      end_of_association_RU <- end_of_association_RU + shift[i]
-
-    dissoc_formula_full <- end_of_association_RU * dissoc_decay
-
-    err_dissoc <- df_dissoc$RU - dissoc_formula_full
-
-    errs <- c(errs, err_assoc, err_dissoc)
+    errors <- c(errors, error)
 
   }
-  errs
+
+  errors
 
 }
 
